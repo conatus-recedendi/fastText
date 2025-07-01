@@ -99,10 +99,10 @@ make
 
 for i in {0..7}
 do
-  log_file ${LOG_FILE} echo "Working on dataset ${DATASET[i]}"
-  log_file ${LOG_FILE} ./fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
+  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]}"
+  log_time ${LOG_FILE} ./fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}" -dim 10 -lr "${LR[i]}" -wordNgrams 2 \
     -minCount 1 -bucket 10000000 -epoch 5 -thread 20 > /dev/null
-  log_file ${LOG_FILE}  ./fasttext test "${RESULTDIR}/${DATASET[i]}.bin" \
+  log_time ${LOG_FILE}  ./fasttext test "${RESULTDIR}/${DATASET[i]}.bin" \
     "${DATADIR}/${DATASET[i]}.test"
 done
