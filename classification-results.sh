@@ -73,7 +73,7 @@ do
   echo "Downloading dataset ${DATASET[i]}"
   if [ ! -f "${DATADIR}/${DATASET[i]}.train" ]
   then
-    curl -c /tmp/cookies "${ID[i]}" > /tmp/intermezzo.html
+    # curl -c /tmp/cookies "${ID[i]}" > /tmp/intermezzo.html
     # echo "https://drive.google.com$(cat /tmp/intermezzo.html | grep -Po 'uc-download-link" [^>]* href="\K[^"]*' | sed 's/\&amp;/\&/g')"
     # curl -L -b /tmp/cookies "https://drive.google.com$(cat /tmp/intermezzo.html | grep -Po 'uc-download-link" [^>]* href="\K[^"]*' | sed 's/\&amp;/\&/g')" > "${DATADIR}/${DATASET[i]}_csv.tar.gz"
     curl -L -b /tmp/cookies "https://drive.usercontent.google.com/download?id=${ID[i]}&export=download&authuser=0&confirm=t" > "${DATADIR}/${DATASET[i]}_csv.tar.gz"
