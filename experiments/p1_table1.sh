@@ -26,7 +26,6 @@ mkdir -p "${LOGDIR}"
 
 LOG_FILE="${LOGDIR}/${EXPERIMENT_ID}_${TIMESTAMP}.log"
 
-log_time "$LOG_FILE" echo "Not implemented yet" 
 
 myshuf() {
   perl -MList::Util=shuffle -e 'print shuffle(<>);' "$@";
@@ -99,10 +98,21 @@ make
 
 for i in {0..7}
 do
-  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]}"
+  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for bigrams"
   log_time ${LOG_FILE} ../fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}" -dim 10 -lr "${LR[i]}" -wordNgrams 2 \
     -minCount 1 -bucket 10000000 -epoch 5 -thread 20 > /dev/null
+  log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}.bin" \
+    "${DATADIR}/${DATASET[i]}.test"
+done
+
+
+for i in {0..7}
+do
+  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for 1-grams"
+  log_time ${LOG_FILE} ../fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
+    -output "${RESULTDIR}/${DATASET[i]}" -dim 10 -lr "${LR[i]}" -wordNgrams 1 \
+    -minCount 1 -bucket 100000000 -epoch 5 -thread 20 > /dev/null
   log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}.bin" \
     "${DATADIR}/${DATASET[i]}.test"
 done
