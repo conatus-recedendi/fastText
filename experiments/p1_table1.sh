@@ -114,5 +114,5 @@ do
     -output "${RESULTDIR}/${DATASET[i]}_1gram" -dim 10 -lr "${LR[i]}" -wordNgrams 1 \
     -minCount 1 -bucket 100000000 -epoch 5 -thread 20 > /dev/null
   log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}_1gram.bin" \
-    "${DATADIR}/${DATASET[i]}_1gram.test"
+    "${DATADIR}/${DATASET[i]}.test"
 done
