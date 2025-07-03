@@ -26,7 +26,6 @@ mkdir -p "${LOGDIR}"
 LOG_FILE="${LOGDIR}/${EXPERIMENT_ID}_${TIMESTAMP}.log"
 
 
-log_time "$LOG_FILE" echo "Not implemented yet" 
 
 combinations=(
   "50, 1",
@@ -46,5 +45,4 @@ do
     -minCount 100 -bucket 100000000 -epoch 5 -thread 20 > /dev/null
 log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/dim=${DIM}_gram=${GRAM}" \
     "${DATADIR}/YFCC100M/test-processing"
-  fi
 done
