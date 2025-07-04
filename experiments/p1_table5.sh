@@ -46,6 +46,6 @@ do
 # log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/dim${DIM}_gram${GRAM}.bin" \
 #     "${DATADIR}/YFCC100M/test-processing" 
 log_time ${LOG_FILE} ../fasttext test "../output/p1_table5_20250703_0921/dim50_gram1.bin" \
-    "${DATADIR}/YFCC100M/test-processing" 
+    "${DATADIR}/YFCC100M/test-processing" 1
 
 done

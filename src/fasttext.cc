@@ -438,9 +438,6 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   in.seekg(0, std::ios_base::beg);
 
   
-  // progress_ was not declared in this scope, so how to?
-  real progress_ = 0.0; // Initialize progress to 0
-  int64_t tokenCount_ = 0; // Initialize token count to 0
   // progress_ = 0.0;
   // tokenCount_ = 0;
 
@@ -461,6 +458,9 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
       continue;
     }
 
+    real process_ = cnt_line / static_cast<real>(max_line);
+
+    std::cerr << std::fixed;
     std::cerr << "Progress: "
               << std::setprecision(1) << std::setw(5)
               << (progress_ * 100) << "%";
