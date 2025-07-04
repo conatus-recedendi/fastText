@@ -449,11 +449,25 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   std::cerr << "nwords: " << dict_->nwords() << std::endl;
   std::cerr << "nlabels: " << dict_->nlabels() << std::endl;
 
-
+  // line of in 
+  int max_line = 666650;
+  int cnt_line = 0;
   while (in.peek() != EOF) {
     line.clear();
     labels.clear();
     dict_->getLine(in, line, labels);
+
+    if (line.empty()) {
+      continue;
+    }
+
+    std::cerr << "Progress: "
+              << std::setprecision(1) << std::setw(5)
+              << (progress * 100) << "%";
+    std::cerr << "cnt_line" << std::setw(7) << cnt_line;
+    std::cerr << std::flush;
+
+    cnt_line++;
     
     if (!labels.empty() && !line.empty()) {
       predictions.clear();
