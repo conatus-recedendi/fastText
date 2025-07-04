@@ -462,7 +462,7 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
             progress_));
     std::cerr << std::flush;
     progress_ += 1.0 / dict_->ntokens();
-    tokenCount_ += 1
+    tokenCount_ += 1;
     if (progress_ >= 1.0) {
       progress_ = 1.0;
     }
