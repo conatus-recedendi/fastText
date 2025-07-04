@@ -57,9 +57,23 @@ void Model::predict(
     throw std::invalid_argument("k needs to be 1 or higher!");
   }
   heap.reserve(k + 1);
+  
+  
+  // 시간 측정 시작 - computeHidden
+  auto start_hidden = std::chrono::high_resolution_clock::now();
   computeHidden(input, state);
+  auto end_hidden = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration_hidden = end_hidden - start_hidden;
 
+  // 시간 측정 시작 - loss_->predict
+  auto start_predict = std::chrono::high_resolution_clock::now();
   loss_->predict(k, threshold, heap, state);
+  auto end_predict = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration_predict = end_predict - start_predict;
+
+  // 결과 출력
+  std::cerr << "computeHidden time: " << duration_hidden.count() * 1000 << " ms\n";
+  std::cerr << "loss_->predict time: " << duration_predict.count() * 1000 << " ms\n";
 }
 
 void Model::update(
