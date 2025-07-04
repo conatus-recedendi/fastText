@@ -456,17 +456,13 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
     std::cerr << " words/sec/thread: " << std::setw(7)
               << int64_t(tokenCount_ / utils::getDuration(
                   start_, std::chrono::steady_clock::now()));
-    std::cerr << " lr: " << std::setw(9) << std::setprecision(6)
-              << args_->lr * (1.0 - progress_);
-    std::cerr << " avg.loss: " << std::setw(9) << std::setprecision(6)
-              << meter.loss();
     std::cerr << " ETA: " << utils::ClockPrint(
         int64_t(utils::getDuration(
             start_, std::chrono::steady_clock::now()) * (1 - progress_) /
             progress_));
     std::cerr << std::flush;
     progress_ += 1.0 / dict_->ntokens();
-    tokenCount_ += line.size(); 
+    tokenCount_ += 1
     if (progress_ >= 1.0) {
       progress_ = 1.0;
     }
