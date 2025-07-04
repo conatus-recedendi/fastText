@@ -441,10 +441,6 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   // progress_ = 0.0;
   // tokenCount_ = 0;
 
-  std::cerr << std::fixed;
-  std::cerr << "ntokens: " << dict_->ntokens() << std::endl;
-  std::cerr << "nwords: " << dict_->nwords() << std::endl;
-  std::cerr << "nlabels: " << dict_->nlabels() << std::endl;
 
   // line of in 
   int max_line = 666650;
@@ -459,13 +455,6 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
     }
 
     real progress_ = cnt_line / static_cast<real>(max_line);
-
-    std::cerr << std::fixed;
-    std::cerr << "Progress: "
-              << std::setprecision(1) << std::setw(5)
-              << (progress_ * 100) << "%";
-    std::cerr << "cnt_line" << std::setw(7) << cnt_line;
-    std::cerr << std::flush;
 
     cnt_line++;
     

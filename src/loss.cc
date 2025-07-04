@@ -10,8 +10,6 @@
 #include "utils.h"
 
 #include <cmath>
-#include <chrono>
-#include <iostream>
 
 namespace fasttext {
 
@@ -69,15 +67,9 @@ void Loss::predict(
     Predictions& heap,
     Model::State& state) const {
   computeOutput(state);
-
-  auto start_k = std::chrono::high_resolution_clock::now();
   findKBest(k, threshold, heap, state.output);
-  auto end_k = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> duration_k = end_k - start_k;
-
   std::sort_heap(heap.begin(), heap.end(), comparePairs);
 
-  std::cerr << "findKBest time: " << duration_k.count() * 1000 << " ms\n";
 }
 
 void Loss::findKBest(
@@ -125,22 +117,12 @@ real BinaryLogisticLoss::binaryLogistic(
 
 void BinaryLogisticLoss::computeOutput(Model::State& state) const {
   Vector& output = state.output;
-  auto start_mul = std::chrono::high_resolution_clock::now();
   output.mul(*wo_, state.hidden);
-  auto end_mul = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> duration_mul = end_mul - start_mul;
   int32_t osz = output.size();
-  auto start_sigmoid = std::chrono::high_resolution_clock::now();
   for (int32_t i = 0; i < osz; i++) {
     output[i] = sigmoid(output[i]);
   }
-  auto end_sigmoid = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> duration_sigmoid = end_sigmoid - start_sigmoid;
 
-  std::cerr << "computeOutput mul time: " << duration_mul.count() * 1000
-            << " ms\n";
-  std::cerr << "computeOutput sigmoid time: " << duration_sigmoid.count() * 1000
-            << " ms\n";
 }
 
 OneVsAllLoss::OneVsAllLoss(std::shared_ptr<Matrix>& wo)
