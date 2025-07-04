@@ -443,7 +443,6 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   int64_t tokenCount_ = 0; // Initialize token count to 0
   // progress_ = 0.0;
   // tokenCount_ = 0;
-  start_ = std::chrono::steady_clock::now();
 
   while (in.peek() != EOF) {
     line.clear();
@@ -453,13 +452,7 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
     std::cerr << std::fixed;
     std::cerr << "Progress: ";
     std::cerr << std::setprecision(1) << std::setw(5) << (progress_ * 100) << "%";
-    std::cerr << " words/sec/thread: " << std::setw(7)
-              << int64_t(tokenCount_ / utils::getDuration(
-                  start_, std::chrono::steady_clock::now()));
-    std::cerr << " ETA: " << utils::ClockPrint(
-        int64_t(utils::getDuration(
-            start_, std::chrono::steady_clock::now()) * (1 - progress_) /
-            progress_));
+
     std::cerr << std::flush;
     progress_ += 1.0 / dict_->ntokens();
     tokenCount_ += 1;
