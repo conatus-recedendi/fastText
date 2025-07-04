@@ -463,7 +463,7 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
 
     std::cerr << "Progress: "
               << std::setprecision(1) << std::setw(5)
-              << (progress * 100) << "%";
+              << (progress_ * 100) << "%";
     std::cerr << "cnt_line" << std::setw(7) << cnt_line;
     std::cerr << std::flush;
 
