@@ -458,7 +458,7 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
       continue;
     }
 
-    real process_ = cnt_line / static_cast<real>(max_line);
+    real progress_ = cnt_line / static_cast<real>(max_line);
 
     std::cerr << std::fixed;
     std::cerr << "Progress: "
