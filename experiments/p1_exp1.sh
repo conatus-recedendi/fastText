@@ -11,7 +11,7 @@ log_time() {
         echo "" | tee -a "$logfile"
 }
 
-EXPERIMENT_ID="p1_table5"
+EXPERIMENT_ID="p1_exp1"
 TIMESTAMP=$(date +"%Y%m%d_%H%M")
 LOG_FILE="../logs/${EXPERIMENT_ID}_${TIMESTAMP}.log"
 
