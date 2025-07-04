@@ -72,7 +72,7 @@ void Model::predict(
   loss_->predict(k, threshold, heap, state);
   auto end_predict = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration_predict = end_predict - start_predict;
-
+  std::cerr << "Loss type: " << typeid(*loss_).name() << std::endl;
   // 결과 출력
   std::cerr << "computeHidden time: " << duration_hidden.count() * 1000 << " ms\n";
   std::cerr << "loss_->predict time: " << duration_predict.count() * 1000 << " ms\n";
