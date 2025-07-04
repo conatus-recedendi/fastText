@@ -444,23 +444,17 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   // progress_ = 0.0;
   // tokenCount_ = 0;
 
+  std::cerr << std::fixed;
+  std:cerr << "ntokens: " << dict_->ntokens() << std::endl;
+  std:cerr << "nwords: " << dict_->nwords() << std::endl;
+  std::cerr << "nlabels: " << dict_->nlabels() << std::endl;
+  
+
   while (in.peek() != EOF) {
     line.clear();
     labels.clear();
     dict_->getLine(in, line, labels);
     
-    std::cerr << std::fixed;
-    std::cerr << "Progress: ";
-    std::cerr << std::setprecision(1) << std::setw(5) << (progress_ * 100) << "%";
-
-    std::cerr << std::flush;
-    progress_ += 1.0 / dict_->ntokens();
-    tokenCount_ += 1;
-    if (progress_ >= 1.0) {
-      progress_ = 1.0;
-    }
-
-
     if (!labels.empty() && !line.empty()) {
       predictions.clear();
       predict(k, line, predictions, threshold);
