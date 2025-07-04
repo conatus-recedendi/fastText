@@ -12,6 +12,8 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <chrono>
+#include <iostream>
 
 namespace fasttext {
 
