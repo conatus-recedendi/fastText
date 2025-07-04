@@ -437,8 +437,14 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   in.clear();
   in.seekg(0, std::ios_base::beg);
 
-  progress_ = 0.0;
-  tokenCount_ = 0;
+  
+  // progress_ was not declared in this scope, so how to?
+  real progress_ = 0.0; // Initialize progress to 0
+  int64_t tokenCount_ = 0; // Initialize token count to 0
+  // progress_ = 0.0;
+  // tokenCount_ = 0;
+  start_ = std::chrono::steady_clock::now();
+
   while (in.peek() != EOF) {
     line.clear();
     labels.clear();
