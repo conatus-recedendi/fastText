@@ -445,10 +445,10 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   // tokenCount_ = 0;
 
   std::cerr << std::fixed;
-  std:cerr << "ntokens: " << dict_->ntokens() << std::endl;
-  std:cerr << "nwords: " << dict_->nwords() << std::endl;
+  std::cerr << "ntokens: " << dict_->ntokens() << std::endl;
+  std::cerr << "nwords: " << dict_->nwords() << std::endl;
   std::cerr << "nlabels: " << dict_->nlabels() << std::endl;
-  
+
 
   while (in.peek() != EOF) {
     line.clear();
