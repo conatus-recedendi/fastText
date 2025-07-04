@@ -10,6 +10,8 @@
 #include "utils.h"
 
 #include <cmath>
+#include <chrono>
+#include <iostream>
 
 namespace fasttext {
 
@@ -66,9 +68,25 @@ void Loss::predict(
     real threshold,
     Predictions& heap,
     Model::State& state) const {
+  auto start_hidden = std::chrono::high_resolution_clock::now();
   computeOutput(state);
+  auto end_hidden = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration_hidden = end_hidden - start_hidden;
+
+  auto start_k = std::chrono::high_resolution_clock::now();
   findKBest(k, threshold, heap, state.output);
+  auto end_k = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration_k = end_k - start_k;
+
+  auto start_sort = std::chrono::high_resolution_clock::now();
   std::sort_heap(heap.begin(), heap.end(), comparePairs);
+  auto end_sort = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration_sort = end_sort - start_sort;
+
+  std::cerr << "computeOutput time: " << duration_hidden.count() * 1000
+            << " ms\n";
+  std::cerr << "findKBest time: " << duration_k.count() * 1000 << " ms\n";
+  std::cerr << "sort_heap time: " << duration_sort.count() * 1000 << " ms\n";
 }
 
 void Loss::findKBest(

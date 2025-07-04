@@ -12,8 +12,6 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include <chrono>
-#include <iostream>
 
 namespace fasttext {
 
@@ -61,21 +59,10 @@ void Model::predict(
   heap.reserve(k + 1);
   
   
-  // 시간 측정 시작 - computeHidden
-  auto start_hidden = std::chrono::high_resolution_clock::now();
   computeHidden(input, state);
-  auto end_hidden = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> duration_hidden = end_hidden - start_hidden;
-
-  // 시간 측정 시작 - loss_->predict
-  auto start_predict = std::chrono::high_resolution_clock::now();
+  
   loss_->predict(k, threshold, heap, state);
-  auto end_predict = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> duration_predict = end_predict - start_predict;
-  std::cerr << "Loss type: " << typeid(*loss_).name() << std::endl;
-  // 결과 출력
-  std::cerr << "computeHidden time: " << duration_hidden.count() * 1000 << " ms\n";
-  std::cerr << "loss_->predict time: " << duration_predict.count() * 1000 << " ms\n";
+  
 }
 
 void Model::update(
