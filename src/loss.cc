@@ -68,25 +68,16 @@ void Loss::predict(
     real threshold,
     Predictions& heap,
     Model::State& state) const {
-  auto start_hidden = std::chrono::high_resolution_clock::now();
   computeOutput(state);
-  auto end_hidden = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> duration_hidden = end_hidden - start_hidden;
 
   auto start_k = std::chrono::high_resolution_clock::now();
   findKBest(k, threshold, heap, state.output);
   auto end_k = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration_k = end_k - start_k;
 
-  auto start_sort = std::chrono::high_resolution_clock::now();
   std::sort_heap(heap.begin(), heap.end(), comparePairs);
-  auto end_sort = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> duration_sort = end_sort - start_sort;
 
-  std::cerr << "computeOutput time: " << duration_hidden.count() * 1000
-            << " ms\n";
   std::cerr << "findKBest time: " << duration_k.count() * 1000 << " ms\n";
-  std::cerr << "sort_heap time: " << duration_sort.count() * 1000 << " ms\n";
 }
 
 void Loss::findKBest(
@@ -134,11 +125,22 @@ real BinaryLogisticLoss::binaryLogistic(
 
 void BinaryLogisticLoss::computeOutput(Model::State& state) const {
   Vector& output = state.output;
+  auto start_mul = std::chrono::high_resolution_clock::now();
   output.mul(*wo_, state.hidden);
+  auto end_mul = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration_mul = end_mul - start_mul;
   int32_t osz = output.size();
+  auto start_sigmoid = std::chrono::high_resolution_clock::now();
   for (int32_t i = 0; i < osz; i++) {
     output[i] = sigmoid(output[i]);
   }
+  auto end_sigmoid = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration_sigmoid = end_sigmoid - start_sigmoid;
+
+  std::cerr << "computeOutput mul time: " << duration_mul.count() * 1000
+            << " ms\n";
+  std::cerr << "computeOutput sigmoid time: " << duration_sigmoid.count() * 1000
+            << " ms\n";
 }
 
 OneVsAllLoss::OneVsAllLoss(std::shared_ptr<Matrix>& wo)
