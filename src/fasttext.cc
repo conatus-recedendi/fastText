@@ -445,6 +445,8 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
   // line of in 
   int max_line = 666650;
   int cnt_line = 0;
+  // print args_->addWordNgrams
+  std::cerr << "addWordNgrams: " << args_->addWordNgrams << std::endl;
   while (in.peek() != EOF) {
     line.clear();
     labels.clear();
