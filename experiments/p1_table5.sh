@@ -41,7 +41,7 @@ do
 
   echo "Downloading dataset with dimensions ${DIM} and n-grams ${GRAM}"
   log_time "$LOG_FILE" ../fasttext supervised -input "${DATADIR}/YFCC100M/train-processing" \
-    -output "${RESULTDIR}/dim${DIM}_gram${GRAM}" -dim ${DIM} -lr 0.25 -wordNgrams ${GRAM} \
+    -output "${RESULTDIR}/dim${DIM}_gram${GRAM}" -dim ${DIM} -lr 0.1 -wordNgrams ${GRAM} \
     -minCount 100 -minCountLabel 100 -bucket 100000000 -epoch 5 -thread 20 -loss hs > /dev/null
 log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/dim${DIM}_gram${GRAM}.bin" \
     "${DATADIR}/YFCC100M/test-processing" 
