@@ -118,14 +118,14 @@ real DenseMatrix::dotRow(const Vector& vec, int64_t i) const {
     d += at(i, j) * vec[j];
   }
   if (std::isnan(d)) {
-    std::cerr << "[dotRow] NaN encountered in row " << i << std::endl;
-    for (int64_t j = 0; j < n_; j++) {
-      real a = at(i, j);
-      real b = vec[j];
-      std::cerr << "  at(" << i << "," << j << ") = " << a 
-                << ", vec[" << j << "] = " << b 
-                << ", product = " << a * b << std::endl;
-    }
+    // std::cerr << "[dotRow] NaN encountered in row " << i << std::endl;
+    // for (int64_t j = 0; j < n_; j++) {
+    //   real a = at(i, j);
+    //   real b = vec[j];
+    //   std::cerr << "  at(" << i << "," << j << ") = " << a 
+    //             << ", vec[" << j << "] = " << b 
+    //             << ", product = " << a * b << std::endl;
+    // }
     throw EncounteredNaNError();
   }
   return d;

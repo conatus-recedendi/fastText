@@ -20,6 +20,9 @@
 #include <thread>
 #include <vector>
 
+
+
+
 namespace fasttext {
 
 constexpr int32_t FASTTEXT_VERSION = 12; /* Version 1b */
