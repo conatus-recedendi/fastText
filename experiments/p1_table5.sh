@@ -36,13 +36,13 @@ combinations=(
 
 for combo in "${combinations[@]}";
 do
-  read DIM GRAM <<< "$combo"
-  if [[ -z "$GRAM" == 2]]; then
-    BUCKET=10000000 # 10M
-  else
-    BUCKET=100000000 # 100M
-  fi
+read DIM GRAM <<< "$combo"
 
+if [[ "$GRAM" == "2" ]]; then
+  BUCKET=10000000  # 10M
+else
+  BUCKET=100000000 # 100M
+fi
 
   echo "Downloading dataset with dimensions ${DIM} and n-grams ${GRAM}"
   log_time "$LOG_FILE" ../fasttext supervised -input "${DATADIR}/YFCC100M/train-processing" \
