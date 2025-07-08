@@ -29,20 +29,25 @@ LOG_FILE="${LOGDIR}/${EXPERIMENT_ID}_${TIMESTAMP}.log"
 
 combinations=(
   # "50 1"
-  # "50 2"
+  "50 2"
   # "200 1"
   "200 2"
 )
 
 for combo in "${combinations[@]}";
 do
-        read DIM GRAM <<< "$combo"
+  read DIM GRAM <<< "$combo"
+  if [[ -z "$GRAM" == 2]]; then
+    BUCKET=10000000 # 10M
+  else
+    BUCKET=100000000 # 100M
+  fi
 
 
   echo "Downloading dataset with dimensions ${DIM} and n-grams ${GRAM}"
   log_time "$LOG_FILE" ../fasttext supervised -input "${DATADIR}/YFCC100M/train-processing" \
     -output "${RESULTDIR}/dim${DIM}_gram${GRAM}" -dim ${DIM} -lr 0.1 -wordNgrams ${GRAM} \
-    -minCount 100 -minCountLabel 100 -bucket 100000000 -epoch 5 -thread 20 -loss hs > /dev/null
+    -minCount 100 -minCountLabel 100 -bucket 10000000 -epoch 5 -thread 20 -loss hs > /dev/null
 log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/dim${DIM}_gram${GRAM}.bin" \
     "${DATADIR}/YFCC100M/test-processing" 
 # log_time ${LOG_FILE} ../fasttext predict "../output/p1_table5_20250703_0921/dim50_gram1.bin" \
