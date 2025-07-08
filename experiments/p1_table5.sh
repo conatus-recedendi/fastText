@@ -28,10 +28,10 @@ LOG_FILE="${LOGDIR}/${EXPERIMENT_ID}_${TIMESTAMP}.log"
 
 
 combinations=(
-  "50 1"
-  "50 2"
+  # "50 1"
+  # "50 2"
   "200 1"
-  "200 2"
+  # "200 2"
 )
 
 for combo in "${combinations[@]}";
