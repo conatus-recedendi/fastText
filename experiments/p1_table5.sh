@@ -100,5 +100,12 @@ done
 # Final result summary
 log_time "$LOG_FILE"  echo -e "\n===== BEST RESULTS PER (DIM, GRAM) ====="
 for key in "${!best_p1[@]}"; do
+
   log_time "$LOG_FILE" echo "DIM_GRAM: $key   Best P@1: ${best_p1[$key]}   LR: ${best_lr[$key]}"
+  GRAM=$(echo "$key" | cut -d'_' -f2)
+  DIM=$(echo "$key" | cut -d'_' -f1)
+
+  OUTFILE="${RESULTDIR}/dim${DIM}_gram${GRAM}_lr${best_lr[$key]}"
+  log_time "$LOG_FILE" ../fasttext test "${OUTFILE}.bin" \
+    "${DATADIR}/YFCC100M/test-processing"
 done | sort
