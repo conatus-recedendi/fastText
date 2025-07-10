@@ -26,6 +26,7 @@ ROOT="data/wikimedia/${NOW}"
 mkdir -p "${ROOT}"
 echo "Saving data in ""$ROOT"
 read -r -p "Choose a language (e.g. en, bh, fr, etc.): " choice
+# ar, cs, de, en, es, fr, it, ro, ru
 LANG="$choice"
 echo "Chosen language: ""$LANG"
 read -r -p "Continue to download (WARNING: This might be big and can take a long time!)(y/n)? " choice
@@ -66,8 +67,8 @@ while (<>) {
     s/\[\[category:([^|\]]*)[^]]*\]\]/[[$1]]/ig;  # show categories without markup
     s/\[\[[a-z\-]*:[^\]]*\]\]//g;  # remove links to other languages
     s/\[\[[^\|\]]*\|/[[/g;  # remove wiki url, preserve visible text
-    s/{{[^}]*}}//g;         # remove {{icons}} and {tables}
-    s/{[^}]*}//g;
+    s/\{\{[^}]*\}\}//g;         # remove {{icons}} and {tables}
+    s/\{[^}\}//g;
     s/\[//g;                # remove [ and ]
     s/\]//g;
     s/&[^;]*;/ /g;          # remove URL encoded chars
