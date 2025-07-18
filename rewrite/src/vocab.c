@@ -83,7 +83,7 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   }
   vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
 
-  printf("[INFO] Allocating memory for word: %s %d\n", word, *vocab_size,);
+  printf("[INFO] Allocating memory for word: %s %d\n", word, *vocab_size);
 
   strcpy(vocab[*vocab_size]->word, word);
   printf("[INFO] Word '%s' added to vocab at index %lld\n", word, *vocab_size);
