@@ -41,13 +41,13 @@ void initialize_network(global_setting *gs) {
     exit(1);
   }
   printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
-  posix_memalign(gs->layer2, 64, gs->layer1_size * gs->class_size * sizeof(float));
+  posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->class_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
   printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
-  posix_memalign(gs->output, 64, gs->class_size * sizeof(float));
+  posix_memalign((void **)&(gs->output), 64, gs->class_size * sizeof(float));
   if (gs->output == NULL) {
     fprintf(stderr, "Memory allocation failed for output\n");
     exit(1);
