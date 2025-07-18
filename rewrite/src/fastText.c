@@ -327,10 +327,6 @@ void *train_thread(thread_args *args) {
         }
       }
     }
-
-    if (gs->debug_mode > 1) {
-      printf("[INFO] Thread %lld reading from offset %lld to %lld\n", thread_id, gs->start_offsets[thread_id], gs->end_offsets[thread_id]);
-    }
   
 
   fclose(fi);
