@@ -194,7 +194,7 @@ void *train_thread(thread_args *args) {
     // Reset sentence length and position for each iteration
     sentence_length = 0;
     sentence_position = 0;
-    printf("[INFO] Thread %lld starting iteration %d...\n", thread_id, iter);
+    printf("[INFO] Thread %lld starting iteration %d... %d %d\n", thread_id, iter, gs->start_offsets[thread_id], gs->end_offsets[thread_id]);
     // Read the file line by line
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
     
