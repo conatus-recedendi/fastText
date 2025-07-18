@@ -238,6 +238,7 @@ void *train_thread(thread_args *args) {
     for (int i = gs->start_offsets[thread_id]; i < gs->end_offsets[thread_id]; i++) {
       read_word(word, fi);
       word_count++;
+      gs->word_count_actual++;
       gs->learning_rate_decay = gs->learning_rate * (1 - ((float)word_count / (offset_length * gs->iter)));
 
       if (gs->debug_mode > 1 && word_count % 100000 == 0) {
