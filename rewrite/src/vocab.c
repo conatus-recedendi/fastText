@@ -18,7 +18,7 @@ int get_word_hash(char *word, global_setting *gs) {
 }
 
 // Reads a single word from a file, assuming space + tab + EOL to be word boundaries
-void read_word(char *word, FILE *fin) {
+int read_word(char *word, FILE *fin) {
   int a = 0, ch;
   while (!feof(fin)) { 
     ch = fgetc(fin);
@@ -38,6 +38,7 @@ void read_word(char *word, FILE *fin) {
     if (a >= MAX_STRING - 1) a--;   // Truncate too long words
   }
   word[a] = 0;
+  return a;
 }
 
 int search_vocab(char *word, global_setting *gs) {
