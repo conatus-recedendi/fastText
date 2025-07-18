@@ -14,6 +14,87 @@ typedef struct {
   global_setting *gs; // global settings
 } thread_args;
 
+int isNewLine(const char *word) {
+  return strcmp(word, "\n") == 0;
+}
+int isClass(const char *word) {
+  return word[0] == '__' && word[strlen(word) - 1] == '__';
+}
+
+int isWord(const char *word) {
+  return !isNewLine(word) && !isClass(word);
+}
+void softmaxf(const float* input, float* output, int size) {
+    float max = input[0];
+    for (int i = 1; i < size; ++i) {
+        if (input[i] > max) {
+            max = input[i];
+        }
+    }
+
+    // expf 계산 + 합 구하기 (overflow 방지 위해 max 빼기)
+    float sum = 0.0f;
+    for (int i = 0; i < size; ++i) {
+        output[i] = expf(input[i] - max);
+        sum += output[i];
+    }
+
+    // 정규화
+    for (int i = 0; i < size; ++i) {
+        output[i] /= sum;
+    }
+}
+
+long count_lines(FILE *fp) {
+    long lines = 0;
+    int c;
+    while ((c = fgetc(fp)) != EOF) {
+        if (c == '\n') lines++;
+    }
+    rewind(fp);
+    return lines;
+}
+
+// 시작 및 끝 오프셋 계산
+void compute_thread_offsets(FILE *fp, int num_threads, long total_lines, long *start_offsets, long *end_offsets) {
+    char line[MAX_LINE_LEN];
+    long current_line = 0;
+    int current_thread = 0;
+
+    long *start_lines = malloc(sizeof(long) * (num_threads + 1));
+    if (!start_lines) {
+        perror("malloc");
+        exit(1);
+    }
+
+    for (int i = 0; i <= num_threads; i++) {
+        start_lines[i] = total_lines * i / num_threads;
+    }
+
+    // 첫 스레드 시작은 항상 0
+    rewind(fp);
+    start_offsets[0] = 0;
+
+    while (fgets(line, sizeof(line), fp)) {
+        current_line++;
+
+        // 다음 스레드의 시작 라인에 도달하면 offset 저장
+        if (current_thread + 1 <= num_threads &&
+            current_line == start_lines[current_thread + 1]) {
+            end_offsets[current_thread] = ftell(fp);
+            start_offsets[current_thread + 1] = ftell(fp);
+            current_thread++;
+        }
+    }
+
+    // 마지막 스레드의 끝 오프셋은 파일 끝
+    fseek(fp, 0, SEEK_END);
+    end_offsets[num_threads - 1] = ftell(fp);
+
+    free(start_lines);
+}
+
+
 /**
   * get arg_pos
   * idx = get_arg_pos("--size"), argc, argv)
@@ -92,17 +173,40 @@ void *train_thread(thread_args *args) {
 
   long long word_count = 0;
   long long last_word_count = 0;
+  long long iter = gs->iter;
+
+  long long sentence_length = 0;
+  long long sentence_position = 0;
+  long long sentence_start = 0;
+  long long sentence_end = 0;
+  long long sen[MAX_SENTENCE_LENGTH];
 
   FILE *fi = fopen(gs->train_file, "rb");
   fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
-  for (long long i = 0; i < gs->iter; i++) {
-    // Placeholder for training logic
-    // printf("Thread %lld: Training iteration %lld\n", thread_id, i);
+
+  for (int iter = 0; iter < gs->iter; iter++) {
+  
+
+    // Reset sentence length and position for each iteration
+    sentence_length = 0;
+    sentence_position = 0;
+
+    // Read the file line by line
+    fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
     
-    if (word_count - last_word_count > gs->update_word_count) {
-        // Update word count and print progress
-      gs->word_count_actual += word_count - last_word_count;
-      last_word_count = word_count;
+
+    char word[MAX_STRING];
+    char sen[MAX_SENTENCE_LENGTH];
+    long long labels[MAX_LABELS]; // [1, 0, 0, 1, 0 ...]
+    long long words[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
+
+    long long offset_length = gs->end_offsets[thread_id] - gs->start_offsets[thread_id] + 1;
+
+    for (int i = gs->start_offsets[thread_id]; i < gs->end_offsets[thread_id]; i++) {
+      read_word(word, fi);
+      word_count++;
+      gs->learning_rate_decay = gs->learning_rate * (1 - ((float)word_count / (offset_length * gs->iter)));
+
       if (gs->debug_mode > 1) {
         clock_t now = clock();
         printf("%lr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ",
@@ -112,23 +216,124 @@ void *train_thread(thread_args *args) {
         fflush(stdout);
       }
 
-      // Update the learning rate
-      if (gs->learning_rate > 0) {
-        gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->word_count_actual / (double)(gs->iter * gs->train_words + 1));
-        if (gs->learning_rate_decay < 0) gs->learning_rate_decay = 0;
+      if (isNewLine(word)) {
+        // Forward 
+        if (sentence_length > 0) {
+          // Process the sentence
+          float *layer1_avg = (float *)calloc(gs->layer1_size, sizeof(float));
+
+          for (int j = 0; j < sentence_length; j++) {
+            long long word_index = words[j];
+            // Update the word vectors
+            for (long long k = 0; k < gs->layer1_size; k++) {
+              // gs->layer1[word_index * gs->layer1_size + k] += learning_rate * (1 - words[j]);
+              layer1_avg[k] += gs->layer1[word_index * gs->layer1_size + k];
+              // forward and backward pass logic
+            }
+          }
+          for (long long j = 0; j < gs->layer1_size; j++) {
+            layer1_avg[j] /= sentence_length;
+          }
+
+          // Dot product with layer1_avg and layer2
+          for (long long j = 0; j < gs->class_size; j++) {
+            gs->output[j] = 0;
+            for (long long k = 0; k < gs->layer1_size; k++) {
+              gs->output[j] += layer1_avg[k] * gs->layer2[k * gs->class_size + j];
+            }
+          }
+
+          softmaxf(gs->output, gs->output, gs->class_size);  
+          float loss = 0.0;
+          for (long long j = 0; j < gs->class_size; j++)
+          {
+            if (labels[j] == 1) {
+              loss -= logf(gs->output[j] + 1e-10); // Add small value to avoid log(0)
+            }
+          }
+          loss /= sentence_length;
+          
+          // back propagation logic
+          // Allocate gradients
+          float *dL_dh = (float *)calloc(gs->layer1_size, sizeof(float)); // dL/dh
+          float learning_rate = 0.01f;  // 예시용
+
+          // (1) dL/dz = y_hat - y (output - labels)
+          for (long long j = 0; j < gs->class_size; j++) {
+              gs->output[j] -= labels[j];  // output[j] = y_hat_j - y_j
+          }
+
+          // (2) Update layer2 weights: W = W - lr * outer(h, dL/dz)
+          for (long long j = 0; j < gs->class_size; j++) {
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                  float grad = layer1_avg[k] * gs->output[j];  // outer product
+                  gs->layer2[k * gs->class_size + j] -= gs->learning_rate_decay * grad;
+                  dL_dh[k] += gs->layer2[k * gs->class_size + j] * gs->output[j]; // accumulate dL/dh
+              }
+          }
+
+          // (3) Backprop to word embeddings (A): average ⇒ distribute
+          for (int j = 0; j < sentence_length; j++) {
+              long long word_index = words[j];
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                  float grad = dL_dh[k] / sentence_length;  // distribute average
+                  gs->layer1[word_index * gs->layer1_size + k] -= gs->learning_rate_decay * grad;
+              }
+          }
+
+          free(dL_dh);
+          free(layer1_avg);
+
+        }
+        sentence_length = 0; // Reset for next sentence
+        for (int j = 0; j < MAX_LABELS; j++) {
+          labels[j] = 0; // Reset labels
+        }
+        for (int j = 0; j < MAX_WORDS_PER_SENTENCE; j++) {
+          words[j] = -1; // Reset words
+        }
+        continue;
       }
 
+      if (isClass(word)) {
+        // it is class
+        long long word_index = search_vocab(word, gs);
+        if (word_index != -1) {
+          labels[word_index] = 1;
+        }
+      }
+      }
+
+      if (isClass(word)) {
+        // it is class
+        long long word_index = search_vocab(word, gs);
+        if (word_index != -1) {
+          labels[word_index] = 1;
+        }
+      }
+
+      if (isWord(word)) {
+        // it is word
+        long long word_index = search_vocab(word, gs);
+        if (word_index != -1) {
+          words[sentence_length] = word_index;
+          sentence_length++;
+        } else {
+          // Handle unknown word
+          words[sentence_length] = -1; // or some other logic
+        }
+      }
     }
-    // TODO
-    // Implement the training logic here
 
+    if (gs->debug_mode > 1) {
+      printf("[INFO] Thread %lld reading from offset %lld to %lld\n", thread_id, gs->start_offsets[thread_id], gs->end_offsets[thread_id]);
+    }
+  
 
-  }
+  fclose(fi);
 
-
-  fseek(fi, 0, SEEK_SET);
   // Implement the saving output here
-  return NULL;
+  pthread_exit(NULL);
 }
 
 
@@ -144,6 +349,19 @@ void train_model(global_setting *gs) {
 
   printf("[INFO] Initializing threads...\n");
   pthread_t *pt = (pthread_t *)malloc(gs->num_threads * sizeof(pthread_t));
+
+
+  FILE *fp = fopen(gs->train_file, "r");
+  if (!fp) {
+      perror("fopen");
+      return ;
+  }
+
+  gs->total_lines = count_lines(fp);
+  gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
+  gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
+
+  compute_thread_offsets(fp, gs->num_threads, gs->total_lines, &(gs->start_offsets), &( gs->end_offsets));
 
   printf("[INFO] read vocabulary...\n");
 

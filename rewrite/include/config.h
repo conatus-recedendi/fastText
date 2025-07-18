@@ -8,7 +8,10 @@
 #define MAX_EXP 6
 #define MAX_SENTENCE_LENGTH 1000
 #define MAX_CODE_LENGTH 40
+#define MAX_LABELS 1000
+#define MAX_WORDS_PER_SENTENCE 1000
  
+#define MAX_LINE_LEN 1000000
 
 typedef struct {
   long long layer1_size; // hidden size/
@@ -48,6 +51,10 @@ typedef struct {
   float *layer1; // word embedding weights. vocab size * layer1_size
   float *layer2; // hidden weights. layer1_size * class_sizef
   float *output; // output (from softmax) weights.  class_size * 1
+
+  long long total_lines;
+  long long *start_offsets;
+  long long *end_offsets;
 
 } global_setting;
 
