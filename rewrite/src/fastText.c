@@ -517,6 +517,7 @@ int main(int argc, char **argv) {
     gs.layer2[j] = ((float)rand() / RAND_MAX - 0.5f) / gs.layer1_size;
   }
 
+  printf("[INFO] Training Start")
   train_model(&gs);
 
   printf("[INFO] FastText training started.\n");
