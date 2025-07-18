@@ -165,19 +165,24 @@ void create_vocab_from_train_file(global_setting *gs) {
 
   while(1) {
     read_word(word, f_in);
+    printf("[INFO] Read word: %s\n", word);
     if (feof(f_in)) break;
     train_words++;
+    printf("[INFO] Current word count: %lld\n", train_words);
     if ((debug_mode > 1) && (train_words % 100000 == 0)) {
       printf("%lldK%c", train_words / 1000, 13);
       fflush(stdout); 
     }
+    printf("[INFO] Searching for word in vocabulary...\n");
     temp_vocab_hash = search_vocab(word, gs);
+    printf("[INFO] Search result: %lld\n", temp_vocab_hash);
     if (temp_vocab_hash == -1) {
       temp_vocab = add_word_to_vocab(word, gs);
       vocab[temp_vocab].cn = 1; // Initialize count to 1
     } else {
       vocab[temp_vocab_hash].cn++; // Increment count for existing word
     }
+    printf("[INFO] Added word: %s, count: %lld\n", vocab[temp_vocab].word, vocab[temp_vocab].cn);
     if (vocab_size >= vocab_hash_size * 0.7) {
       reduce_vocab(gs);
     }
