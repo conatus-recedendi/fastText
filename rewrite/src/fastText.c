@@ -159,7 +159,7 @@ void train_model(global_setting *gs) {
 
   if (save_vocab_file[0] != 0) {
     // Save vocabulary to file
-    save_vocab(gs);
+    // save_vocab(gs);
   }
 
 
@@ -199,7 +199,7 @@ void train_model(global_setting *gs) {
   // 2. classification 논문
 
   save_model(output_file, gs);
-  save_vector(output_file, gs);
+  save_vector(save_vocab_file , gs);
   // foramt
   // __label1__ __label2__ ... input
   // 2-1. input infeernece 
