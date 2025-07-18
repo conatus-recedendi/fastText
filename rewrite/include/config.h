@@ -35,6 +35,7 @@ typedef struct {
   float learning_rate_decay; // 
   float sample;
   long long word_count_actual;
+  long long offset_actual;
   long long file_size;
   long long train_words; // total number of words in the training file
   long long update_word_count;
@@ -46,6 +47,7 @@ typedef struct {
   vocab_word *vocab;
   long long vocab_size; // current vocabulary size
   long long vocab_max_size; // maximum vocabulary size
+
 
   // for learning
   float *layer1; // word embedding weights. vocab size * layer1_size

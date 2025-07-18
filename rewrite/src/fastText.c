@@ -243,7 +243,8 @@ void *train_thread(thread_args *args) {
     for (int i = gs->start_offsets[thread_id]; i < gs->end_offsets[thread_id]; i++) {
       long long word_length = read_word(word, fi);
       word_count++;
-      gs->word_count_actual += word_length;
+      gs->word_count_actual++;
+      gs->offset_actual += word_length;
       temp += word_length;
 
       gs->learning_rate_decay = gs->learning_rate * (1 - ((float)gs->word_count_actual / (gs->total_offset * gs->iter)));
@@ -253,7 +254,7 @@ void *train_thread(thread_args *args) {
         clock_t now = clock();
         printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , %d",
               13, gs->learning_rate_decay,
-              gs->word_count_actual / (double)(gs->iter * gs->total_offset) * 100,
+              gs->offset_actual / (double)(gs->iter * gs->total_offset) * 100,
               gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000), gs->word_count_actual);
         fflush(stdout);
       }
@@ -545,7 +546,7 @@ int main(int argc, char **argv) {
   for (int j = 0; j < gs.vocab_hash_size; j++) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
   }
-
+  gs.offset_actual = 0; // Initialize offset actual
 
   train_model(&gs);
 
