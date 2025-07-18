@@ -269,6 +269,8 @@ int main(int argc, char **argv) {
   // lr
   // wordNgrams
   // bucket
+  gs.vocab = (struct vocab_word *)calloc(gs.vocab_max_size, sizeof(struct vocab_word));
+  gs.vocab_hash = (int *)calloc(gs.vocab_hash_size, sizeof(int));
 
   train_model(&gs);
 
