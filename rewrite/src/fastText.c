@@ -255,10 +255,10 @@ void *train_thread(thread_args *args) {
       if (gs->debug_mode > 1 && temp % 100000 >= 0) {
         temp = 0;
         clock_t now = clock();
-        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , %d",
+        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , %d, %d",
               13, gs->learning_rate_decay,
               gs->offset_actual / (double)(gs->iter * gs->total_offset) * 100,
-              gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->word_count_actual);
+              gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->word_count_actual, i);
         fflush(stdout);
       }
 
@@ -406,6 +406,7 @@ void train_model(global_setting *gs) {
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
 
   compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets, &gs->total_offset);
+
 
   // printf("[INFO] read vocabulary...\n");
 
