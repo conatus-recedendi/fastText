@@ -215,8 +215,8 @@ void *train_thread(thread_args *args) {
         clock_t now = clock();
         printf("%lr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ",
               13, gs->learning_rate_decay,
-              gs->word_count_actual / (double)(gs->iter * gs->train_words + 1) * 100,
-              gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000));
+              gs->word_count / (double)(gs->iter * gs->train_words + 1) * 100,
+              gs->word_count / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000));
         fflush(stdout);
       }
 
