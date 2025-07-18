@@ -366,7 +366,7 @@ void train_model(global_setting *gs) {
   gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
 
-  compute_thread_offsets(fp, gs->num_threads, gs->total_lines, &(gs->start_offsets), &( gs->end_offsets));
+  compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets);
 
   printf("[INFO] read vocabulary...\n");
 
