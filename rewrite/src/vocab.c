@@ -259,6 +259,7 @@ void create_binary_tree(global_setting *gs) {
   char code[MAX_CODE_LENGTH];
   long long vocab_size = gs->vocab_size;
   vocab_word *vocab = gs->vocab;
+  printf("[INFO] Allocate memory space for temporar values...\n");
   long long *count = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
   long long *binary = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
   long long *parent_node = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
@@ -266,6 +267,8 @@ void create_binary_tree(global_setting *gs) {
   for (a = vocab_size; a < vocab_size * 2; a++) count[a] = 1e15;
   pos1 = vocab_size - 1;
   pos2 = vocab_size;
+
+  printf("[INFO] Creating binary tree for vocabulary...\n");
   // Following algorithm constructs the Huffman tree by adding one node at a time
   for (a = 0; a < vocab_size - 1; a++) {
     // First, find two smallest nodes 'min1, min2'
