@@ -15,7 +15,7 @@ log_time() {
         echo "" | tee -a "$logfile"
 }
 
-EXPERIMENT_ID="p1_table1"
+EXPERIMENT_ID="p1_test"
 TIMESTAMP=$(date +"%Y%m%d_%H%M")
 
 DATADIR=../data
@@ -102,10 +102,10 @@ make
 for i in {0..7}
 do
   log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for bigrams"
-  log_time ${LOG_FILE} ../fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
-    -output "${RESULTDIR}/${DATASET[i]}" -dim 10 -lr "${LR[i]}" -wordNgrams 2 \
-    -minCount 1 -bucket 10000000 -epoch 5 -thread 20 > /dev/null
-  log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}.bin" \
+  log_time ${LOG_FILE} ../rewrite/bin/fasttext -train "${DATADIR}/${DATASET[i]}.train" \
+    -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
+    -min-count 1 -bucket 10000000 -iter 5 -thread 20 > /dev/null
+  log_time ${LOG_FILE} ../rewrite/bin/fasttext-test "${RESULTDIR}/${DATASET[i]}.bin" \
     "${DATADIR}/${DATASET[i]}.test"
 done
 
@@ -113,9 +113,9 @@ done
 for i in {0..7}
 do
   log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for 1-grams"
-  log_time ${LOG_FILE} ../fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
-    -output "${RESULTDIR}/${DATASET[i]}_1gram" -dim 10 -lr "${LR[i]}" -wordNgrams 1 \
-    -minCount 1 -bucket 100000000 -epoch 5 -thread 20 > /dev/null
-  log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}_1gram.bin" \
+  log_time ${LOG_FILE} ../rewrite/bin/fasttext -train "${DATADIR}/${DATASET[i]}.train" \
+    -output "${RESULTDIR}/${DATASET[i]}_1gram" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
+    -min-count 1 -bucket 100000000 -iter 5 -thread 20 > /dev/null
+  log_time ${LOG_FILE} ../rewrite/bin/fasttext-test "${RESULTDIR}/${DATASET[i]}_1gram.bin" \
     "${DATADIR}/${DATASET[i]}.test"
 done
