@@ -137,7 +137,10 @@ void train_model(global_setting *gs) {
   char *output_file = gs->output_file;
   gs->learning_rate_decay = gs->learning_rate;
 
+  printf("[INFO] Initializing threads...\n");
   pthread_t *pt = (pthread_t *)malloc(gs->num_threads * sizeof(pthread_t));
+
+  printf("[INFO] Initializing vocabulary...\n");
 
   if (read_vocab_file[0] != 0) {
     // Read vocabulary from file
