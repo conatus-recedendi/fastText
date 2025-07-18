@@ -152,12 +152,16 @@ void create_vocab_from_train_file(global_setting *gs) {
   vocab_word *vocab = gs->vocab;
   char *train_file = gs->train_file;
 
+  printf("[INFO] Creating vocabulary from training file...\n");
+
   
   FILE *f_in = fopen(train_file, "rb");
   if (f_in == NULL) {
     printf("ERROR: training data file not found!\n");
     exit(1);
   }
+
+  printf("[INFO] Reading words from training file...\n");
 
   while(1) {
     read_word(word, f_in);
@@ -178,6 +182,7 @@ void create_vocab_from_train_file(global_setting *gs) {
       reduce_vocab(gs);
     }
   }
+  printf("\n[INFO] Finished reading words from training file.\n");
   sort_vocab(gs);
   gs->file_size = ftell(f_in);
   fclose(f_in);
