@@ -94,7 +94,7 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   hash = get_word_hash(word, gs);
   printf("[INFO] Hash for new word '%s': %u\n", word, hash);
   while (*vocab_hash[hash] != -1) {
-    hash = (hash + 1) % *vocab_hash_size;
+    hash = (hash + 1) % vocab_hash_size;
   }
 
   printf("[INFO] Inserting word '%s' at hash index %u\n", word, hash);
