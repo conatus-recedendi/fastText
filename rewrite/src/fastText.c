@@ -34,21 +34,25 @@ int get_arg_pos(char *str, int argc, char **argv) {
 }
 
 void initialize_network(global_setting *gs) {
-  posix_memalign((void **)&gs->layer1, 64, gs->vocab_size * gs->layer1_size * sizeof(float));
+  printf("[INFO] Initializing network...\n");
+  posix_memalign(gs->layer1, 64, gs->vocab_size * gs->layer1_size * sizeof(float));
   if (gs->layer1 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer1\n");
     exit(1);
   }
-  posix_memalign((void **)&gs->layer2, 64, gs->layer1_size * gs->class_size * sizeof(float));
+  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
+  posix_memalign(gs->layer2, 64, gs->layer1_size * gs->class_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
-  posix_memalign((void **)&gs->output, 64, gs->class_size * sizeof(float));
+  printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
+  posix_memalign(gs->output, 64, gs->class_size * sizeof(float));
   if (gs->output == NULL) {
     fprintf(stderr, "Memory allocation failed for output\n");
     exit(1);
   }
+  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
   create_binary_tree(gs);
   return ;
 }
