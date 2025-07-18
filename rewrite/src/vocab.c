@@ -47,7 +47,7 @@ int search_vocab(char *word, global_setting *gs) {
   vocab_word *vocab = gs->vocab;
   int *vocab_hash = gs->vocab_hash;
   long long vocab_hash_size = gs->vocab_hash_size;
-  printf("[INFO] Starting search in vocab hash table...\n");
+  printf("[INFO] Starting search in vocab hash table... \n");
   while (1) {
     if (vocab_hash[hash] == -1) return -1;
     if (!strcmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];

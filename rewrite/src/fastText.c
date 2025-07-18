@@ -271,6 +271,9 @@ int main(int argc, char **argv) {
   // bucket
   gs.vocab = (vocab_word *)calloc(gs.vocab_max_size, sizeof(vocab_word));
   gs.vocab_hash = (int *)calloc(gs.vocab_hash_size, sizeof(int));
+  for (int j = 0; j < gs.vocab_hash_size; j++) {
+    gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
+  }
 
   train_model(&gs);
 
