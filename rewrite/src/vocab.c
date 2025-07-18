@@ -82,7 +82,7 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   strcpy(vocab[*vocab_size]->word, word);
   printf("[INFO] Word '%s' added to vocab at index %lld\n", word, *vocab_size);
   vocab[*vocab_size]->cn = 0; // Initialize count to zero
-  vocab_size++;
+  *vocab_size++;
   
   printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
   // Hashing logic here
