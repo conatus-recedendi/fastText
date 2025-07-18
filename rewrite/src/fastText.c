@@ -340,34 +340,34 @@ void *train_thread(thread_args *args) {
       //   continue;
       // }
 
-      if (isClass(word)) {
-        // it is class
-        long long word_index = search_vocab(word, gs);
-        if (word_index != -1) {
-          labels[word_index] = 1;
-        }
-      }
-      }
+      // if (isClass(word)) {
+      //   // it is class
+      //   long long word_index = search_vocab(word, gs);
+      //   if (word_index != -1) {
+      //     labels[word_index] = 1;
+      //   }
+      // }
+      // }
 
-      if (isClass(word)) {
-        // it is class
-        long long word_index = search_vocab(word, gs);
-        if (word_index != -1) {
-          labels[word_index] = 1;
-        }
-      }
+      // if (isClass(word)) {
+      //   // it is class
+      //   long long word_index = search_vocab(word, gs);
+      //   if (word_index != -1) {
+      //     labels[word_index] = 1;
+      //   }
+      // }
 
-      if (isWord(word)) {
-        // it is word
-        long long word_index = search_vocab(word, gs);
-        if (word_index != -1) {
-          words[sentence_length] = word_index;
-          sentence_length++;
-        } else {
-          // Handle unknown word
-          words[sentence_length] = -1; // or some other logic
-        }
-      }
+      // if (isWord(word)) {
+      //   // it is word
+      //   long long word_index = search_vocab(word, gs);
+      //   if (word_index != -1) {
+      //     words[sentence_length] = word_index;
+      //     sentence_length++;
+      //   } else {
+      //     // Handle unknown word
+      //     words[sentence_length] = -1; // or some other logic
+      //   }
+      // }
     }
   
 
