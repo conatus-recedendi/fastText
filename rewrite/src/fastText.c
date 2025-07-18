@@ -182,6 +182,7 @@ void train_model(global_setting *gs) {
     pthread_create(&pt[i], NULL, train_thread, (thread_args *){i, gs});
 
   }
+  printf("[INFO] Training threads started.\n");
   for (int i = 0; i < gs->num_threads; i++) {
     // Wait for threads to finish
     pthread_join(pt[i], NULL);
