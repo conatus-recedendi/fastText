@@ -207,12 +207,11 @@ void *train_thread(thread_args *args) {
     long long offset_length = gs->end_offsets[thread_id] - gs->start_offsets[thread_id] + 1;
 
     for (int i = gs->start_offsets[thread_id]; i < gs->end_offsets[thread_id]; i++) {
-      printf("[INFO] Thread %lld processing offset %d...\n", thread_id, i);
       read_word(word, fi);
       word_count++;
       gs->learning_rate_decay = gs->learning_rate * (1 - ((float)word_count / (offset_length * gs->iter)));
 
-      if (gs->debug_mode > 1) {
+      if (gs->debug_mode > 1 && word_count % 100000 == 0) {
         clock_t now = clock();
         printf("%lr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ",
               13, gs->learning_rate_decay,
