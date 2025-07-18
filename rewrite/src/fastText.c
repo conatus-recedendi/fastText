@@ -56,10 +56,11 @@ long count_lines(FILE *fp) {
 }
 
 // 시작 및 끝 오프셋 계산
-void compute_thread_offsets(FILE *fp, int num_threads, long total_lines, long *start_offsets, long *end_offsets) {
+void compute_thread_offsets(FILE *fp, int num_threads, long total_lines, long *start_offsets, long *end_offsets, long *total_offset) {
     char line[MAX_LINE_LEN];
     long current_line = 0;
     int current_thread = 0;
+
 
     long *start_lines = malloc(sizeof(long) * (num_threads + 1));
     if (!start_lines) {
@@ -92,6 +93,7 @@ void compute_thread_offsets(FILE *fp, int num_threads, long total_lines, long *s
     end_offsets[num_threads - 1] = ftell(fp);
 
     free(start_lines);
+    *total_offset = end_offsets[num_threads - 1] - start_offsets[0];
 }
 
 
@@ -242,8 +244,8 @@ void *train_thread(thread_args *args) {
         clock_t now = clock();
         printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ",
               13, gs->learning_rate_decay,
-              word_count / (double)(gs->iter * offset_length + 1) * 100,
-              word_count / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000));
+              gs->word_count_actual / (double)(gs->iter * offset_length + 1) * 100,
+              gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000));
         fflush(stdout);
       }
 
@@ -385,10 +387,11 @@ void train_model(global_setting *gs) {
   }
 
   gs->total_lines = count_lines(fp);
+  gs->total_offset = 0;
   gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
 
-  compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets);
+  compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets, &gs->total_offset);
 
   // printf("[INFO] read vocabulary...\n");
 

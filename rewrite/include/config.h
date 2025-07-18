@@ -55,6 +55,7 @@ typedef struct {
   long long total_lines;
   long long *start_offsets;
   long long *end_offsets;
+  long long total_offset; // total offset for all threads
 
 } global_setting;
 
