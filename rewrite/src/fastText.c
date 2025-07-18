@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
     .cbow = 1, // Default CBOW model
     .window = 5, // Default window size
     .min_count = 5, // Default minimum count for words  
-    .num_threads = 4, // Default number of threads
+    .num_threads = 20, // Default number of threads
     .min_reduce = 1, // Default minimum reduce count
     .hs = 0, // Default hierarchical softmax
     .negative = 5, // Default negative sampling
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-sample", argc, argv)) > 0) gs.sample = atof(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-hs", argc, argv)) > 0) gs.hs = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-negative", argc, argv)) > 0) gs.negative = atoi(argv[i + 1]);
-  if ((i = get_arg_pos((char *)"-threads", argc, argv)) > 0) gs.num_threads = atoi(argv[i + 1]);
+  if ((i = get_arg_pos((char *)"-thread", argc, argv)) > 0) gs.num_threads = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-iter", argc, argv)) > 0) gs.iter = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-min-count", argc, argv)) > 0) gs.min_count = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-classes", argc, argv)) > 0) gs.classes = atoi(argv[i + 1]);
