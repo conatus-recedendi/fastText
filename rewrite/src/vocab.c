@@ -93,7 +93,8 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   printf("[INFO] Resizing vocab to max size: %lld\n", *vocab_max_size);
   hash = get_word_hash(word, gs);
   printf("[INFO] Hash for new word '%s': %u\n", word, hash);
-  while (*vocab_hash[hash] != -1) {
+  printf("[INFO] Inserting word '%s' into vocab hash table...\n", (*vocab_hash)[hash], (hash + 1) % vocab_hash_size);
+  while ((*vocab_hash)[hash] != -1) {
     hash = (hash + 1) % vocab_hash_size;
   }
 
