@@ -74,9 +74,13 @@ int add_word_to_vocab(char *word, global_setting *gs) {
 
   printf("[INFO] Adding word: %s\n", word);
   if (length > MAX_STRING) length = MAX_STRING;
+  printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
   vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
 
+  printf("[INFO] Allocating memory for word: %s\n", word);
+
   strcpy(vocab[*vocab_size]->word, word);
+  printf("[INFO] Word '%s' added to vocab at index %lld\n", word, *vocab_size);
   vocab[*vocab_size]->cn = 0; // Initialize count to zero
   vocab_size++;
   
