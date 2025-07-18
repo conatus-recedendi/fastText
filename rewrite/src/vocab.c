@@ -66,7 +66,7 @@ int read_word_index(FILE *fin, global_setting *gs) {
 
 int add_word_to_vocab(char *word, global_setting *gs) {
   unsigned int hash, length = strlen(word) + 1;
-  vocab_word **vocab = &gs->vocab;
+  vocab_word *vocab = gs->vocab;
   long long *vocab_size = &gs->vocab_size;
   long long *vocab_max_size = &gs->vocab_max_size;
   int *vocab_hash = gs->vocab_hash;
@@ -76,11 +76,8 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   if (length > MAX_STRING) length = MAX_STRING;
   printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
   // vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
-  vocab[*vocab_size] = (vocab_word *)malloc(sizeof(vocab_word));
-  if (vocab[*vocab_size] == NULL) {
-    fprintf(stderr, "Memory allocation failed for vocab word\n");
-    exit(1);
-  }
+  // vocab[*vocab_size] = (vocab_word *)malloc(sizeof(vocab_word));
+
   vocab[*vocab_size].word = (char *)calloc(length, sizeof(char));
 
 
@@ -93,7 +90,8 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   // Hashing logic here
   if (*vocab_size + 2 >= *vocab_max_size) {
     *vocab_max_size += 1000;
-    *vocab = (vocab_word *)realloc(*vocab, *vocab_max_size * sizeof(vocab_word));
+    // *vocab = (vocab_word *)realloc(*vocab, *vocab_max_size * sizeof(vocab_word));
+    vocab = (vocab_word *)realloc(vocab, *vocab_max_size * sizeof(vocab_word));
   }
   printf("[INFO] Resizing vocab to max size: %lld\n", *vocab_max_size);
   hash = get_word_hash(word, gs);
