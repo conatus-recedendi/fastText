@@ -71,6 +71,8 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   long long *vocab_max_size = &gs->vocab_max_size;
   int *vocab_hash = gs->vocab_hash;
   long long vocab_hash_size = gs->vocab_hash_size;
+
+  printf("[INFO] Adding word: %s\n", word);
   if (length > MAX_STRING) length = MAX_STRING;
   vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
 
@@ -78,15 +80,20 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   vocab[*vocab_size]->cn = 0; // Initialize count to zero
   vocab_size++;
   
+  printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
   // Hashing logic here
   if (*vocab_size + 2 >= *vocab_max_size) {
     *vocab_max_size += 1000;
     vocab = (vocab_word *)realloc(*vocab, *vocab_max_size * sizeof(vocab_word));
   }
+  printf("[INFO] Resizing vocab to max size: %lld\n", *vocab_max_size);
   hash = get_word_hash(word, gs);
+  printf("[INFO] Hash for new word '%s': %u\n", word, hash);
   while (vocab_hash[hash] != -1) {
-    hash = (hash + 1) % vocab_hash_size; // Linear probing
+    hash = (hash + 1) % vocab_hash_size;
   }
+
+  printf("[INFO] Inserting word '%s' at hash index %u\n", word, hash);
   vocab_hash[hash] = *vocab_size - 1; // Store the index
   
   return *vocab_size - 1; // Return the index of the new word
