@@ -30,7 +30,7 @@ long long read_word(char *word, FILE *fin) {
       }
       if (ch == '\n') {
         strcpy(word, (char *)"</s>");
-        return;
+        return 0;
       } else continue;
     }
     word[a] = ch;

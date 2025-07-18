@@ -376,6 +376,7 @@ void *train_thread(thread_args *args) {
   // Implement the saving output here
   pthread_exit(NULL);
 }
+}
 
 
 
