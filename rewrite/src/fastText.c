@@ -34,8 +34,8 @@ int get_arg_pos(char *str, int argc, char **argv) {
 }
 
 void initialize_network(global_setting *gs) {
-  printf("[INFO] Initializing network...\n");
-  posix_memalign(gs->layer1, 64, gs->vocab_size * gs->layer1_size * sizeof(float));
+  printf("[INFO] Initializing network... %lld %lld \n", gs->vocab_size, gs->layer1_size);
+  posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
   if (gs->layer1 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer1\n");
     exit(1);
