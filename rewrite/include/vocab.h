@@ -4,7 +4,7 @@
 
 
 int get_word_hash(char *word, global_setting *gs);
-void read_word(char *word, FILE *fin);
+long long read_word(char *word, FILE *fin);
 int search_vocab(char *word, global_setting *gs);
 int read_word_index(FILE *fin, global_setting *gs);
 int add_word_to_vocab(char *word, global_setting *gs);

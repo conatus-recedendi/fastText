@@ -18,8 +18,8 @@ int get_word_hash(char *word, global_setting *gs) {
 }
 
 // Reads a single word from a file, assuming space + tab + EOL to be word boundaries
-int read_word(char *word, FILE *fin) {
-  int a = 0, ch;
+long long read_word(char *word, FILE *fin) {
+  long long a = 0, ch;
   while (!feof(fin)) { 
     ch = fgetc(fin);
     if (ch == 13) continue; // Skip carriage return
