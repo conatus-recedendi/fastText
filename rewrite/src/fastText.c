@@ -218,10 +218,26 @@ int main(int argc, char **argv) {
     .learning_rate = 0.05, // Default learning rate
     .learning_rate_decay = 0.05, // Default learning rate decay
     .sample = 1e-3, // Default subsampling rate
-    .train_file = "train.txt", // Default training file
-    .output_file = "model.bin", // Default output file
-    .save_vocab_file = "vocab.txt", // Default vocabulary save file
+    .train_file = "", // Default training file
+    .output_file = "", // Default output file
+    .save_vocab_file = "", // Default vocabulary save file
+    .read_vocab_file = "", // Default vocabulary read file
+    .vocab_hash_size = 1000000, // Default vocabulary hash size
+
+    .vocab_size = 0, // Default vocabulary size
+    .vocab_max_size = 1000000, // Default maximum vocabulary size
+    .vocab = NULL, // Vocabulary pointer
+    .vocab_hash = NULL, // Vocabulary hash table
+    .file_size = 0, // Default file size
+    .train_words = 0, // Default number of words in training file
+    .word_count_actual = 0, // Actual word count
+    .start = 0, // Start time for training
+
     .update_word_count = 10000, // Update word count every 10,000 words
+    .vocab = NULL, // Vocabulary pointer
+    .layer1 = NULL, // Layer 1 weights
+    .layer2 = NULL, // Layer 2 weights
+    .output = NULL // Output weights
   };
   printf("[INFO] FastText training started.\n");
 
