@@ -140,7 +140,7 @@ void train_model(global_setting *gs) {
   printf("[INFO] Initializing threads...\n");
   pthread_t *pt = (pthread_t *)malloc(gs->num_threads * sizeof(pthread_t));
 
-  printf("[INFO] Initializing vocabulary...\n");
+  printf("[INFO] read vocabulary...\n");
 
   if (read_vocab_file[0] != 0) {
     // Read vocabulary from file
@@ -150,26 +150,28 @@ void train_model(global_setting *gs) {
     create_vocab_from_train_file(gs);
   }
 
+  printf("[INFO] save vocabulary...\n");
+
   if (save_vocab_file[0] != 0) {
     // Save vocabulary to file
     save_vocab(gs);
   }
 
-  if (output_file[0] == 0) {
-    printf("No output file specified. Exiting.\n");
-    return;
-  }
 
   if (output_file[0] == 0) {
     printf("No output file specified. Exiting.\n");
     return;
   }
+
+  printf("[INFO] Initializing network...\n");
 
   initialize_network(gs);
 
   // TODO: make unigram table
 
   gs->start = clock();
+
+  printf("[INFO] Starting training threads...\n");
 
   for (int i = 0; i < gs->num_threads; i++) {
     // Create threads for training
