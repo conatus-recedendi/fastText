@@ -81,6 +81,7 @@ void save_model(char *output_file, global_setting *gs) {
 }
 
 void *train_thread(thread_args *args) {
+  printf("[INFO] Starting training thread %lld\n", args->id);
 
   long long thread_id = (long long)args->id;
   global_setting *gs = (global_setting *)args->gs;
@@ -179,7 +180,7 @@ void train_model(global_setting *gs) {
 
   for (int i = 0; i < gs->num_threads; i++) {
     // Create threads for training
-    pthread_create(&(pt[i]), NULL, train_thread, (thread_args *){i, gs});
+    pthread_create(&pt[i], NULL, train_thread, (thread_args *){i, gs});
 
   }
   printf("[INFO] Training threads started.\n");
