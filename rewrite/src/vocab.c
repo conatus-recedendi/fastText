@@ -301,6 +301,7 @@ void create_binary_tree(global_setting *gs) {
     parent_node[min2i] = vocab_size + a;
     binary[min2i] = 1;
   }
+  printf("[INFO] Finished creating binary tree for vocabulary.\n");
   // Now assign binary code to each vocabulary word
   for (a = 0; a < vocab_size; a++) {
     b = a;
