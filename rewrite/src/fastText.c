@@ -510,6 +510,7 @@ int main(int argc, char **argv) {
     .layer1 = NULL, // Layer 1 weights
     .layer2 = NULL, // Layer 2 weights
     .output = NULL // Output weights
+    .offset_actual = 0, // Actual offset for training
   };
   printf("[INFO] FastText training started.\n");
 
