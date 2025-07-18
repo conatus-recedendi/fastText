@@ -133,7 +133,6 @@ void initialize_network(global_setting *gs) {
     // gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
     // Xavier initialization
     // https://en.wikipedia.org/wiki/Xavier_initialization
-    printf("[INFO] Initializing layer1 with Xavier initialization...\n");
     gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
   }
 
@@ -161,6 +160,8 @@ void initialize_network(global_setting *gs) {
     gs->output[i] = 0.0f; // Initialize output weights to zero
   }
   // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
+
+  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
   create_binary_tree(gs);
   return ;
 }
