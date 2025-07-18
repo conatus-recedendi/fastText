@@ -506,6 +506,17 @@ int main(int argc, char **argv) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
   }
 
+  // Xavier initialization for layer1 and layer2
+  for (int j = 0; j < gs.vocab_max_size; j++) {
+    for (int k = 0; k < gs.layer1_size; k++) {
+      gs.layer1[j * gs.layer1_size + k] = ((float)rand() / RAND_MAX - 0.5f) / gs.layer1_size;
+    }
+
+  }
+  for (int j = 0; j < gs.layer1_size * gs.class_size; j++) {
+    gs.layer2[j] = ((float)rand() / RAND_MAX - 0.5f) / gs.layer1_size;
+  }
+
   train_model(&gs);
 
   printf("[INFO] FastText training started.\n");
