@@ -121,17 +121,34 @@ void initialize_network(global_setting *gs) {
     fprintf(stderr, "Memory allocation failed for layer1\n");
     exit(1);
   }
+  //xavier
+
+  for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
+    gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
+  }
+
+
+  
+
   // printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
   posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->class_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
+
+  for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
+    gs->layer2[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
+  }
   // printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
   posix_memalign((void **)&(gs->output), 64, gs->class_size * sizeof(float));
   if (gs->output == NULL) {
     fprintf(stderr, "Memory allocation failed for output\n");
     exit(1);
+  }
+
+  for (long long i = 0; i < gs->class_size; i++) {
+    gs->output[i] = 0.0f; // Initialize output weights to zero
   }
   // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
   create_binary_tree(gs);
@@ -506,21 +523,10 @@ int main(int argc, char **argv) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
   }
 
-  // Xavier initialization for layer1 and layer2
-  for (int j = 0; j < gs.vocab_max_size; j++) {
-    for (int k = 0; k < gs.layer1_size; k++) {
-      gs.layer1[j * gs.layer1_size + k] = ((float)rand() / RAND_MAX - 0.5f) / gs.layer1_size;
-    }
 
-  }
-  for (int j = 0; j < gs.layer1_size * gs.class_size; j++) {
-    gs.layer2[j] = ((float)rand() / RAND_MAX - 0.5f) / gs.layer1_size;
-  }
-
-  printf("[INFO] Training Start");
   train_model(&gs);
 
-  printf("[INFO] FastText training started.\n");
+  printf("[INFO] FastText training completed.\n");
 
   return 0;
 }
