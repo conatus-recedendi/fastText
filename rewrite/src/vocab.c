@@ -66,10 +66,10 @@ int read_word_index(FILE *fin, global_setting *gs) {
 
 int add_word_to_vocab(char *word, global_setting *gs) {
   unsigned int hash, length = strlen(word) + 1;
-  vocab_word **vocab = gs->vocab;
+  vocab_word **vocab = &gs->vocab;
   long long *vocab_size = &gs->vocab_size;
   long long *vocab_max_size = &gs->vocab_max_size;
-  int *vocab_hash = gs->vocab_hash;
+  int **vocab_hash = &gs->vocab_hash;
   long long vocab_hash_size = gs->vocab_hash_size;
 
   printf("[INFO] Adding word: %s\n", word);
