@@ -241,6 +241,7 @@ void *train_thread(thread_args *args) {
 
     long long temp = 0;
     long long i = gs->start_offsets[thread_id];
+    printf("%d %d", gs->end_offsets[thread_id], gs->start_offsets[thread_id]);
     while (i <= gs->end_offsets[thread_id]) {
       long long word_length = read_word(word, fi);
       word_count++;
