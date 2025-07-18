@@ -123,7 +123,17 @@ void initialize_network(global_setting *gs) {
   }
   //xavier
 
+  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
+
   for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
+    // Initialize layer1 with random values between -1 and 1
+    // Using a uniform distribution for initialization
+    // You can also use other initialization methods like Xavier or He initialization
+    // Here we use a simple random initialization for demonstration purposes
+    // gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
+    // Xavier initialization
+    // https://en.wikipedia.org/wiki/Xavier_initialization
+    printf("[INFO] Initializing layer1 with Xavier initialization...\n");
     gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
   }
 
