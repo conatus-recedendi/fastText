@@ -274,6 +274,11 @@ int main(int argc, char **argv) {
   // wordNgrams
   // bucket
   gs.vocab = (vocab_word *)calloc(gs.vocab_max_size, sizeof(vocab_word));
+  for (int j = 0; j < gs.vocab_max_size; j++) {
+    gs.vocab[j].word = (char *)calloc(MAX_STRING, sizeof(char));
+    gs.vocab[j].code = (char *)calloc(MAX_CODE_LENGTH, sizeof(char));
+    gs.vocab[j].point = (int *)calloc(MAX_CODE_LENGTH + 1, sizeof(int));
+  }
   gs.vocab_hash = (int *)calloc(gs.vocab_hash_size, sizeof(int));
   for (int j = 0; j < gs.vocab_hash_size; j++) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table

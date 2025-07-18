@@ -320,6 +320,7 @@ void create_binary_tree(global_setting *gs) {
       vocab[a].point[i - b] = point[b] - vocab_size;
     }
   }
+  printf("[INFO] Binary tree created with %lld nodes.\n", vocab_size * 2 - 1);
   free(count);
   free(binary);
   free(parent_node);
