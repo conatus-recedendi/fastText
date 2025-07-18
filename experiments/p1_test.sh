@@ -102,6 +102,9 @@ make
 for i in {0..7}
 do
   log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for bigrams"
+  echo "../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
+    -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
+    -min-count 1 -bucket 10000000 -iter 5 -thread 20"
   log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
     -min-count 1 -bucket 10000000 -iter 5 -thread 20 > /dev/null
