@@ -93,6 +93,10 @@ void compute_thread_offsets(FILE *fp, int num_threads, long total_lines, long *s
     end_offsets[num_threads - 1] = ftell(fp);
 
     free(start_lines);
+    printf("[INFO] Computed thread offsets:\n");
+    for (int i = 0; i < num_threads; i++) {
+        printf("Thread %d: Start: %ld, End: %ld\n", i, start_offsets[i], end_offsets[i]);
+    }
     *total_offset = end_offsets[num_threads - 1] - start_offsets[0];
 }
 
