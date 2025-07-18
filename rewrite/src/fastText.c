@@ -81,7 +81,6 @@ void save_model(char *output_file, global_setting *gs) {
 }
 
 void *train_thread(thread_args *args) {
-  printf("[INFO] Starting training thread %lld\n", args->id);
   // Implement the training logic here
 
   long long thread_id = (long long)args->id;
@@ -98,7 +97,7 @@ void *train_thread(thread_args *args) {
   fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
   for (long long i = 0; i < gs->iter; i++) {
     // Placeholder for training logic
-    printf("Thread %lld: Training iteration %lld\n", thread_id, i);
+    // printf("Thread %lld: Training iteration %lld\n", thread_id, i);
     
     if (word_count - last_word_count > gs->update_word_count) {
         // Update word count and print progress
@@ -181,7 +180,6 @@ void train_model(global_setting *gs) {
 
   for (int i = 0; i < gs->num_threads; i++) {
     // Create threads for training
-    printf("[INFO] Creating thread %d %d\n", i, gs->num_threads);
     thread_args *args = (thread_args *)malloc(sizeof(thread_args));
     args->id = i;
     args->gs = gs;
