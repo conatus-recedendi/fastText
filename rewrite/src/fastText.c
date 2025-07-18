@@ -112,6 +112,7 @@ void *train_thread(thread_args *args) {
         gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->word_count_actual / (double)(gs->iter * gs->train_words + 1));
         if (gs->learning_rate_decay < 0) gs->learning_rate_decay = 0;
       }
+
     }
     // TODO
     // Implement the training logic here
@@ -129,7 +130,7 @@ void *train_thread(thread_args *args) {
 
 void train_model(global_setting *gs) {
   // Placeholder for training model logic
-  printf("Training model with layer size: %lld\n", gs->layer1_size);
+  printf("[INFO] Training model with layer size: %lld\n", gs->layer1_size);
   // Implement the training logic here
   char *read_vocab_file = gs->read_vocab_file;
   char *save_vocab_file = gs->save_vocab_file;
@@ -200,13 +201,29 @@ void train_model(global_setting *gs) {
 
 int main(int argc, char **argv) {
   int i;
-  if (argc == 1) {
-    printf("Word2Vec C implementation\n");
-  }
 
   global_setting gs = {
-    update_word_count: 10000, // Update word count every 10,000 words
+    .layer1_size = 10, // Default layer size 
+    .class_size = 10, // Default class size
+    .binary = 0, // Default binary output
+    .debug_mode = 2, // Default debug mode
+    .cbow = 1, // Default CBOW model
+    .window = 5, // Default window size
+    .min_count = 5, // Default minimum count for words  
+    .num_threads = 4, // Default number of threads
+    .min_reduce = 1, // Default minimum reduce count
+    .hs = 0, // Default hierarchical softmax
+    .negative = 5, // Default negative sampling
+    .iter = 5, // Default number of iterations
+    .learning_rate = 0.05, // Default learning rate
+    .learning_rate_decay = 0.05, // Default learning rate decay
+    .sample = 1e-3, // Default subsampling rate
+    .train_file = "train.txt", // Default training file
+    .output_file = "model.bin", // Default output file
+    .save_vocab_file = "vocab.txt", // Default vocabulary save file
+    .update_word_count = 10000, // Update word count every 10,000 words
   };
+  printf("[INFO] FastText training started.\n");
 
   if ((i = get_arg_pos((char *)"-size", argc, argv)) > 0) gs.layer1_size = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-train", argc, argv)) > 0) strcpy(gs.train_file, argv[i + 1]);
@@ -226,12 +243,15 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-min-count", argc, argv)) > 0) gs.min_count = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-classes", argc, argv)) > 0) gs.classes = atoi(argv[i + 1]);
 
+  printf("[INFO] Argument parsing completed.\n");
   // bag of tricks for efficient text classification additional setting
   // lr
   // wordNgrams
   // bucket
 
   train_model(&gs);
-  printf("Training completed.\n");
+
+  printf("[INFO] FastText training started.\n");
+
   return 0;
 }

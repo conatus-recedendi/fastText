@@ -43,6 +43,8 @@ typedef struct {
   vocab_word *vocab;
   long long vocab_size; // current vocabulary size
   long long vocab_max_size; // maximum vocabulary size
+
+  // for learning
   float *layer1; // word embedding weights. vocab size * layer1_size
   float *layer2; // hidden weights. layer1_size * class_sizef
   float *output; // output (from softmax) weights.  class_size * 1
