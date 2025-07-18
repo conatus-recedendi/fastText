@@ -213,9 +213,9 @@ void *train_thread(thread_args *args) {
 
       if (gs->debug_mode > 1 && word_count % 100000 == 0) {
         clock_t now = clock();
-        printf("%lr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ",
+        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  ",
               13, gs->learning_rate_decay,
-              word_count / (double)(gs->iter * gs->train_words + 1) * 100,
+              word_count / (double)(gs->iter * offset_length + 1) * 100,
               word_count / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000));
         fflush(stdout);
       }
