@@ -262,81 +262,81 @@ void *train_thread(thread_args *args) {
       }
 
       if (isNewLine(word)) {
-        // Forward 
-        if (sentence_length > 0) {
-          // Process the sentence
-          float *layer1_avg = (float *)calloc(gs->layer1_size, sizeof(float));
+        // // Forward 
+        // if (sentence_length > 0) {
+        //   // Process the sentence
+        //   float *layer1_avg = (float *)calloc(gs->layer1_size, sizeof(float));
 
-          for (int j = 0; j < sentence_length; j++) {
-            long long word_index = words[j];
-            // Update the word vectors
-            for (long long k = 0; k < gs->layer1_size; k++) {
-              // gs->layer1[word_index * gs->layer1_size + k] += learning_rate * (1 - words[j]);
-              layer1_avg[k] += gs->layer1[word_index * gs->layer1_size + k];
-              // forward and backward pass logic
-            }
-          }
-          for (long long j = 0; j < gs->layer1_size; j++) {
-            layer1_avg[j] /= sentence_length;
-          }
+        //   for (int j = 0; j < sentence_length; j++) {
+        //     long long word_index = words[j];
+        //     // Update the word vectors
+        //     for (long long k = 0; k < gs->layer1_size; k++) {
+        //       // gs->layer1[word_index * gs->layer1_size + k] += learning_rate * (1 - words[j]);
+        //       layer1_avg[k] += gs->layer1[word_index * gs->layer1_size + k];
+        //       // forward and backward pass logic
+        //     }
+        //   }
+        //   for (long long j = 0; j < gs->layer1_size; j++) {
+        //     layer1_avg[j] /= sentence_length;
+        //   }
 
-          // Dot product with layer1_avg and layer2
-          for (long long j = 0; j < gs->class_size; j++) {
-            gs->output[j] = 0;
-            for (long long k = 0; k < gs->layer1_size; k++) {
-              gs->output[j] += layer1_avg[k] * gs->layer2[k * gs->class_size + j];
-            }
-          }
+        //   // Dot product with layer1_avg and layer2
+        //   for (long long j = 0; j < gs->class_size; j++) {
+        //     gs->output[j] = 0;
+        //     for (long long k = 0; k < gs->layer1_size; k++) {
+        //       gs->output[j] += layer1_avg[k] * gs->layer2[k * gs->class_size + j];
+        //     }
+        //   }
 
-          softmaxf(gs->output, gs->output, gs->class_size);  
-          float loss = 0.0;
-          for (long long j = 0; j < gs->class_size; j++)
-          {
-            if (labels[j] == 1) {
-              loss -= logf(gs->output[j] + 1e-10); // Add small value to avoid log(0)
-            }
-          }
-          loss /= sentence_length;
+        //   softmaxf(gs->output, gs->output, gs->class_size);  
+        //   float loss = 0.0;
+        //   for (long long j = 0; j < gs->class_size; j++)
+        //   {
+        //     if (labels[j] == 1) {
+        //       loss -= logf(gs->output[j] + 1e-10); // Add small value to avoid log(0)
+        //     }
+        //   }
+        //   loss /= sentence_length;
           
-          // back propagation logic
-          // Allocate gradients
-          float *dL_dh = (float *)calloc(gs->layer1_size, sizeof(float)); // dL/dh
-          float learning_rate = 0.01f;  // 예시용
+        //   // back propagation logic
+        //   // Allocate gradients
+        //   float *dL_dh = (float *)calloc(gs->layer1_size, sizeof(float)); // dL/dh
+        //   float learning_rate = 0.01f;  // 예시용
 
-          // (1) dL/dz = y_hat - y (output - labels)
-          for (long long j = 0; j < gs->class_size; j++) {
-              gs->output[j] -= labels[j];  // output[j] = y_hat_j - y_j
-          }
+        //   // (1) dL/dz = y_hat - y (output - labels)
+        //   for (long long j = 0; j < gs->class_size; j++) {
+        //       gs->output[j] -= labels[j];  // output[j] = y_hat_j - y_j
+        //   }
 
-          // (2) Update layer2 weights: W = W - lr * outer(h, dL/dz)
-          for (long long j = 0; j < gs->class_size; j++) {
-              for (long long k = 0; k < gs->layer1_size; k++) {
-                  float grad = layer1_avg[k] * gs->output[j];  // outer product
-                  gs->layer2[k * gs->class_size + j] -= gs->learning_rate_decay * grad;
-                  dL_dh[k] += gs->layer2[k * gs->class_size + j] * gs->output[j]; // accumulate dL/dh
-              }
-          }
+        //   // (2) Update layer2 weights: W = W - lr * outer(h, dL/dz)
+        //   for (long long j = 0; j < gs->class_size; j++) {
+        //       for (long long k = 0; k < gs->layer1_size; k++) {
+        //           float grad = layer1_avg[k] * gs->output[j];  // outer product
+        //           gs->layer2[k * gs->class_size + j] -= gs->learning_rate_decay * grad;
+        //           dL_dh[k] += gs->layer2[k * gs->class_size + j] * gs->output[j]; // accumulate dL/dh
+        //       }
+        //   }
 
-          // (3) Backprop to word embeddings (A): average ⇒ distribute
-          for (int j = 0; j < sentence_length; j++) {
-              long long word_index = words[j];
-              for (long long k = 0; k < gs->layer1_size; k++) {
-                  float grad = dL_dh[k] / sentence_length;  // distribute average
-                  gs->layer1[word_index * gs->layer1_size + k] -= gs->learning_rate_decay * grad;
-              }
-          }
+        //   // (3) Backprop to word embeddings (A): average ⇒ distribute
+        //   for (int j = 0; j < sentence_length; j++) {
+        //       long long word_index = words[j];
+        //       for (long long k = 0; k < gs->layer1_size; k++) {
+        //           float grad = dL_dh[k] / sentence_length;  // distribute average
+        //           gs->layer1[word_index * gs->layer1_size + k] -= gs->learning_rate_decay * grad;
+        //       }
+        //   }
 
-          free(dL_dh);
-          free(layer1_avg);
+        //   free(dL_dh);
+        //   free(layer1_avg);
 
-        }
-        sentence_length = 0; // Reset for next sentence
-        for (int j = 0; j < MAX_LABELS; j++) {
-          labels[j] = 0; // Reset labels
-        }
-        for (int j = 0; j < MAX_WORDS_PER_SENTENCE; j++) {
-          words[j] = -1; // Reset words
-        }
+        // }
+        // sentence_length = 0; // Reset for next sentence
+        // for (int j = 0; j < MAX_LABELS; j++) {
+        //   labels[j] = 0; // Reset labels
+        // }
+        // for (int j = 0; j < MAX_WORDS_PER_SENTENCE; j++) {
+        //   words[j] = -1; // Reset words
+        // }
         continue;
       }
 
