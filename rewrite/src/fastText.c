@@ -240,9 +240,11 @@ void *train_thread(thread_args *args) {
     long long offset_length = gs->end_offsets[thread_id] - gs->start_offsets[thread_id] + 1;
 
     long long temp = 0;
-    for (int i = gs->start_offsets[thread_id]; i < gs->end_offsets[thread_id]; i++) {
+    long long i = gs->start_offsets[thread_id];
+    while (i <= gs->end_offsets[thread_id]) {
       long long word_length = read_word(word, fi);
       word_count++;
+      i += word_length - 1; // Adjust for the length of the word read
       gs->word_count_actual++;
       gs->offset_actual += word_length;
       temp += word_length;
