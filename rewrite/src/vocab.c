@@ -81,13 +81,12 @@ int add_word_to_vocab(char *word, global_setting *gs) {
     fprintf(stderr, "Memory allocation failed for vocab word\n");
     exit(1);
   }
-  vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
+  vocab[*vocab_size].word = (char *)calloc(length, sizeof(char));
 
-  printf("[INFO] Allocating memory for word: %s %d\n", word, *vocab_size);
 
-  strcpy(vocab[*vocab_size]->word, word);
-  printf("[INFO] Word '%s' added to vocab at index %lld\n", word, *vocab_size);
-  vocab[*vocab_size]->cn = 0; // Initialize count to zero
+
+  strcpy(vocab[*vocab_size].word, word);
+  vocab[*vocab_size].cn = 0; // Initialize count to zero
   (*vocab_size)++;
   
   printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
