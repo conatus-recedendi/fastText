@@ -181,16 +181,20 @@ void *train_thread(thread_args *args) {
   long long sentence_end = 0;
   long long sen[MAX_SENTENCE_LENGTH];
 
+  printf("[INFO] Thread %lld started training...\n", thread_id);
+  
+
   FILE *fi = fopen(gs->train_file, "rb");
   fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
 
+  printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
   for (int iter = 0; iter < gs->iter; iter++) {
   
 
     // Reset sentence length and position for each iteration
     sentence_length = 0;
     sentence_position = 0;
-
+    printf("[INFO] Thread %lld starting iteration %d...\n", thread_id, iter);
     // Read the file line by line
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
     
@@ -203,6 +207,7 @@ void *train_thread(thread_args *args) {
     long long offset_length = gs->end_offsets[thread_id] - gs->start_offsets[thread_id] + 1;
 
     for (int i = gs->start_offsets[thread_id]; i < gs->end_offsets[thread_id]; i++) {
+      printf("[INFO] Thread %lld processing offset %d...\n", thread_id, i);
       read_word(word, fi);
       word_count++;
       gs->learning_rate_decay = gs->learning_rate * (1 - ((float)word_count / (offset_length * gs->iter)));
