@@ -182,15 +182,21 @@ void create_vocab_from_train_file(global_setting *gs) {
   printf("[INFO] Reading words from training file...\n");
 
   while(1) {
+    printf("[INFO] Reading word from training file...\n");
     read_word(word, f_in);
+    printf("[INFO] Read word: %s\n", word);
     // printf("[INFO] Read word: %s\n", word);
     if (feof(f_in)) break;
+    printf("[INFO] Current word: %s\n", word);
     train_words++;
     // printf("[INFO] Current word count: %lld\n", train_words);
+    printf("[INFO] Current word count: %lld\n", train_words);
     if ((debug_mode > 1) && (train_words % 100000 == 0)) {
       printf("%lldK%c", train_words / 1000, 13);
       fflush(stdout); 
     }
+
+    printf("[INFO] Searching for word in vocabulary...\n");
     // printf("[INFO] Searching for word in vocabulary...\n");
     temp_vocab_hash = search_vocab(word, gs);
     // printf("[INFO] Search result: %lld\n", temp_vocab_hash);
