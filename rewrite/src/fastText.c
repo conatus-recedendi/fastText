@@ -257,7 +257,7 @@ void *train_thread(thread_args *args) {
         printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , %d",
               13, gs->learning_rate_decay,
               gs->offset_actual / (double)(gs->iter * gs->total_offset) * 100,
-              gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000), gs->word_count_actual);
+              gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->word_count_actual);
         fflush(stdout);
       }
 
