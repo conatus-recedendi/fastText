@@ -115,25 +115,25 @@ int get_arg_pos(char *str, int argc, char **argv) {
 }
 
 void initialize_network(global_setting *gs) {
-  printf("[INFO] Initializing network... %lld %lld \n", gs->vocab_size, gs->layer1_size);
+  // printf("[INFO] Initializing network... %lld %lld \n", gs->vocab_size, gs->layer1_size);
   posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
   if (gs->layer1 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer1\n");
     exit(1);
   }
-  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
+  // printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
   posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->class_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
-  printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
+  // printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
   posix_memalign((void **)&(gs->output), 64, gs->class_size * sizeof(float));
   if (gs->output == NULL) {
     fprintf(stderr, "Memory allocation failed for output\n");
     exit(1);
   }
-  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
+  // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
   create_binary_tree(gs);
   return ;
 }
@@ -181,20 +181,19 @@ void *train_thread(thread_args *args) {
   long long sentence_end = 0;
   long long sen[MAX_SENTENCE_LENGTH];
 
-  printf("[INFO] Thread %lld started training...\n", thread_id);
+  // printf("[INFO] Thread %lld started training...\n", thread_id);
   
 
   FILE *fi = fopen(gs->train_file, "rb");
   fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
 
-  printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
+  // printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
   for (int iter = 0; iter < gs->iter; iter++) {
   
 
     // Reset sentence length and position for each iteration
     sentence_length = 0;
     sentence_position = 0;
-    printf("[INFO] Thread %lld starting iteration %d... %d %d\n", thread_id, iter, gs->start_offsets[thread_id], gs->end_offsets[thread_id]);
     // Read the file line by line
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
     
@@ -351,7 +350,7 @@ void train_model(global_setting *gs) {
   char *output_file = gs->output_file;
   gs->learning_rate_decay = gs->learning_rate;
 
-  printf("[INFO] Initializing threads...\n");
+  // printf("[INFO] Initializing threads...\n");
   pthread_t *pt = (pthread_t *)malloc(gs->num_threads * sizeof(pthread_t));
 
 
@@ -367,7 +366,7 @@ void train_model(global_setting *gs) {
 
   compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets);
 
-  printf("[INFO] read vocabulary...\n");
+  // printf("[INFO] read vocabulary...\n");
 
   if (read_vocab_file[0] != 0) {
     // Read vocabulary from file
@@ -377,7 +376,7 @@ void train_model(global_setting *gs) {
     create_vocab_from_train_file(gs);
   }
 
-  printf("[INFO] save vocabulary...\n");
+  // printf("[INFO] save vocabulary...\n");
 
   if (save_vocab_file[0] != 0) {
     // Save vocabulary to file
@@ -390,7 +389,7 @@ void train_model(global_setting *gs) {
     return;
   }
 
-  printf("[INFO] Initializing network...\n");
+  // printf("[INFO] Initializing network...\n");
 
   initialize_network(gs);
 
@@ -398,7 +397,7 @@ void train_model(global_setting *gs) {
 
   gs->start = clock();
 
-  printf("[INFO] Starting training threads...\n");
+  // printf("[INFO] Starting training threads...\n");
 
   for (int i = 0; i < gs->num_threads; i++) {
     // Create threads for training
@@ -408,7 +407,7 @@ void train_model(global_setting *gs) {
     pthread_create(&pt[i], NULL, train_thread, (thread_args *)args);
 
   }
-  printf("[INFO] Training threads started.\n");
+  // printf("[INFO] Training threads started.\n");
   for (int i = 0; i < gs->num_threads; i++) {
     // Wait for threads to finish
     pthread_join(pt[i], NULL);
@@ -495,7 +494,7 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-min-count", argc, argv)) > 0) gs.min_count = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-classes", argc, argv)) > 0) gs.classes = atoi(argv[i + 1]);
 
-  printf("[INFO] Argument parsing completed.\n");
+  // printf("[INFO] Argument parsing completed.\n");
   // bag of tricks for efficient text classification additional setting
   // lr
   // wordNgrams
