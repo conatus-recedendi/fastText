@@ -98,10 +98,11 @@ make
 
 for i in {0..7}
 do
+#  ./fasttext supervised -input ./data/ag_news.train -output ./output/test  -dim 10 -lr 0.25 -wordNgrams 2   -minCount 1 -bucket 10000000 -epoch 5 -thread 2 > /dev/null
   log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for bigrams"
   log_time ${LOG_FILE} ../fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}" -dim 10 -lr "${LR[i]}" -wordNgrams 2 \
-    -minCount 1 -bucket 10000000 -epoch 5 -thread 20 > /dev/null
+    -minCount 1 -bucket 10000000 -epoch 5 -thread 20 > /dev/nulldata/
   log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}.bin" \
     "${DATADIR}/${DATASET[i]}.test"
 done

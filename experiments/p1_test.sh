@@ -3,6 +3,8 @@
 
 # 개발 시 debugging 용!
 
+# bin/fastText -train ../data/ag_news.train     -output ../output/p1_test/ag_news.bin -size 10 -lr 0.25 -wordNgrams 2     -min-count 1 -bucket 10000000 -iter 5 -thread 20 -save-vocab ../output/p1_test/ag_news.vec
+
 # 로그 함수 정의
 log_time() {
         logfile="$1"
@@ -54,13 +56,13 @@ DATASET=(
 
 ID=(
   0Bz8a_Dbh9QhbUDNpeUdjb0wxRms # ag_news
-  0Bz8a_Dbh9QhbUkVqNEszd0pHaFE # sogou_news
-  0Bz8a_Dbh9QhbQ2Vic1kxMmZZQ1k # dbpedia
-  0Bz8a_Dbh9QhbNUpYQ2N3SGlFaDg # yelp_review_polarity
-  0Bz8a_Dbh9QhbZlU4dXhHTFhZQU0 # yelp_review_full
-  0Bz8a_Dbh9Qhbd2JNdDBsQUdocVU # yahoo_answers
-  0Bz8a_Dbh9QhbZVhsUnRWRDhETzA # amazon_review_full
-  0Bz8a_Dbh9QhbaW12WVVZS2drcnM # amazon_review_polarity
+  # 0Bz8a_Dbh9QhbUkVqNEszd0pHaFE # sogou_news
+  # 0Bz8a_Dbh9QhbQ2Vic1kxMmZZQ1k # dbpedia
+  # 0Bz8a_Dbh9QhbNUpYQ2N3SGlFaDg # yelp_review_polarity
+  # 0Bz8a_Dbh9QhbZlU4dXhHTFhZQU0 # yelp_review_full
+  # 0Bz8a_Dbh9Qhbd2JNdDBsQUdocVU # yahoo_answers
+  # 0Bz8a_Dbh9QhbZVhsUnRWRDhETzA # amazon_review_full
+  # 0Bz8a_Dbh9QhbaW12WVVZS2drcnM # amazon_review_polarity
 )
 
 # These learning rates were chosen by validation on a subset of the training set.

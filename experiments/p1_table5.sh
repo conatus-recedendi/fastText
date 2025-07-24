@@ -60,18 +60,18 @@ for combo in "${combinations[@]}";
 do
 read DIM GRAM LR <<< "$combo"
 
-if [[ "$GRAM" == "2" ]]; then
-  BUCKET=10000000  # 10M
-else
-  BUCKET=100000000 # 100M
-fi
+  if [[ "$GRAM" == "2" ]]; then
+    BUCKET=10000000  # 10M
+  else
+    BUCKET=100000000 # 100M
+  fi
 
   OUTFILE="${RESULTDIR}/dim${DIM}_gram${GRAM}_lr${LR}"
 
   echo "Downloading dataset with dimensions ${DIM} and n-grams ${GRAM}"
   log_time "$LOG_FILE" ../fasttext supervised -input "${DATADIR}/YFCC100M/train-processing" \
     -output ${OUTFILE} -dim ${DIM} -lr ${LR} -wordNgrams ${GRAM} \
-    -minCount 100 -minCountLabel 100 -bucket 10000000 -epoch 5 -thread 20 -loss hs > /dev/null
+    -minCount 100 -minCountLabel 100 -bucket ${BUCKET} -epoch 5 -thread 20 -loss hs > /dev/null
 
   # log_time "$LOG_FILE" echo "Testing on validation set"
   # OUTPUT=$(../fasttext test "${OUTFILE}.bin" "${DATADIR}/YFCC100M/valid-processing")
