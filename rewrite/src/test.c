@@ -413,8 +413,8 @@ void test_thread(global_setting *gs) {
       long long local_fp_cnt = predicted_length - local_tp_cnt;
       long long local_fn_cnt = gold_length - local_tp_cnt;
       long long local_tn_cnt = gs->class_size - (local_tp_cnt + local_fp_cnt + local_fn_cnt);
-      printf("[INFO] TP: %lld, FP: %lld, Gold length: %lld, Predicted length: %lld\n", local_tp_cnt, local_fp_cnt, gold_length, predicted_length);
-      printf("[INFO] expected value: %lld,golden value: %lld\n", predicted[0], gold[0]);
+      // printf("[INFO] TP: %lld, FP: %lld, Gold length: %lld, Predicted length: %lld\n", local_tp_cnt, local_fp_cnt, gold_length, predicted_length);
+      // printf("[INFO] expected value: %lld,golden value: %lld\n", predicted[0], gold[0]);
 
       tp_cnt += local_tp_cnt;
       fp_cnt += local_fp_cnt;
