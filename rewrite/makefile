@@ -35,7 +35,7 @@ all: $(BINARIES)
 # 실행 파일 빌드 규칙 (이제는 COMMON_OBJS가 정의된 상태)
 $(BIN_DIR)/%: $(BUILD_DIR)/%.o $(COMMON_OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC)  $^ -o $@ $(CFLAGS)
 
 # 전체 오브젝트 파일 빌드 규칙
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
