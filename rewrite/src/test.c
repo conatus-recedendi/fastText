@@ -435,7 +435,7 @@ void test_thread(global_setting *gs) {
       }
 
       // printf()
-      printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
+      // printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
 
 
       long long predicted_length = 0;
