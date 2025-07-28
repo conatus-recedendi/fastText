@@ -93,6 +93,8 @@ void save_model(char *output_file, global_setting *gs) {
   fwrite(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fo);
   printf("[INFO] Vocabulary hash table saved to %s %lld, %lld\n", output_file, gs->vocab_size, sizeof(vocab_word));
   fwrite(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fo);
+  fwrite(gs->label_hash, sizeof(int), gs->label_hash_size, fo);
+  fwrite(gs->labels, sizeof(vocab_word), gs->label_max_size, fo);
   // fwrite(gs->labels, sizeof(vocab_word), gs->class_size, fo);
   printf("[INFO] Vocabulary and labels saved to %s\n", output_file);
   fwrite(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fo);
@@ -101,6 +103,9 @@ void save_model(char *output_file, global_setting *gs) {
   // }
   printf("[INFO] Layer1 weights saved to %s\n", output_file);
   fwrite(gs->layer2, sizeof(float), gs->layer1_size * gs->class_size, fo);
+  for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
+    printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
+  }
   printf("[INFO] Layer2 weights saved to %s\n", output_file);
   fwrite(gs->output, sizeof(float), gs->class_size, fo);
   printf("[INFO] Layer weights saved to %s\n", output_file);
@@ -117,26 +122,29 @@ void save_model(char *output_file, global_setting *gs) {
 }
 
 void *train_thread(thread_args *args) {
+  // printf("starting train thread %lld\n", args->id);
+  // fflush(stdout);
   // Implement the training logic here
-
+  
   long long thread_id = (long long)args->id;
   global_setting *gs = (global_setting *)args->gs;
   // Placeholder for thread-specific training logic
-
+  
   long long file_size = gs->file_size;
   int num_threads = gs->num_threads;
-
+  
   long long word_count = 0;
   long long last_word_count = 0;
   long long iter = gs->iter;
-
+  
   long long sentence_length = 0;
   long long sentence_position = 0;
   long long sentence_start = 0;
   long long sentence_end = 0;
   long long sen[MAX_SENTENCE_LENGTH];
-
+  
   // printf("[INFO] Thread %lld started training...\n", thread_id);
+  
   
 
   FILE *fi = fopen(gs->train_file, "rb");
@@ -155,8 +163,16 @@ void *train_thread(thread_args *args) {
 
     char word[MAX_STRING];
     char sen[MAX_SENTENCE_LENGTH];
-    long long labels[MAX_LABELS]; // [1, 0, 0, 1, 0 ...]
+    // long long labels[MAX_LABELS]; // [0, 3, -1, -1, -1 ...]
+    long long *labels = malloc(sizeof(long long) * gs->class_size);
+    if (labels == NULL) {
+        fprintf(stderr, "[ERROR] Memory allocation failed for labels\n");
+        exit(1);
+    }
+
     long long words[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
+          // printf("\nlabels %p\n", labels);
+
 
     long long offset_length = gs->end_offsets[thread_id] - gs->start_offsets[thread_id] + 1;
 
@@ -168,13 +184,16 @@ void *train_thread(thread_args *args) {
     // }
     long long line = 0;
     long long max_line = gs->total_line_by_thread[thread_id];
+    // printf("[INFO] Thread %lld started training with %lld lines\n", thread_id, max_line);
+    
 
     float *neu1 = (float *)malloc(gs->layer1_size * sizeof(float));
     float *neu2 = (float *)malloc(gs->class_size * sizeof(float));
     float *neu1err = (float *)malloc(gs->layer1_size * sizeof(float));
     float *neu2err = (float *)malloc(gs->class_size * sizeof(float));
 
-
+    // printf("[INFO] Thread %lld started training with %lld lines\n", thread_id, max_line);
+  
     while (fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
       line++;
       gs->total_learned_lines++;
@@ -185,14 +204,18 @@ void *train_thread(thread_args *args) {
       // 단어 분리
       char *token = strtok(sen, " ");
       long long sentence_length = 0;
-      memset(labels, 0, sizeof(labels)); // Initialize labels to 0
+      long long label_length = 0;
+      memset(labels, -1, sizeof(labels)); // Initialize labels to -1
+
       memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
       while (token != NULL) {
           if (strncmp(token, "__", 2) == 0) {
               // 라벨인 경우 __label_1__
-              long long label_index = atoi(token + 9) - 1;
+              long long label_index = search_label(token, gs);
               if (label_index != -1 && label_index < MAX_LABELS) {
-                  labels[label_index] = 1;
+                  labels[label_length++] = label_index;  // Set the label index to 1
+              } else {
+                labels[label_length++] = -1; // unknown label
               }
           } else {
               // 일반 단어인 경우
@@ -204,7 +227,8 @@ void *train_thread(thread_args *args) {
               }
           }
           token = strtok(NULL, " ");
-      }
+      }      
+      // printf("\nlabels %p\n", labels);
       gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
       // gs->train_words += word_count(word);
       gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
@@ -232,16 +256,21 @@ void *train_thread(thread_args *args) {
       // learning by line
       // logging by N lines
       long long golden_label = 0;
-
-
+      // printf("\nlabels %p\n", labels);
+// 
       
       if (sentence_length > 0) {
+
+        // printf("\nsentence length: %lld %lld %lld\n", sentence_length, gs->class_size, gs->layer1_size);
+        
 
         // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
         memset(neu1, 0, gs->layer1_size * sizeof(float));
         memset(neu2, 0, gs->class_size * sizeof(float));
         memset(neu1err, 0, gs->layer1_size * sizeof(float));
         memset(neu2err, 0, gs->class_size * sizeof(float));
+        
+
 
         
         for (long long j = 0; j < sentence_length; j++) {
@@ -251,11 +280,14 @@ void *train_thread(thread_args *args) {
             }
           }
         }
+        
 
         for (long long j = 0; j < gs->layer1_size; j++) {
           //neu1: 1 x h
           neu1[j] /= sentence_length; // 평균을 구함
         }
+
+        
 
         // neu1 dot layer2
         for (long long j = 0; j < gs->class_size; j++) {
@@ -268,12 +300,14 @@ void *train_thread(thread_args *args) {
 
         
         
+        
         // 
         float max = neu2[0];
         for (long long j = 1; j < gs->class_size; j++) {
           if (neu2[j] > max) max = neu2[j];
           // printf("%f ", neu2[j]);
         }
+
         // printf("\n");
         // softmax
         // softmax: 기존과 동일
@@ -288,10 +322,11 @@ void *train_thread(thread_args *args) {
             neu2[j] /= sum;
       
         float loss = 0.0f;
+        
       
-        for (int i = 0; i < MAX_LABELS; i++) {
-          if (labels[i] == 1) {
-            golden_label = i;
+        for (int i = 0; i < label_length; i++) {
+          if (labels[i] >= 0) {
+            golden_label = labels[i];
           } else {
             continue ;
           }
@@ -322,8 +357,7 @@ void *train_thread(thread_args *args) {
               }
             }
           }
-          // if (loss > 0)
-          //   gs->loss += loss;
+  
       }
         // Reset sentence length and position for the next sentence
         sentence_length = 0;
@@ -372,6 +406,7 @@ void train_model(global_setting *gs) {
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
   gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
+  gs->class_size = 0;
 
   //   // gs->total_offset = 0;
   // gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
@@ -379,6 +414,7 @@ void train_model(global_setting *gs) {
   // gs->offset_actual = malloc(sizeof(long long) * gs->num_threads);
 
 
+  // printf("yes\n");
   compute_thread_offsets(fp, gs);
   // compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets, &gs->total_offset, gs->offset_actual, gs->data_lines);
 
@@ -425,6 +461,9 @@ void train_model(global_setting *gs) {
     thread_args *args = (thread_args *)malloc(sizeof(thread_args));
     args->id = i;
     args->gs = gs;
+    // printf("[INFO] Creating thread %d with id %lld, global_setting: %p\n", i, args->id, (void *)args->gs);
+    // printf("[INFO] %p, %p\n", &pt[i], args);
+
     pthread_create(&pt[i], NULL, train_thread, (thread_args *)args);
 
   }
@@ -483,6 +522,7 @@ int main(int argc, char **argv) {
     .save_vocab_file = "", // Default vocabulary save file
     .read_vocab_file = "", // Default vocabulary read file
     .vocab_hash_size = 1000000, // Default vocabulary hash size
+    .label_hash_size = 1000000, // Default label hash size
 
     .vocab_size = 0, // Default vocabulary size
     .vocab_max_size = 1000000, // Default maximum vocabulary size
@@ -533,6 +573,11 @@ int main(int argc, char **argv) {
   gs.vocab_hash = (int *)calloc(gs.vocab_hash_size, sizeof(int));
   for (int j = 0; j < gs.vocab_hash_size; j++) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
+  }
+  gs.labels = (vocab_word *)calloc(gs.label_hash_size, sizeof(vocab_word));
+  gs.label_hash = (int *)calloc(gs.label_hash_size, sizeof(int));
+  for (int j = 0; j < gs.label_hash_size; j++) {
+    gs.label_hash[j] = -1; // Initialize the label hash table
   }
 
   train_model(&gs);

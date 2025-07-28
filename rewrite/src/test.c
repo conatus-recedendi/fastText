@@ -114,6 +114,17 @@ void load_model(char *load_model_file, global_setting *gs) {
     exit(1);
   }
 
+  gs->label_hash = (int *)calloc(gs->label_hash_size, sizeof(int));
+  if (gs->label_hash == NULL) {
+    fprintf(stderr, "Memory allocation failed for label_hash\n");
+    exit(1);
+  }
+  gs->labels = (vocab_word *)calloc(gs->label_max_size, sizeof(vocab_word));
+  if (gs->labels == NULL) {
+    fprintf(stderr, "Memory allocation failed for labels\n");
+    exit(1);
+  }
+
 
 
   for (int j = 0; j < gs->vocab_max_size; j++) {
@@ -125,6 +136,8 @@ void load_model(char *load_model_file, global_setting *gs) {
   // posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
   fread(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fi);
   fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi);
+  fread(gs->label_hash, sizeof(int), gs->label_hash_size, fi);
+  fread(gs->labels, sizeof(vocab_word), gs->label_max_size, fi);
   
   printf("[INFO] Vocabulary loaded from %s\n", load_model_file);
   
@@ -155,6 +168,9 @@ void load_model(char *load_model_file, global_setting *gs) {
   // }
 
   fread(gs->layer2, sizeof(float), gs->layer1_size * gs->class_size, fi);
+  for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
+    printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
+  }
   fread(gs->output, sizeof(float), gs->class_size, fi);
   gs->start_offsets= malloc(sizeof(long long) * gs->num_threads);
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
@@ -203,8 +219,10 @@ void test_thread(global_setting *gs) {
 
   // char word[MAX_SENTENCE_LENGTH];
   char sen[MAX_SENTENCE_LENGTH];
-  long long labels[MAX_LABELS]; // [1, 0, 0, 1, 0 ...]
-  long long words[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
+  // long long labels[MAX_LABELS]; // [0, 3, -1, -1, -1 ...]
+  long long *labels = (long long *)malloc(gs->class_size * sizeof(long long));
+  // long long words[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
+  long long *words = (long long *)malloc(MAX_WORDS_PER_SENTENCE * sizeof(long long));
 
 
   long long temp = 0;
@@ -240,16 +258,21 @@ void test_thread(global_setting *gs) {
     // 단어 분리
     char *token = strtok(sen, " ");
     long long sentence_length = 0;
-    memset(labels, 0,  sizeof(labels)); // Initialize labels to 0
+    long long label_length = 0;
+    memset(labels, -1,  sizeof(labels)); // Initialize labels to 0
     memset(words, -1,  sizeof(words)); // Initialize words to -1 (unknown word)
     while (token != NULL) {
+      // printf("%s \n", token);
       if (strncmp(token, "__", 2) == 0) {
-          
-            // 라벨인 경우 __label_1__
-            long long label_index = atoi(token + 9) - 1;
-            if (label_index != -1 && label_index < MAX_LABELS) {
-                labels[label_index] = 1;
-            }
+        // 라벨인 경우 __label_1__
+        // printf("[INFO] Found label: %s\n", token);
+        long long label_index = search_label(token, gs);
+        // printf("[INFO] Found label: %s, index: %lld\n", token, label_index);
+              if (label_index != -1 && label_index < MAX_LABELS) {
+                  labels[label_length++] = label_index;  // Set the label index to 1
+              } else {
+                labels[label_length++] = -1; // unknown label
+              }
         } else {
             // 일반 단어인 경우
             long long word_index = search_vocab(token, gs);
@@ -262,6 +285,7 @@ void test_thread(global_setting *gs) {
         }
         token = strtok(NULL, " ");
     }
+    // exit(1);
     gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
     // gs->train_words += word_count(word);
     gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
@@ -293,7 +317,6 @@ void test_thread(global_setting *gs) {
     long long golden_label = -1;
 
 
-
     if (sentence_length > 0) {
 
       // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
@@ -307,14 +330,20 @@ void test_thread(global_setting *gs) {
         if (words[j] != -1) {
           for (long long k = 0; k < gs->layer1_size; k++) {
             neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
+            // printf("%f ", gs->layer1[words[j] * gs->layer1_size + k]);
           }
+          // printf("\nneu1[k]: %f", neu1[0]);
+          // printf("\n");
         }
       }
-      
+      // printf("[INFO] neu1: ");
       for (long long j = 0; j < gs->layer1_size; j++) {
         //neu1: 1 x h
+
+        // printf("\nneu1[%d]: %f, %lld, %f",j,  neu1[j], sentence_length, neu1[j] / sentence_length);
         neu1[j] /= sentence_length; // 평균을 구함
       }
+
 
       // neu1 dot layer2
       for (long long j = 0; j < gs->class_size; j++) {
@@ -322,18 +351,29 @@ void test_thread(global_setting *gs) {
         neu2[j] = 0.0f;
         for (long long k = 0; k < gs->layer1_size; k++) {
           neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+
         }
+        
       }
 
+      // printf neu1
+      // printf("[INFO] neu1: ");
+      // for (long long j = 0; j < gs->layer1_size; j++) {
+      //   printf("%f ", neu1[j]);
+      // }
+      // printf("\n");
       
       
       // 
       float max = neu2[0];
-      for (long long j = 1; j < gs->class_size; j++) {
+      for (long long j = 0; j < gs->class_size; j++) {
         if (neu2[j] > max) max = neu2[j];
         // printf("%f ", neu2[j]);
       }
+      
+
       // printf("\n");
+      // printf("max: %f\n", max);
       // softmax
       // softmax: 기존과 동일
       for (long long j = 0; j < gs->class_size; j++)
@@ -346,7 +386,10 @@ void test_thread(global_setting *gs) {
       for (long long j = 0; j < gs->class_size; j++)
           neu2[j] /= sum;
     
-
+      // for (long long j = 0; j < gs->class_size; j++) {
+      //   printf("%f %f", neu2[j], sum);
+      // }
+      // printf("\n");
       // neu2 copy and sort by decreasign
       // but, there are remianing information to index to original neu2
 
@@ -374,18 +417,20 @@ void test_thread(global_setting *gs) {
       }
 
       // printf("[INFO] Sorted neu2: %f %lld", neu2_sorted[0], index_sorted[0]);
-      for (long long j = 0; j < gs->class_size; j++) {
-        printf("%f %lld ", neu2_sorted[j], index_sorted[j]);
-      }
-      printf("\n");
+      // TODO:
+      // for (long long j = 0; j < gs->class_size; j++) {
+      //   printf("%f %lld ", neu2_sorted[j], index_sorted[j]);
+      // }
+      // printf("\n");
 
+      
       long long *gold = (long long *)malloc(gs->class_size * sizeof(long long));
       long long *predicted = (long long *)malloc(gs->class_size * sizeof(long long));
 
       long long gold_length = 0;
       for (long long j = 0; j < gs->class_size; j++) {
-        if (labels[j] == 1) {
-          gold[gold_length++] = j;
+        if (labels[j] >= 0) {
+          gold[gold_length++] = labels[j];
         }
       }
       // printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);

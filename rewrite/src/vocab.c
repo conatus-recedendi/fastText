@@ -6,6 +6,15 @@
 #include "config.h"
 #include "vocab.h"
 
+int get_label_hash(char *word, global_setting *gs) {
+  unsigned long long label_hash_size = gs->label_hash_size;
+  vocab_word *labels = gs->labels;
+  int *label_hash = gs->label_hash;
+  unsigned long long hash = 0;
+  for (unsigned long long a = 0; a < strlen(word); a++) hash = hash * 257 + word[a];
+  hash = hash % label_hash_size;
+  return hash;
+}
 
 int get_word_hash(char *word, global_setting *gs) {
   unsigned long long vocab_hash_size = gs->vocab_hash_size;
@@ -41,6 +50,27 @@ long long read_word(char *word, FILE *fin) {
   return ftell(fin);
 }
 
+int search_label(char *word, global_setting *gs) {
+  // printf("[INFO] Searching for label: %s\n", word);
+  unsigned int hash = get_label_hash(word, gs);
+  // printf("[INFO] Hash for label '%s': %u\n", word, hash);
+  vocab_word *labels = gs->labels;
+  int *label_hash = gs->label_hash;
+  long long label_hash_size = gs->label_hash_size;
+  // printf("[INFO] Searching in label hash table... label_hash_size: %lld\n", label_hash_size);
+  
+  while (1) {
+    // printf("[INFO] Checking label hash index %u: %d\n", hash, label_hash[hash]);
+    if (label_hash[hash] == -1) return -1; // Not found
+    // printf("%s vs %s, %d\n", word, labels[label_hash[hash]].word, strcmp(word, labels[label_hash[hash]].word));
+    if (!strcmp(word, labels[label_hash[hash]].word)) {
+      return label_hash[hash]; // Found
+    }
+    hash = (hash + 1) % label_hash_size; // Linear probing
+  }
+  return -1; // Should not reach here
+}
+
 int search_vocab(char *word, global_setting *gs) {
   // printf("[INFO] Searching for word: %s\n", word);
   unsigned int hash = get_word_hash(word, gs);
@@ -48,6 +78,7 @@ int search_vocab(char *word, global_setting *gs) {
   vocab_word *vocab = gs->vocab;
   int *vocab_hash = gs->vocab_hash;
   long long vocab_hash_size = gs->vocab_hash_size;
+  // printf("[INFO] Searching in vocab hash table... vocab_hash_size: %lld\n", vocab_hash_size);
   // printf("[INFO] Starting search in vocab hash table... \n");
   while (1) {
     // printf("[INFO] Checking hash index %u: %d\n", hash, vocab_hash[hash]);
@@ -68,6 +99,40 @@ int read_word_index(FILE *fin, global_setting *gs) {
   return search_vocab(word, gs);
 }
 
+int add_label_to_vocab(char *word, global_setting *gs) {
+  unsigned int hash, length = strlen(word) + 1;
+  vocab_word *labels = gs->labels;
+  long long *label_size = &gs->label_size;
+  long long *label_max_size = &gs->label_max_size;
+  int *label_hash = gs->label_hash;
+  long long label_hash_size = gs->label_hash_size;
+
+  if (length > MAX_STRING) length = MAX_STRING;
+  
+  strcpy(labels[*label_size].word, word);
+  labels[*label_size].cn = 0; // Initialize count to zero
+  (*label_size)++;
+  
+  if (*label_size + 2 >= *label_max_size) {
+    *label_max_size += 1000;
+    labels = (vocab_word *)realloc(labels, *label_max_size * sizeof(vocab_word));
+    if (labels == NULL) {
+      fprintf(stderr, "Memory allocation failed for labels\n");
+      exit(1);
+    }
+    gs->labels = labels; // Update global setting
+  }
+  
+  hash = get_label_hash(word, gs);
+  
+  while (label_hash[hash] != -1) {
+    hash = (hash + 1) % label_hash_size;
+  }
+  
+  label_hash[hash] = *label_size - 1; // Store the index
+  
+  return *label_size - 1; // Return the index of the new label
+}
 
 int add_word_to_vocab(char *word, global_setting *gs) {
   unsigned int hash, length = strlen(word) + 1;
@@ -170,6 +235,7 @@ void reduce_vocab(global_setting *gs) {
 void create_vocab_from_train_file(global_setting *gs) {
   char word[MAX_STRING];
   long long temp_vocab, temp_vocab_hash;
+  long long temp_label, temp_label_hash;
   long long debug_mode = gs->debug_mode;
   long long train_words = gs->train_words;
   long long vocab_size = gs->vocab_size;
@@ -177,7 +243,7 @@ void create_vocab_from_train_file(global_setting *gs) {
   vocab_word *vocab = gs->vocab;
   char *train_file = gs->train_file;
 
-  printf("[INFO] Creating vocabulary from training file...\n");
+  // printf("[INFO] Creating vocabulary from training file...\n");
 
   
   FILE *f_in = fopen(train_file, "rb");
@@ -186,27 +252,67 @@ void create_vocab_from_train_file(global_setting *gs) {
     exit(1);
   }
 
-  printf("[INFO] Reading words from training file...\n");
+  // printf("[INFO] Reading words from training file...\n");
 
+  clock_t search_label_time;
+  clock_t accum_search_label_time = 0;
+  clock_t add_label_to_vocab_time;
+  clock_t accum_add_label_to_vocab_time = 0;
+  clock_t search_vocab_time;
+  clock_t accum_search_vocab_time = 0;
+  clock_t add_word_to_vocab_time;
+  clock_t accum_add_word_to_vocab_time = 0;
+  char prev_word[MAX_STRING];
+  long long prev_subword_length = 0; 
   while(1) {
     read_word(word, f_in);
     if (feof(f_in)) break;
     if (strncmp(word, "__", 2) == 0) {
-      // Skip class names
+      // printf("[INFO] Found label: %s\n", word);
+      // TODO Skip class names
+      // search_label_time = clock();
+      temp_label_hash = search_label(word, gs);
+      // search_label_time = clock() - search_label_time;
+      // accum_search_label_time += search_label_time;
+
+      // printf("[INFO] Label hash: %lld\n", temp_label_hash);
+      if (temp_label_hash == -1) {
+        // add_label_to_vocab_time = clock();
+        // printf("[INFO] Adding label: %s\n", word);
+        temp_label = add_label_to_vocab(word, gs);
+        gs->class_size = temp_label + 1;
+        
+        // add_label_to_vocab_time = clock() - add_label_to_vocab_time;
+        // accum_add_label_to_vocab_time += add_label_to_vocab_time;
+        gs->labels[temp_label].cn = 1; // Initialize count to 1
+      } else {
+        gs->labels[temp_label_hash].cn++; // Increment count for existing label
+      }
+      // printf("[INFO] Added label: %s, count: %lld\n", gs->labels[temp_label].word, gs->labels[temp_label].cn);
+      // do not reduce
+      // do not sort?
       continue;
     }
     train_words++;
     // printf("[INFO] Current word count: %lld\n", train_words);
 
     if ((debug_mode > 1) && (train_words % 100000 == 0)) {
-      printf("%lldK%c", train_words / 1000, 13);
-      fflush(stdout); 
+      // printf("%lldK, search_label_time: %lld, add_label_to_vocab_time: %lld, search_vocab_time: %lld, add_word_to_vocab_time: %lld%c", train_words / 1000, accum_search_label_time, accum_add_label_to_vocab_time, accum_search_vocab_time, accum_add_word_to_vocab_time, 13);
+      printf("%lldK, %c", train_words / 1000, 13);
+      fflush(stdout);
     }
     // printf("[INFO] Searching for word in vocabulary...\n");
+    // search_vocab_time = clock();
     temp_vocab_hash = search_vocab(word, gs);
+    // search_vocab_time = clock() - search_vocab_time;
+    // accum_search_vocab_time += search_vocab_time;
     // printf("[INFO] Search result: %lld\n", temp_vocab_hash);
     if (temp_vocab_hash == -1) {
+      // printf("[INFO] Word not found in vocabulary, adding...\n");
+      // add_word_to_vocab_time = clock();
       temp_vocab = add_word_to_vocab(word, gs);
+      // add_word_to_vocab_time = clock() - add_word_to_vocab_time;
+      // accum_add_word_to_vocab_time += add_word_to_vocab_time;
       vocab[temp_vocab].cn = 1; // Initialize count to 1
     } else {
       vocab[temp_vocab_hash].cn++; // Increment count for existing word

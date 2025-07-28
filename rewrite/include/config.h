@@ -7,7 +7,7 @@
 #define EXP_TABLE_SIZE 1000
 #define MAX_EXP 6
 #define MAX_SENTENCE_LENGTH 50000
-#define MAX_LABELS 1000
+#define MAX_LABELS 300000
 #define MAX_WORDS_PER_SENTENCE 50000
  
 #define MAX_LINE_LEN 1000000
@@ -46,6 +46,10 @@ typedef struct {
   long long vocab_hash_size; // size of the hash tvocab_max_sizeable for vocabulary
   vocab_word *vocab;
   vocab_word *labels; // labels for classification
+  int *label_hash; // hash table for labels
+  long long label_hash_size; // size of the hash table for labels
+  long long label_size; // current label size
+  long long label_max_size; // maximum label size
   long long vocab_size; // current vocabulary size
   long long vocab_max_size; // maximum vocabulary size
 
