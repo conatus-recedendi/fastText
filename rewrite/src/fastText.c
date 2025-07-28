@@ -20,8 +20,8 @@ void initialize_network(global_setting *gs) {
   //xavier
 
   printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
-
-  for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
+  long long size = gs->vocab_size * gs->layer1_size;
+  for (long long i = 0; i < size; i++) {
     // Initialize layer1 with random values between -1 and 1
     // Using a uniform distribution for initialization
     // You can also use other initialization methods like Xavier or He initialization
@@ -29,7 +29,9 @@ void initialize_network(global_setting *gs) {
     // gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
     // Xavier initialization
     // https://en.wikipedia.org/wiki/Xavier_initialization
-    gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
+    // gs->layer1[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
+    // uniform
+    gs->layer1[i] = ((float)rand() / RAND_MAX * 2 - 1) / size;
   }
 
 
@@ -40,8 +42,9 @@ void initialize_network(global_setting *gs) {
     exit(1);
   }
 
+  size = gs->layer1_size * gs->class_size;
   for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
-    gs->layer2[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
+    gs->layer2[i] = ((float)rand() / RAND_MAX * 2 - 1) / size; // Initialize with random values between -1 and 1
   }
   // printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
   posix_memalign((void **)&(gs->output), 64, gs->class_size * sizeof(float));
@@ -58,8 +61,8 @@ void initialize_network(global_setting *gs) {
 
   printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
   // TODO: if classifation, gs->labels should be passed
-  create_binary_tree(gs->vocab, gs->vocab_size);
-  // create_binary_tree(gs->labels, gs->class_size);
+  // create_binary_tree(gs->vocab, gs->vocab_size);
+  create_binary_tree(gs->labels, gs->class_size);
   return ;
 }
 
@@ -196,6 +199,7 @@ void *train_thread(thread_args *args) {
   
     while (fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
       line++;
+      temp++;
       gs->total_learned_lines++;
       // word를 label, words로 분리.
       // 줄 끝 개행 문자 제거
@@ -232,13 +236,13 @@ void *train_thread(thread_args *args) {
       gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
       // gs->train_words += word_count(word);
       gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
-      if (gs->debug_mode > 1) {
-        temp = 0;
+      if (gs->debug_mode > 1 && gs->total_learned_lines % 1000 == 0) {
+        // temp = 0;
         clock_t now = clock();
-        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , loss: %f",
+        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , loss: %f, Lines: %lld",
               13, gs->learning_rate_decay,
               gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
-              gs->train_words / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->loss / gs->total_learned_lines);
+              gs->train_words / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->loss / gs->total_learned_lines, gs->total_learned_lines);
 
         fflush(stdout);
       }
@@ -257,8 +261,8 @@ void *train_thread(thread_args *args) {
       // logging by N lines
       long long golden_label = 0;
       // printf("\nlabels %p\n", labels);
-// 
-      
+      // 
+        
       if (sentence_length > 0) {
 
         // printf("\nsentence length: %lld %lld %lld\n", sentence_length, gs->class_size, gs->layer1_size);
@@ -267,8 +271,6 @@ void *train_thread(thread_args *args) {
         // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
         memset(neu1, 0, gs->layer1_size * sizeof(float));
         memset(neu2, 0, gs->class_size * sizeof(float));
-        memset(neu1err, 0, gs->layer1_size * sizeof(float));
-        memset(neu2err, 0, gs->class_size * sizeof(float));
         
 
 
@@ -287,53 +289,97 @@ void *train_thread(thread_args *args) {
           neu1[j] /= sentence_length; // 평균을 구함
         }
 
-        
-
-        // neu1 dot layer2
-        for (long long j = 0; j < gs->class_size; j++) {
-          // neu2: 1 x c
-          neu2[j] = 0.0f;
-          for (long long k = 0; k < gs->layer1_size; k++) {
-            neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+        // implement Hiereical softmax
+        if (gs->hierarchical_softmax) {
+          // Hierarchical softmax
+          // Implement hierarchical softmax here
+          // For now, we will just use the average of the words
+          for (int i = 0; i < label_length; i++) {
+            if (labels[i] >= 0) {
+              golden_label = labels[i];
+            } else {
+              continue ;
+            }
+            for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
+              
+              float f = 0.0f;
+              long long l2 = gs->labels[golden_label].point[d] * gs->layer1_size;
+              for (long long j = 0; j < gs->layer1_size; j++) {
+                f += neu1[j] * gs->layer2[l2 + j];
+              }
+              if (f <= -6) {
+                // neu2[d] = 0.0f;
+                continue ;
+              } else if (f >= 6) {
+                continue ;
+              } else {
+                f = 1.0f / (1.0f + expf(-f));
+              }
+              float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
+              for (long long j = 0; j < gs->layer1_size; j++) {
+                neu1err[j] += g * gs->layer2[l2 + j]; // to neu1
+                gs->layer2[l2 + j] += g * neu1[j]; // update layer2
+              }
+              // printf("%f ",f);
+              // printf("\n");
+              gs->loss += -logf(f + 1e-10f);
+            }
           }
-        }
 
-        
-        
-        
-        // 
-        float max = neu2[0];
-        for (long long j = 1; j < gs->class_size; j++) {
-          if (neu2[j] > max) max = neu2[j];
-          // printf("%f ", neu2[j]);
-        }
-
-        // printf("\n");
-        // softmax
-        // softmax: 기존과 동일
-        for (long long j = 0; j < gs->class_size; j++)
-            neu2[j] = expf(neu2[j] - max);
-
-        float sum = 0.0f;
-        for (long long j = 0; j < gs->class_size; j++)
-            sum += neu2[j];
-
-        for (long long j = 0; j < gs->class_size; j++)
-            neu2[j] /= sum;
-      
-        float loss = 0.0f;
-        
-      
-        for (int i = 0; i < label_length; i++) {
-          if (labels[i] >= 0) {
-            golden_label = labels[i];
-          } else {
-            continue ;
+          for (long long j = 0; j < sentence_length; j++) {
+            if (words[j] != -1) {
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
+              }
+            }
           }
+        } else { // if hierarchical softmax is not used
+          
+
+          // neu1 dot layer2
+          for (long long j = 0; j < gs->class_size; j++) {
+            // neu2: 1 x c
+            neu2[j] = 0.0f;
+            for (long long k = 0; k < gs->layer1_size; k++) {
+              neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+            }
+          }
+
+          
+          // 
+          float max = neu2[0];
+          for (long long j = 1; j < gs->class_size; j++) {
+            if (neu2[j] > max) max = neu2[j];
+            // printf("%f ", neu2[j]);
+          }
+
+          // printf("\n");
+          // softmax
+          // softmax: 기존과 동일
+          float sum = 0.0f;
+          for (long long j = 0; j < gs->class_size; j++) {
+              neu2[j] = expf(neu2[j] - max);
+              sum += neu2[j];
+          }
+          for (long long j = 0; j < gs->class_size; j++)
+              neu2[j] /= sum;
+
+          float loss = 0.0f;
+          
+        
+          for (int i = 0; i < label_length; i++) {
+            if (labels[i] >= 0) {
+              golden_label = labels[i];
+            } else {
+              break ;
+            }
+            memset(neu1err, 0, gs->layer1_size * sizeof(float));
+            memset(neu2err, 0, gs->class_size * sizeof(float));
 
             float g = 0.0f;
             // multi answer 
             for (long long j = 0; j < gs->class_size; j++) {
+              // TODO: softmax?
               g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
@@ -343,7 +389,7 @@ void *train_thread(thread_args *args) {
               } 
             }
             
-            gs->loss += -logf(neu2[golden_label] + 1e-10f);
+            loss += -logf(neu2[golden_label] + 1e-10f);
             // gs->loss += 1;
             // printf("%f ",/ -logf(neu2[golden_label] + 1e-10f));
 
@@ -357,15 +403,27 @@ void *train_thread(thread_args *args) {
               }
             }
           }
-  
+          if (label_length > 0) {
+            loss /= label_length;
+            gs->loss += loss;
+          }
+        }
+
+        // free(neu1);
+        // free(neu2);
+        // free(neu1err);  
+        // free(neu2err);
       }
         // Reset sentence length and position for the next sentence
-        sentence_length = 0;
-        sentence_position = 0;
-        sentence_start = 0;
-        sentence_end = 0;   
-        continue;
-      }
+      
+      sentence_length = 0;
+      sentence_position = 0;
+      sentence_start = 0;
+      sentence_end = 0;   
+      continue;
+        
+    }
+    free(labels);
   }
   fclose(fi);
   
@@ -542,6 +600,7 @@ int main(int argc, char **argv) {
     .start_offsets = NULL, // Start offsets for each thread
     .end_offsets = NULL, // End offsets for each thread
     .start_line_by_thread = NULL, // Actual offset for each thread
+    .hierarchical_softmax = 0, // Default hierarchical softmax
   };
   printf("[INFO] FastText training started.\n");
 
@@ -563,6 +622,7 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-min-count", argc, argv)) > 0) gs.min_count = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-classes", argc, argv)) > 0) gs.classes = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-bucket", argc, argv)) > 0) gs.vocab_hash_size = atoi(argv[i + 1]);
+  if ((i = get_arg_pos((char *)"-hs", argc, argv)) > 0) gs.hierarchical_softmax = atoi(argv[i + 1]);
 
   // printf("[INFO] Argument parsing completed.\n");
   // bag of tricks for efficient text classification additional setting

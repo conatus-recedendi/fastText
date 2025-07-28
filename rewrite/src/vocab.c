@@ -373,6 +373,7 @@ void read_vocab(global_setting *gs) {
   fclose(fin);
 }
 
+// oriignal binary tree is indicate same key value 
 void create_binary_tree(vocab_word *_vocab, long long size) {
   long long a, b, i, min1i, min2i, pos1, pos2, point[VOCAB_MAX_CODE_LENGTH];
   char code[VOCAB_MAX_CODE_LENGTH];

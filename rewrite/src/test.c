@@ -429,11 +429,13 @@ void test_thread(global_setting *gs) {
 
       long long gold_length = 0;
       for (long long j = 0; j < gs->class_size; j++) {
-        if (labels[j] >= 0) {
+        if (labels[j] >= 0 && gold_length < gs->top_k) {
           gold[gold_length++] = labels[j];
         }
       }
-      // printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
+
+      // printf()
+      printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
 
 
       long long predicted_length = 0;

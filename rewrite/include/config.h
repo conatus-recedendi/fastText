@@ -65,6 +65,8 @@ typedef struct {
   long long *start_line_by_thread; // actual offset for each thread
   long long total_learned_lines; // total lines learned by all threads
   long long *total_line_by_thread; // total lines by each thread
+
+  long long hierarchical_softmax; // whether to use hierarchical softmax or not
   
 
   // for test
