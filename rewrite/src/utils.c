@@ -8,16 +8,6 @@
 #include "config.h"
 #include "vocab.h"
 
-int isNewLine(const char *word) {
-  return strcmp(word, "\n") == 0;
-}
-int isClass(const char *word) {
-  return word[0] == '__' && word[strlen(word) - 1] == '__';
-}
-
-int isWord(const char *word) {
-  return !isNewLine(word) && !isClass(word);
-}
 void softmaxf(const float* input, float* output, int size) {
     float max = input[0];
     for (int i = 1; i < size; ++i) {
