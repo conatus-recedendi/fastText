@@ -198,6 +198,7 @@ void *train_thread(thread_args *args) {
     // printf("[INFO] Thread %lld started training with %lld lines\n", thread_id, max_line);
   
     while (fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
+
       line++;
       temp++;
       gs->total_learned_lines++;
@@ -379,7 +380,6 @@ void *train_thread(thread_args *args) {
             float g = 0.0f;
             // multi answer 
             for (long long j = 0; j < gs->class_size; j++) {
-              // TODO: softmax?
               g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
