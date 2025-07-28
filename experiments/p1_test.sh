@@ -106,12 +106,12 @@ for i in {0..7}
 do
   log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for bigrams"
   echo "../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
-    -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
+    -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
     -min-count 1 -bucket 10000000 -iter 5 -thread 20"
 
   log_time ${LOG_FILE} ../rewrite/bin/fastText  -train "${DATADIR}/${DATASET[i]}.train" \
-    -output "${RESULTDIR}/${DATASET[i]}.bin" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
-    -min-count 1 -bucket 10000000 -iter 5 -thread 20 -save-vocab "${RESULTDIR}/${DATASET[i]}.vec"
+    -output "${RESULTDIR}/${DATASET[i]}.bin" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
+    -min-count 1 -bucket 10000000 -iter 5 -thread 1 -save-vocab "${RESULTDIR}/${DATASET[i]}.vec"
 
   # log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
   #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
