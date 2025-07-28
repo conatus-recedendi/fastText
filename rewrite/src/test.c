@@ -373,8 +373,12 @@ void test_thread(global_setting *gs) {
         }
       }
 
-      printf("[INFO] Sorted neu2: %f %lld", neu2_sorted[0], index_sorted[0]);
-    
+      // printf("[INFO] Sorted neu2: %f %lld", neu2_sorted[0], index_sorted[0]);
+      for (long long j = 0; j < gs->class_size; j++) {
+        printf("%f %lld ", neu2_sorted[j], index_sorted[j]);
+      }
+      printf("\n");
+
       long long *gold = (long long *)malloc(gs->class_size * sizeof(long long));
       long long *predicted = (long long *)malloc(gs->class_size * sizeof(long long));
 
@@ -410,6 +414,7 @@ void test_thread(global_setting *gs) {
       long long local_fn_cnt = gold_length - local_tp_cnt;
       long long local_tn_cnt = gs->class_size - (local_tp_cnt + local_fp_cnt + local_fn_cnt);
       printf("[INFO] TP: %lld, FP: %lld, Gold length: %lld, Predicted length: %lld\n", local_tp_cnt, local_fp_cnt, gold_length, predicted_length);
+      printf("[INFO] expected value: %lld,golden value: %lld\n", predicted[0], gold[0]);
 
       tp_cnt += local_tp_cnt;
       fp_cnt += local_fp_cnt;
