@@ -11,7 +11,7 @@ int add_word_to_vocab(char *word, global_setting *gs);
 void sort_vocab(global_setting *gs);
 void reduce_vocab(global_setting *gs);
 void create_vocab_from_train_file(global_setting *gs);
-void create_binary_tree(global_setting *gs);
+void create_binary_tree(vocab_word *vocab, long long size);
 void read_vocab(global_setting *gs);
 void save_vocab(global_setting *gs);
 

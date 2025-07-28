@@ -30,7 +30,7 @@ long long read_word(char *word, FILE *fin) {
       }
       if (ch == '\n') {
         strcpy(word, (char *)"</s>");
-        return 0;
+        return ftell(fin);
       } else continue;
     }
     word[a] = ch;
@@ -38,7 +38,7 @@ long long read_word(char *word, FILE *fin) {
     if (a >= MAX_STRING - 1) a--;   // Truncate too long words
   }
   word[a] = 0;
-  return a;
+  return ftell(fin);
 }
 
 int search_vocab(char *word, global_setting *gs) {
@@ -50,8 +50,12 @@ int search_vocab(char *word, global_setting *gs) {
   long long vocab_hash_size = gs->vocab_hash_size;
   // printf("[INFO] Starting search in vocab hash table... \n");
   while (1) {
+    // printf("[INFO] Checking hash index %u: %d\n", hash, vocab_hash[hash]);
+    // printf("[INFO] Current word: %lld\n", vocab[vocab_hash[hash]].cn);
     if (vocab_hash[hash] == -1) return -1;
+    // printf("[INFO] Found hash index %u: %d \"%s\"\n", hash, vocab_hash[hash], vocab[vocab_hash[hash]].word);
     if (!strcmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];
+    // printf("[INFO] Hash for word '%s': %u %lld\n", word, hash, vocab_hash_size);
     hash = (hash + 1) % vocab_hash_size;
   }
   return -1;
@@ -79,7 +83,7 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   // vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
   // vocab[*vocab_size] = (vocab_word *)malloc(sizeof(vocab_word));
 
-  vocab[*vocab_size].word = (char *)calloc(length, sizeof(char));
+  // vocab[*vocab_size].word = (char *)calloc(length, sizeof(char));
 
 
 
@@ -144,7 +148,10 @@ void reduce_vocab(global_setting *gs) {
 
   for (a = 0; a < vocab_size; a++) if (vocab[a].cn > min_reduce) {
     vocab[b].cn = vocab[a].cn;
-    vocab[b].word = vocab[a].word;
+    for (int c = 0; c < MAX_STRING; c++) {
+      vocab[b].word[c] = vocab[a].word[c]; // Copy the word
+    }
+    // vocab[b].word = vocab[a].word;
     b++;
   } else free(vocab[a].word);
   vocab_size = b;
@@ -183,8 +190,11 @@ void create_vocab_from_train_file(global_setting *gs) {
 
   while(1) {
     read_word(word, f_in);
-    // printf("[INFO] Read word: %s\n", word);
     if (feof(f_in)) break;
+    if (strncmp(word, "__", 2) == 0) {
+      // Skip class names
+      continue;
+    }
     train_words++;
     // printf("[INFO] Current word count: %lld\n", train_words);
 
@@ -257,11 +267,11 @@ void read_vocab(global_setting *gs) {
   fclose(fin);
 }
 
-void create_binary_tree(global_setting *gs) {
-  long long a, b, i, min1i, min2i, pos1, pos2, point[MAX_CODE_LENGTH];
-  char code[MAX_CODE_LENGTH];
-  long long vocab_size = gs->vocab_size;
-  vocab_word *vocab = gs->vocab;
+void create_binary_tree(vocab_word *_vocab, long long size) {
+  long long a, b, i, min1i, min2i, pos1, pos2, point[VOCAB_MAX_CODE_LENGTH];
+  char code[VOCAB_MAX_CODE_LENGTH];
+  long long vocab_size = size;
+  vocab_word *vocab = _vocab;
   printf("[INFO] Allocate memory space for temporar values...\n");
   long long *count = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
   long long *binary = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));

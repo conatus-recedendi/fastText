@@ -7,118 +7,8 @@
 #include <ctype.h>
 #include "config.h"
 #include "vocab.h"
+#include "utils.h"
 
-
-typedef struct {
-  long long id; // thread id
-  global_setting *gs; // global settings
-} thread_args;
-
-int isNewLine(const char *word) {
-  return strcmp(word, "\n") == 0;
-}
-int isClass(const char *word) {
-  return word[0] == '__' && word[strlen(word) - 1] == '__';
-}
-
-int isWord(const char *word) {
-  return !isNewLine(word) && !isClass(word);
-}
-void softmaxf(const float* input, float* output, int size) {
-    float max = input[0];
-    for (int i = 1; i < size; ++i) {
-        if (input[i] > max) {
-            max = input[i];
-        }
-    }
-
-    // expf 계산 + 합 구하기 (overflow 방지 위해 max 빼기)
-    float sum = 0.0f;
-    for (int i = 0; i < size; ++i) {
-        output[i] = expf(input[i] - max);
-        sum += output[i];
-    }
-
-    // 정규화
-    for (int i = 0; i < size; ++i) {
-        output[i] /= sum;
-    }
-}
-
-long count_lines(FILE *fp) {
-    long lines = 0;
-    int c;
-    while ((c = fgetc(fp)) != EOF) {
-        if (c == '\n') lines++;
-    }
-    rewind(fp);
-    return lines;
-}
-
-// 시작 및 끝 오프셋 계산
-void compute_thread_offsets(FILE *fp, int num_threads, long total_lines, long *start_offsets, long *end_offsets, long *total_offset) {
-    char line[MAX_LINE_LEN];
-    long current_line = 0;
-    int current_thread = 0;
-
-
-    long *start_lines = malloc(sizeof(long) * (num_threads + 1));
-    if (!start_lines) {
-        perror("malloc");
-        exit(1);
-    }
-
-    for (int i = 0; i <= num_threads; i++) {
-        start_lines[i] = total_lines * i / num_threads;
-    }
-
-    // 첫 스레드 시작은 항상 0
-    rewind(fp);
-    start_offsets[0] = 0;
-
-    while (fgets(line, sizeof(line), fp)) {
-        current_line++;
-
-        // 다음 스레드의 시작 라인에 도달하면 offset 저장
-        if (current_thread + 1 <= num_threads &&
-            current_line == start_lines[current_thread + 1]) {
-            end_offsets[current_thread] = ftell(fp);
-            start_offsets[current_thread + 1] = ftell(fp);
-            current_thread++;
-        }
-    }
-
-    // 마지막 스레드의 끝 오프셋은 파일 끝
-    fseek(fp, 0, SEEK_END);
-    end_offsets[num_threads - 1] = ftell(fp);
-
-    free(start_lines);
-    printf("[INFO] Computed thread offsets:\n");
-    for (int i = 0; i < num_threads; i++) {
-        printf("Thread %d: Start: %ld, End: %ld\n", i, start_offsets[i], end_offsets[i]);
-    }
-    *total_offset = end_offsets[num_threads - 1] - start_offsets[0];
-}
-
-
-/**
-  * get arg_pos
-  * idx = get_arg_pos("--size"), argc, argv)
- */
-int get_arg_pos(char *str, int argc, char **argv) {
-  int i = 0;
-
-  for (i = 1; i < argc; i++) {
-    if (!strcmp(str, argv[i])) {
-      if (i == argc - 1) {
-        printf("Argument missing for %s\n", str);
-        exit(1);
-      }
-      return i;
-    }
-  }
-  return -1;
-}
 
 void initialize_network(global_setting *gs) {
   // printf("[INFO] Initializing network... %lld %lld \n", gs->vocab_size, gs->layer1_size);
@@ -143,9 +33,7 @@ void initialize_network(global_setting *gs) {
   }
 
 
-  
-
-  // printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
+  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
   posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->class_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
@@ -165,16 +53,20 @@ void initialize_network(global_setting *gs) {
   for (long long i = 0; i < gs->class_size; i++) {
     gs->output[i] = 0.0f; // Initialize output weights to zero
   }
+
   // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
 
   printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
-  create_binary_tree(gs);
+  // TODO: if classifation, gs->labels should be passed
+  create_binary_tree(gs->vocab, gs->vocab_size);
+  // create_binary_tree(gs->labels, gs->class_size);
   return ;
 }
 
 void save_vector(char *output_file, global_setting *gs) {
   // Implement the logic to save the vector representations
   FILE *fo = fopen(output_file, "w");
+  fprintf(fo, "%lld %lld\n", gs->vocab_size, gs->layer1_size);
   for (long long i = 0; i < gs->vocab_size; i++) {
     fprintf(fo, "%s ", gs->vocab[i].word);
     for (long long j = 0; j < gs->layer1_size; j++) {
@@ -192,6 +84,35 @@ void save_model(char *output_file, global_setting *gs) {
     exit(1);
   }
   // fwrite(gs, sizeof(global_setting), 1, fo);
+
+  // gs를 binary 형태로 전부 저장. 언제든지 불러올 수 있는 형태로.
+  printf("[INFO] Saving model to %s\n", output_file);
+  fwrite(gs, sizeof(global_setting), 1, fo);
+  printf("[INFO] Global settings saved to %s\n", output_file);
+  // Save the layer1, layer2, and output weights
+  fwrite(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fo);
+  printf("[INFO] Vocabulary hash table saved to %s %lld, %lld\n", output_file, gs->vocab_size, sizeof(vocab_word));
+  fwrite(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fo);
+  // fwrite(gs->labels, sizeof(vocab_word), gs->class_size, fo);
+  printf("[INFO] Vocabulary and labels saved to %s\n", output_file);
+  fwrite(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fo);
+  // for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
+  //   printf("[INFO] Layer1[%lld]: %f\n", i, gs->layer1[i]);
+  // }
+  printf("[INFO] Layer1 weights saved to %s\n", output_file);
+  fwrite(gs->layer2, sizeof(float), gs->layer1_size * gs->class_size, fo);
+  printf("[INFO] Layer2 weights saved to %s\n", output_file);
+  fwrite(gs->output, sizeof(float), gs->class_size, fo);
+  printf("[INFO] Layer weights saved to %s\n", output_file);
+  fwrite(gs->start_offsets, sizeof(long long), gs->num_threads + 1, fo);
+  fwrite(gs->end_offsets, sizeof(long long), gs->num_threads, fo);
+  printf("[INFO] Thread offsets saved to %s\n", output_file);
+  fwrite(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fo);
+  fwrite(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fo);
+  printf("[INFO] Thread offsets saved to %s\n", output_file);
+  // Save the vocabulary
+  // Save the vocabulary hash table
+
   fclose(fo);
 }
 
@@ -241,143 +162,184 @@ void *train_thread(thread_args *args) {
 
     long long temp = 0;
     long long i = gs->start_offsets[thread_id];
-    while (i <= gs->end_offsets[thread_id]) {
-      // long long word_length = read_word(word, fi);
-      long long word_length =3;
-      word_count++;
-      i += word_length - 1; // Adjust for the length of the word read
-      gs->word_count_actual++;
-      gs->offset_actual += word_length;
-      temp += word_length;
+    // while (1) {
+    //   fgets(word, MAX_STRING, fi);
+      
+    // }
+    long long line = 0;
+    long long max_line = gs->total_line_by_thread[thread_id];
 
-      gs->learning_rate_decay = gs->learning_rate * (1 - ((float)gs->word_count_actual / (gs->total_offset * gs->iter)));
+    float *neu1 = (float *)malloc(gs->layer1_size * sizeof(float));
+    float *neu2 = (float *)malloc(gs->class_size * sizeof(float));
+    float *neu1err = (float *)malloc(gs->layer1_size * sizeof(float));
+    float *neu2err = (float *)malloc(gs->class_size * sizeof(float));
 
-      if (gs->debug_mode > 1 && temp % 100000 >= 0) {
+
+    while (fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
+      line++;
+      gs->total_learned_lines++;
+      // word를 label, words로 분리.
+      // 줄 끝 개행 문자 제거
+      sen[strcspn(sen, "\n")] = 0;
+
+      // 단어 분리
+      char *token = strtok(sen, " ");
+      long long sentence_length = 0;
+      memset(labels, 0, sizeof(labels)); // Initialize labels to 0
+      memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
+      while (token != NULL) {
+          if (strncmp(token, "__", 2) == 0) {
+              // 라벨인 경우 __label_1__
+              long long label_index = atoi(token + 9) - 1;
+              if (label_index != -1 && label_index < MAX_LABELS) {
+                  labels[label_index] = 1;
+              }
+          } else {
+              // 일반 단어인 경우
+              long long word_index = search_vocab(token, gs);
+              if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+                  words[sentence_length++] = word_index;
+              } else {
+                  words[sentence_length++] = -1; // unknown word
+              }
+          }
+          token = strtok(NULL, " ");
+      }
+      gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
+      // gs->train_words += word_count(word);
+      gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
+      if (gs->debug_mode > 1) {
         temp = 0;
         clock_t now = clock();
-        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , %d, %d",
+        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , loss: %f",
               13, gs->learning_rate_decay,
-              gs->offset_actual / (double)(gs->iter * gs->total_offset) * 100,
-              gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->word_count_actual, i);
+              gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
+              gs->train_words / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->loss / gs->total_learned_lines);
+
         fflush(stdout);
       }
-
+      // learning by line
+      // logging by N lines
       // if (isNewLine(word)) {
-      //   // Forward 
+      //   // Forward
       //   if (sentence_length > 0) {
       //     // Process the sentence
-      //     float *layer1_avg = (float *)calloc(gs->layer1_size, sizeof(float));
-
-      //     for (int j = 0; j < sentence_length; j++) {
-      //       long long word_index = words[j];
-      //       // Update the word vectors
-      //       for (long long k = 0; k < gs->layer1_size; k++) {
-      //         // gs->layer1[word_index * gs->layer1_size + k] += learning_rate * (1 - words[j]);
-      //         layer1_avg[k] += gs->layer1[word_index * gs->layer1_size + k];
-      //         // forward and backward pass logic
-      //       }
-      //     }
-      //     for (long long j = 0; j < gs->layer1_size; j++) {
-      //       layer1_avg[j] /= sentence_length;
-      //     }
-
-      //     // Dot product with layer1_avg and layer2
-      //     for (long long j = 0; j < gs->class_size; j++) {
-      //       gs->output[j] = 0;
-      //       for (long long k = 0; k < gs->layer1_size; k++) {
-      //         gs->output[j] += layer1_avg[k] * gs->layer2[k * gs->class_size + j];
-      //       }
-      //     }
-
-      //     softmaxf(gs->output, gs->output, gs->class_size);  
-      //     float loss = 0.0;
-      //     for (long long j = 0; j < gs->class_size; j++)
-      //     {
-      //       if (labels[j] == 1) {
-      //         loss -= logf(gs->output[j] + 1e-10); // Add small value to avoid log(0)
-      //       }
-      //     }
-      //     loss /= sentence_length;
-          
-      //     // back propagation logic
-      //     // Allocate gradients
-      //     float *dL_dh = (float *)calloc(gs->layer1_size, sizeof(float)); // dL/dh
-      //     float learning_rate = 0.01f;  // 예시용
-
-      //     // (1) dL/dz = y_hat - y (output - labels)
-      //     for (long long j = 0; j < gs->class_size; j++) {
-      //         gs->output[j] -= labels[j];  // output[j] = y_hat_j - y_j
-      //     }
-
-      //     // (2) Update layer2 weights: W = W - lr * outer(h, dL/dz)
-      //     for (long long j = 0; j < gs->class_size; j++) {
-      //         for (long long k = 0; k < gs->layer1_size; k++) {
-      //             float grad = layer1_avg[k] * gs->output[j];  // outer product
-      //             gs->layer2[k * gs->class_size + j] -= gs->learning_rate_decay * grad;
-      //             dL_dh[k] += gs->layer2[k * gs->class_size + j] * gs->output[j]; // accumulate dL/dh
-      //         }
-      //     }
-
-      //     // (3) Backprop to word embeddings (A): average ⇒ distribute
-      //     for (int j = 0; j < sentence_length; j++) {
-      //         long long word_index = words[j];
-      //         for (long long k = 0; k < gs->layer1_size; k++) {
-      //             float grad = dL_dh[k] / sentence_length;  // distribute average
-      //             gs->layer1[word_index * gs->layer1_size + k] -= gs->learning_rate_decay * grad;
-      //         }
-      //     }
-
-      //     free(dL_dh);
-      //     free(layer1_avg);
-
-      //   }
-      //   sentence_length = 0; // Reset for next sentence
-      //   for (int j = 0; j < MAX_LABELS; j++) {
-      //     labels[j] = 0; // Reset labels
-      //   }
-      //   for (int j = 0; j < MAX_WORDS_PER_SENTENCE; j++) {
-      //     words[j] = -1; // Reset words
-      //   }
-      //   continue;
-      // }
-
-      // if (isClass(word)) {
-      //   // it is class
-      //   long long word_index = search_vocab(word, gs);
-      //   if (word_index != -1) {
-      //     labels[word_index] = 1;
+      //         total / (double)(gs->iter * gs->total_offset) * 100,
+      //         gs->word_count_actual / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads, gs->word_count_actual, i);
+      //   fflush(stdout);
       //   }
       // }
-      // }
+      // learning by line
+      // logging by N lines
+      long long golden_label = 0;
 
-      // if (isClass(word)) {
-      //   // it is class
-      //   long long word_index = search_vocab(word, gs);
-      //   if (word_index != -1) {
-      //     labels[word_index] = 1;
-      //   }
-      // }
 
-      // if (isWord(word)) {
-      //   // it is word
-      //   long long word_index = search_vocab(word, gs);
-      //   if (word_index != -1) {
-      //     words[sentence_length] = word_index;
-      //     sentence_length++;
-      //   } else {
-      //     // Handle unknown word
-      //     words[sentence_length] = -1; // or some other logic
-      //   }
-      // }
-    }
-  
+      
+      if (sentence_length > 0) {
 
+        // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
+        memset(neu1, 0, gs->layer1_size * sizeof(float));
+        memset(neu2, 0, gs->class_size * sizeof(float));
+        memset(neu1err, 0, gs->layer1_size * sizeof(float));
+        memset(neu2err, 0, gs->class_size * sizeof(float));
+
+        
+        for (long long j = 0; j < sentence_length; j++) {
+          if (words[j] != -1) {
+            for (long long k = 0; k < gs->layer1_size; k++) {
+              neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
+            }
+          }
+        }
+
+        for (long long j = 0; j < gs->layer1_size; j++) {
+          //neu1: 1 x h
+          neu1[j] /= sentence_length; // 평균을 구함
+        }
+
+        // neu1 dot layer2
+        for (long long j = 0; j < gs->class_size; j++) {
+          // neu2: 1 x c
+          neu2[j] = 0.0f;
+          for (long long k = 0; k < gs->layer1_size; k++) {
+            neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+          }
+        }
+
+        
+        
+        // 
+        float max = neu2[0];
+        for (long long j = 1; j < gs->class_size; j++) {
+          if (neu2[j] > max) max = neu2[j];
+          // printf("%f ", neu2[j]);
+        }
+        // printf("\n");
+        // softmax
+        // softmax: 기존과 동일
+        for (long long j = 0; j < gs->class_size; j++)
+            neu2[j] = expf(neu2[j] - max);
+
+        float sum = 0.0f;
+        for (long long j = 0; j < gs->class_size; j++)
+            sum += neu2[j];
+
+        for (long long j = 0; j < gs->class_size; j++)
+            neu2[j] /= sum;
+      
+        float loss = 0.0f;
+      
+        for (int i = 0; i < MAX_LABELS; i++) {
+          if (labels[i] == 1) {
+            golden_label = i;
+          } else {
+            continue ;
+          }
+
+            float g = 0.0f;
+            // multi answer 
+            for (long long j = 0; j < gs->class_size; j++) {
+              g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
+              if (g > 6) g = 6;
+              if (g < -6) g = -6;
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                neu1err[k] += g * gs->layer2[k * gs->class_size + j]; // to neu1
+                gs->layer2[k * gs->class_size + j] += g * neu1[k]; // update layer2
+              } 
+            }
+            
+            gs->loss += -logf(neu2[golden_label] + 1e-10f);
+            // gs->loss += 1;
+            // printf("%f ",/ -logf(neu2[golden_label] + 1e-10f));
+
+
+            // Update neu1err
+            for (long long j = 0; j < sentence_length; j++) {
+              if (words[j] != -1) {
+                for (long long k = 0; k < gs->layer1_size; k++) {
+                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
+                }
+              }
+            }
+          }
+          // if (loss > 0)
+          //   gs->loss += loss;
+      }
+        // Reset sentence length and position for the next sentence
+        sentence_length = 0;
+        sentence_position = 0;
+        sentence_start = 0;
+        sentence_end = 0;   
+        continue;
+      }
+  }
   fclose(fi);
-
+  
   // Implement the saving output here
   pthread_exit(NULL);
+
 }
-}
+
 
 
 
@@ -401,11 +363,24 @@ void train_model(global_setting *gs) {
   }
 
   gs->total_lines = count_lines(fp);
-  gs->total_offset = 0;
-  gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
+  // lines을 thread 개수만큼 분리
+  // 각 데이터의 start offset, end offset 저장. 각 thread에서 실행할 라인 수 계산
+  // 스레드에서는 start offset으로 fseek하고, 각 thread에서 실행할 데이터만큼 학습
+  
+  // long long total_line;
+  gs->start_offsets= malloc(sizeof(long long) * gs->num_threads);
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
+  gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
+  gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
 
-  compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets, &gs->total_offset);
+  //   // gs->total_offset = 0;
+  // gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
+  // gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
+  // gs->offset_actual = malloc(sizeof(long long) * gs->num_threads);
+
+
+  compute_thread_offsets(fp, gs);
+  // compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets, &gs->total_offset, gs->offset_actual, gs->data_lines);
 
 
   // printf("[INFO] read vocabulary...\n");
@@ -437,9 +412,13 @@ void train_model(global_setting *gs) {
 
   // TODO: make unigram table
 
-  gs->start = clock();
+  for (int i = 0; i < gs->num_threads; i++) {
+    // print start_offset, end offset, strat_line_by_thread, total_line_by_thread
+    printf("[INFO] Thread %d: Start Offset: %lld, End Offset: %lld, Start Line: %lld, Total Lines: %lld\n",
+           i, gs->start_offsets[i], gs->end_offsets[i], gs->start_line_by_thread[i], gs->total_line_by_thread[i]);
+  }
 
-  // printf("[INFO] Starting training threads...\n");
+  gs->start = clock();
 
   for (int i = 0; i < gs->num_threads; i++) {
     // Create threads for training
@@ -454,6 +433,7 @@ void train_model(global_setting *gs) {
     // Wait for threads to finish
     pthread_join(pt[i], NULL);
   }
+  printf("[INFO] All training threads finished.\n");
   free(pt);
 
 
@@ -461,7 +441,10 @@ void train_model(global_setting *gs) {
   // 1. embedding 논문
   // 2. classification 논문
 
+  printf("[INFO] Saving model...\n");
+
   save_model(output_file, gs);
+  printf("[INFO] Model saved to %s\n", output_file);
   save_vector(save_vocab_file , gs);
   // foramt
   // __label1__ __label2__ ... input
@@ -515,7 +498,10 @@ int main(int argc, char **argv) {
     .layer1 = NULL, // Layer 1 weights
     .layer2 = NULL, // Layer 2 weights
     .output = NULL, // Output weights
-    .offset_actual = 0, // Actual offset for training
+    .total_lines = 0, // Total lines in training file
+    .start_offsets = NULL, // Start offsets for each thread
+    .end_offsets = NULL, // End offsets for each thread
+    .start_line_by_thread = NULL, // Actual offset for each thread
   };
   printf("[INFO] FastText training started.\n");
 
@@ -536,6 +522,7 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-iter", argc, argv)) > 0) gs.iter = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-min-count", argc, argv)) > 0) gs.min_count = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-classes", argc, argv)) > 0) gs.classes = atoi(argv[i + 1]);
+  if ((i = get_arg_pos((char *)"-bucket", argc, argv)) > 0) gs.vocab_hash_size = atoi(argv[i + 1]);
 
   // printf("[INFO] Argument parsing completed.\n");
   // bag of tricks for efficient text classification additional setting
@@ -543,16 +530,10 @@ int main(int argc, char **argv) {
   // wordNgrams
   // bucket
   gs.vocab = (vocab_word *)calloc(gs.vocab_max_size, sizeof(vocab_word));
-  for (int j = 0; j < gs.vocab_max_size; j++) {
-    gs.vocab[j].word = (char *)calloc(MAX_STRING, sizeof(char));
-    gs.vocab[j].code = (char *)calloc(MAX_CODE_LENGTH, sizeof(char));
-    gs.vocab[j].point = (int *)calloc(MAX_CODE_LENGTH + 1, sizeof(int));
-  }
   gs.vocab_hash = (int *)calloc(gs.vocab_hash_size, sizeof(int));
   for (int j = 0; j < gs.vocab_hash_size; j++) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
   }
-  gs.offset_actual = 0; // Initialize offset actual
 
   train_model(&gs);
 
@@ -560,3 +541,4 @@ int main(int argc, char **argv) {
 
   return 0;
 }
+  
