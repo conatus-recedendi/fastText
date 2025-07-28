@@ -109,14 +109,14 @@ do
     -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
     -min-count 1 -bucket 10000000 -iter 5 -thread 20"
 
-  log_time ${LOG_FILE} bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
+  log_time ${LOG_FILE} ../rewrite/bin/fastText  -train "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}.bin" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
     -min-count 1 -bucket 10000000 -iter 5 -thread 20 -save-vocab "${RESULTDIR}/${DATASET[i]}.vec"
 
   # log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
   #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
     # -min-count 1 -bucket 10000000 -iter 5 -thread 20 > /dev/null
-  log_time ${LOG_FILE} bin/test -load-model "${RESULTDIR}/${DATASET[i]}.bin" -test-file "${DATADIR}/${DATASET[i]}.test" -topk 1 -answer-threshold 0.0
+  log_time ${LOG_FILE} ../rewrite/bin/test -load-model "${RESULTDIR}/${DATASET[i]}.bin" -test-file "${DATADIR}/${DATASET[i]}.test" -topk 1 -answer-threshold 0.0
 done
 
 
