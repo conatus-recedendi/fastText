@@ -16,5 +16,6 @@ void softmaxf(const float* input, float* output, int size);
 long count_lines(FILE *fp);
 void compute_thread_offsets(FILE *fp, global_setting *gs);    
 int get_arg_pos(char *str, int argc, char **argv);
+long long count_lines_until_offset(const char *filename, long long offset);
 
 #endif

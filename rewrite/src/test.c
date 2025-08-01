@@ -90,12 +90,16 @@ void save_model(char *output_file, global_setting *gs) {
 void load_model(char *load_model_file, global_setting *gs) {
   // Implement the logic to load the model
   FILE *fi = fopen(load_model_file, "rb");
+  char read_vec_file[MAX_STRING];
+  strncpy(read_vec_file, gs->read_vec_file, MAX_STRING);
+
   if (fi == NULL) {
     printf("Error opening file %s for reading\n", load_model_file);
     exit(1);  
   }
   printf("[INFO] Loading model from file: %s\n", load_model_file);
   fread(gs, sizeof(global_setting), 1, fi);
+  printf("gs->ngrma_size: %lld\n", gs->ngram);
 
   printf("[INFO] Vocabhash table size: %lld\n", gs->vocab_hash_size);
   gs->vocab_hash = (int *)calloc(gs->vocab_hash_size, sizeof(int));
@@ -104,8 +108,6 @@ void load_model(char *load_model_file, global_setting *gs) {
     fprintf(stderr, "Memory allocation failed for vocab_hash\n");
     exit(1);
   }
-
-
 
 
   gs->vocab = (vocab_word *)calloc(gs->vocab_max_size, sizeof(vocab_word));
@@ -124,6 +126,7 @@ void load_model(char *load_model_file, global_setting *gs) {
     fprintf(stderr, "Memory allocation failed for labels\n");
     exit(1);
   }
+  printf("[INFO] Vocab and labels allocated with size: %lld, %lld\n", gs->vocab_max_size, gs->label_max_size);
 
 
 
@@ -132,13 +135,21 @@ void load_model(char *load_model_file, global_setting *gs) {
     // gs->vocab[j].code = (char *)calloc(MAX_CODE_LENGTH, sizeof(char));
     // gs->vocab[j].point = (int *)calloc(MAX_CODE_LENGTH + 1, sizeof(int));
   }
-
+// 
   // posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
   fread(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fi);
-  fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi);
   fread(gs->label_hash, sizeof(int), gs->label_hash_size, fi);
+  fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi);
   fread(gs->labels, sizeof(vocab_word), gs->label_max_size, fi);
-  
+
+
+  // for (int i=0;i<100; i++)  {
+  //   // printf vocab
+  //   printf("[DEBUG] vocab[%d]: , cn: %lld\n", i, gs->vocab[i].cn);
+  // }
+  // printf("[INFO] Vocabulary and labels loaded from %lld\n", gs->label_hash[0]);
+  // printf("[INFO] Vocabulary and labels loaded from %lld\n", gs->label_hash[427187]);
+
   printf("[INFO] Vocabulary loaded from %s\n", load_model_file);
   
   
@@ -184,6 +195,51 @@ void load_model(char *load_model_file, global_setting *gs) {
   fread(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
   fread(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
   fclose(fi);
+
+
+  if (read_vec_file[0]) {
+    // Load the vector representations from the read_vec_file
+    FILE *ff = fopen(read_vec_file, "r");
+    // load_vector(gs);
+    printf("[INFO] Loading vector representations from %s\n", read_vec_file);
+    char line[MAX_WORDS_PER_SENTENCE];
+    int line_num = 0;
+
+    while (fgets(line, MAX_WORDS_PER_SENTENCE, ff)) {
+      // printf("[DEBUG] Reading line %d: %s", line_num, line);
+        line_num++;
+
+        if (line_num == 1) continue;  // 첫 줄은 스킵
+
+        // 줄 파싱 시작
+        char *saveptr;
+        char *token = strtok_r(line, "\t \n", &saveptr);  // 첫 단어
+        if (!token) continue;
+
+        int index = search_vocab(token, gs);
+        if (index < 0 || index >= gs->vocab_size) {
+          // fprintf(stderr, "%d", get_word_hash(token, gs));
+            fprintf(stderr, "[WARN] Word '%s' not found in vocab (line %d), %d\n", token, line_num, index);
+            continue;
+        }
+
+        // float 파싱
+        for (int i = 0; i < gs->layer1_size; i++) {
+            token = strtok_r(NULL, " \t\n", &saveptr);
+            if (!token) {
+                fprintf(stderr, "[ERROR] Not enough floats for word '%s' at line %d\n", token, line_num);
+                break;
+            }
+            gs->layer1[index * gs->layer1_size + i] = strtof(token, NULL);
+            // printf("[DEBUG] Layer1[%d][%d]: %f\n", index, i, gs->layer1[index * gs->layer1_size + i]);
+        }
+    }
+
+    fclose(ff);
+  } else {
+    printf("[INFO] No read_vec_file specified, skipping vector loading.\n");
+  }
+  printf("Done loading model from %s\n", load_model_file);
 }
 
 
@@ -219,10 +275,14 @@ void test_thread(global_setting *gs) {
 
   // char word[MAX_SENTENCE_LENGTH];
   char sen[MAX_SENTENCE_LENGTH];
+      char word[MAX_STRING];
+    char prev_word[MAX_STRING]; // only support for ngram=2
+    char concat_word[MAX_STRING];
   // long long labels[MAX_LABELS]; // [0, 3, -1, -1, -1 ...]
   long long *labels = (long long *)malloc(gs->class_size * sizeof(long long));
   // long long words[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
   long long *words = (long long *)malloc(MAX_WORDS_PER_SENTENCE * sizeof(long long));
+  long long ngram_words[MAX_WORDS_PER_SENTENCE];
 
 
   long long temp = 0;
@@ -246,10 +306,22 @@ void test_thread(global_setting *gs) {
 
   float *neu1 = (float *)malloc(gs->layer1_size * sizeof(float));
   float *neu2 = (float *)malloc(gs->class_size * sizeof(float));
+  long long avg_ngram =0;
+  long long avg_failure_ngram = 0;
+  long long avg_word =0;
+  
 
-
-  while (fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
+  while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
     line++;
+      if (line % 1000 == 0) {
+        // printf("[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld\n", avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000);
+        avg_ngram = 0;
+        avg_failure_ngram = 0;
+        avg_word = 0;
+      }
+
+
+    // printf("")
     // gs->total_learned_lines++;
     // word를 label, words로 분리.
     // 줄 끝 개행 문자 제거
@@ -258,33 +330,90 @@ void test_thread(global_setting *gs) {
     // 단어 분리
     char *token = strtok(sen, " ");
     long long sentence_length = 0;
+    long long ngram_sentences_length = 0;
     long long label_length = 0;
     memset(labels, -1,  sizeof(labels)); // Initialize labels to 0
     memset(words, -1,  sizeof(words)); // Initialize words to -1 (unknown word)
+    memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+
     while (token != NULL) {
+      if (strlen(token) > MAX_STRING) {
+        token = strtok(NULL, " ");
+        continue; // Skip tokens that are too long
+      }
       // printf("%s \n", token);
-      if (strncmp(token, "__", 2) == 0) {
+      if (strncmp(token, "__label__", 9) == 0) {
+
+          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram/ Reset previous word hash for ngram;
         // 라벨인 경우 __label_1__
-        // printf("[INFO] Found label: %s\n", token);
-        long long label_index = search_label(token, gs);
+          long long label_index = search_label(token, gs);
+
+
         // printf("[INFO] Found label: %s, index: %lld\n", token, label_index);
-              if (label_index != -1 && label_index < MAX_LABELS) {
-                  labels[label_length++] = label_index;  // Set the label index to 1
-              } else {
-                labels[label_length++] = -1; // unknown label
-              }
+          if (label_index != -1 && label_index < MAX_LABELS) {
+              labels[label_length++] = label_index;  // Set the label index to 1
+          } else {
+            // labels[label_length++] = -1; // unknown label
+          
+          }
+        // printf("[DEBUG] Label Length: %lld, Labels: ", label_length);
         } else {
+
             // 일반 단어인 경우
+            long long word_hash = get_word_hash(token, gs);
             long long word_index = search_vocab(token, gs);
+            // printf("[DEBUG] Token: %s, Word Hash: %lld, Word Index: %lld\n", token, word_hash, word_index);
             if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
                 words[sentence_length++] = word_index;
-            } else {
-                words[sentence_length++] = -1; // unknown word
-            }
+                avg_word++;
+                if (gs->ngram > 1) {
 
+                  if (prev_word[0] == 0) {
+                    strncpy(prev_word, token, sizeof(prev_word) - 1);
+                  } else {
+                    memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
+                    // strcpy_s(concat_word, MAX_STRING, prev_word);
+                    
+                    // strcat_s(concat_word, MAX_STRING, "-");
+                    // memcpy(concat_word, prev_word, MAX_STRING);
+
+                    strncpy(concat_word, prev_word, strlen(prev_word));
+                    concat_word[strlen(prev_word)] = 0; // Add hyphen
+
+                    if(strlen(concat_word) < MAX_STRING) {
+                      memcpy(concat_word + strlen(prev_word), "-", 1);
+                      concat_word[strlen(prev_word) + 1] = '\0'; // Ensure null termination
+                      if (strlen(concat_word) + strlen(token) < MAX_STRING) {
+                        // strcat_s(concat_word, MAX_STRING, token);
+                        memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
+                      }
+                      // strcat_s(concat_word, MAX_STRING, token);
+                      // memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
+                      // skip
+                    }
+                    concat_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+                    long long index = search_vocab(concat_word, gs);
+                    if (index == -1) {
+                      // skip
+                      // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
+                      // getchar();
+                      avg_failure_ngram++;
+                    } else {
+                      avg_ngram++;
+                      words[sentence_length++] = index; // ngram word
+                    }
+                  }
+                }
+              } else {
+                  // words[sentence_length++] = -1; // unknown word
+              }
+              memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+              strncpy(prev_word, token, strlen(token)); // Update previous word
         }
         token = strtok(NULL, " ");
+        // printf("[DEBUG] Token: %s, Sentence Length: %lld, Label Length: %lld\n", token, sentence_length, label_length);
     }
+    memcpy(prev_word, "", 1); // Reset previous word for next sentence
     // exit(1);
     gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
     // gs->train_words += word_count(word);
@@ -317,9 +446,15 @@ void test_thread(global_setting *gs) {
     long long golden_label = -1;
 
 
-    if (sentence_length > 0) {
-
-      // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
+    if (sentence_length > 0 && label_length > 0) {
+      // for (long long j = 0; j < ngram_sentences_length; j++) {
+      //   // printf("ngram_words[%lld]: %lld ", j, ngram_words[j]);
+      //   if (j + sentence_length > MAX_SENTENCE_LENGTH) {
+      //     break ;
+      //   }
+      //   words[sentence_length++] = ngram_words[j];
+      // }
+    // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
       memset(neu1, 0, gs->layer1_size * sizeof(float));
       memset(neu2, 0, gs->class_size * sizeof(float));
       // memset(neu1err, 0, gs->layer1_size * sizeof(float));
@@ -457,6 +592,7 @@ void test_thread(global_setting *gs) {
           }
         }
       }
+
       long long local_fp_cnt = predicted_length - local_tp_cnt;
       long long local_fn_cnt = gold_length - local_tp_cnt;
       long long local_tn_cnt = gs->class_size - (local_tp_cnt + local_fp_cnt + local_fn_cnt);
@@ -598,21 +734,38 @@ int main(int argc, char **argv) {
     .end_offsets = NULL, // End offsets for each thread
     .start_line_by_thread = NULL, // Actual offset for each thread
     .top_k = 1, // Default top K for classification
+    .ngram = 1,
+    .bucket_size = 0,
   };
   printf("[INFO] FastText test started.\n");
 
-    if ((i = get_arg_pos((char *)"-load-model", argc, argv)) > 0) {
+  if ((i = get_arg_pos((char *)"-load-model", argc, argv)) > 0) {
     strcpy(gs.load_model_file, argv[i + 1]);
     if (gs.load_model_file[0] == 0) {
       fprintf(stderr, "No model file specified for loading. Exiting.\n");
-      return 1;
     }
+    printf("[INFO] Model file specified for loading: %s\n", gs.load_model_file);
   } else {
     fprintf(stderr, "No model file specified for loading. Exiting.\n");
-    return 1;
+  }
+
+  // /read_vec_file
+  if ((i = get_arg_pos((char *)"-read-vec-file", argc, argv)) > 0) {
+    // gs.read_vec_file = argv[i + 1];
+    strcpy(gs.read_vec_file, argv[i + 1]);
+    if (gs.read_vec_file[0] == 0) {
+      fprintf(stderr, "No read vector file specified. Exiting.\n");
+      return 1;
+    }
+    printf("[INFO] Read vector file specified: %s\n", gs.read_vec_file);
+  } else {
+    gs.read_vec_file[0] = 0; // No read vector file specified
+    // gs.read_vec_file = NULL; // No read vector file specified
   }
   
   load_model(gs.load_model_file, &gs);
+    // Save the model to file
+
 
   if ((i = get_arg_pos((char *)"-size", argc, argv)) > 0) gs.layer1_size = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-train", argc, argv)) > 0) strcpy(gs.train_file, argv[i + 1]);
@@ -688,6 +841,7 @@ int main(int argc, char **argv) {
   printf("vocab_size: %lld\n", gs.vocab_size);
   printf("vocab_max_size: %lld\n", gs.vocab_max_size);
   printf("test_file: %s\n", gs.test_file);
+  printf("ngram: %d\n", gs.ngram);
 
   test_model(&gs);
 

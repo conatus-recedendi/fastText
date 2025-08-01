@@ -6,7 +6,7 @@ BIN_DIR     := bin
 
 # 컴파일러 설정
 CC      := gcc
-CFLAGS  := -O3 -march=native -Wall -funroll-loops -Wno-unused-result -lm -pthread
+CFLAGS  := -O3 -march=native -Wall -funroll-loops -Wno-unused-result -lm -pthread -g
 INC     := -I$(INCLUDE_DIR)
 
 # 공통 소스 및 오브젝트 (⚠️ 이걸 먼저 정의)
@@ -46,3 +46,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
+
+re:
+	$(MAKE) clean
+	$(MAKE) all

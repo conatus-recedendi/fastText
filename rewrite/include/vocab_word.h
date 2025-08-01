@@ -2,7 +2,7 @@
 #ifndef H_VOCAB_WORD_H
 #define H_VOCAB_WORD_H
 
-  #define VOCAB_MAX_STRING 100
+  #define VOCAB_MAX_STRING 400
   #define VOCAB_MAX_CODE_LENGTH 40
 typedef struct {
   long long cn; // Count of word occurrences

@@ -119,3 +119,24 @@ int get_arg_pos(char *str, int argc, char **argv) {
   }
   return -1;
 }
+long long count_lines_until_offset(const char *filename, long long offset) {
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+        perror("Error opening file");
+        return -1;
+    }
+
+    long long line_count = 0;
+    long long pos = 0;
+    int c;
+
+    while (pos < offset && (c = fgetc(fp)) != EOF) {
+        pos++;
+        if (c == '\n') {
+            line_count++;
+        }
+    }
+
+    fclose(fp);
+    return line_count;
+}

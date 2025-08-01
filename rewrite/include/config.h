@@ -3,13 +3,13 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define MAX_STRING 100
+#define MAX_STRING 400
 #define EXP_TABLE_SIZE 1000
 #define MAX_EXP 6
-#define MAX_SENTENCE_LENGTH 50000
-#define MAX_LABELS 300000
-#define MAX_WORDS_PER_SENTENCE 50000
- 
+#define MAX_SENTENCE_LENGTH 16000 // 한줄에 최대  몇개 단어거ㅏ 오느닞
+#define MAX_LABELS 100 // 한 문제에 최대 몇 개의 label이 존재할 수 있는지
+#define MAX_WORDS_PER_SENTENCE 4000 // MAX sentence length랑 동일
+
 #define MAX_LINE_LEN 1000000
 #define SOFTMAX_MIN -64.0f
 
@@ -39,7 +39,10 @@ typedef struct {
   long long train_words; // total number of words in the training file
   long long update_word_count;
   float loss;
-  clock_t start; // start time for tsraining
+  long long ngram;
+  long long bucket_size; // size of the bucket for ngram
+  long long pure_vocab_size;
+  struct timespec start; // start time for tsraining
 
   // for vocab
   int *vocab_hash;
@@ -74,6 +77,9 @@ typedef struct {
   float answer_threshold; // threshold for answer classification
   char test_file[MAX_STRING]; // test file path
   char load_model_file[MAX_STRING]; // model file path .bin
+  char read_vec_file[MAX_STRING]; // vector file path for inference
+  long long min_count_label; // minimum count for labels
+  long long min_count_vocab; // minimum count for vocabulary
 
 } global_setting;
 
