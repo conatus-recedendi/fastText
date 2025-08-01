@@ -352,8 +352,8 @@ void create_vocab_from_train_file(global_setting *gs) {
         // printf("[INFO] Adding label: %s\n", word);
         temp_label = add_label_to_vocab(word, gs);
         // printf("[DEBUG] Added label: %s at index %lld\n", word, temp_label);
-        gs->class_size = temp_label + 1;
-        // printf("[INFO] Added label: %s, index: %lld, class size: %lld\n", gs->labels[temp_label].word, temp_label, gs->class_size);
+        gs->label_size = temp_label + 1;
+        // printf("[INFO] Added label: %s, index: %lld, class size: %lld\n", gs->labels[temp_label].word, temp_label, gs->label_size);
         // 
         // add_label_to_vocab_time = clock() - add_label_to_vocab_time;
         // accum_add_label_to_vocab_time += add_label_to_vocab_time;
@@ -466,6 +466,8 @@ void create_vocab_from_train_file(global_setting *gs) {
   }
   // printf("[INFO] Total create ngram in training file: %lld\n", create_ngram);
   // printf("\n[INFO] Finished reading words from training file.\n");
+  reduce_vocab(gs, gs->min_count_vocab);
+  reduce_label(gs, gs->min_count_label);
   sort_vocab(gs);
   gs->file_size = ftell(f_in);
   fclose(f_in);

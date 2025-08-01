@@ -36,33 +36,33 @@ void initialize_network(global_setting *gs) {
 
 
   printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
-  posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->class_size * sizeof(float));
+  posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->label_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
 
-  size = gs->layer1_size * gs->class_size;
-  for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
+  size = gs->layer1_size * gs->label_size;
+  for (long long i = 0; i < gs->layer1_size * gs->label_size; i++) {
     gs->layer2[i] = ((float)rand() / RAND_MAX * 2 - 1) / size; // Initialize with random values between -1 and 1
   }
-  // printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
-  posix_memalign((void **)&(gs->output), 64, gs->class_size * sizeof(float));
+  // printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->label_size * sizeof(float));
+  posix_memalign((void **)&(gs->output), 64, gs->label_size * sizeof(float));
   if (gs->output == NULL) {
     fprintf(stderr, "Memory allocation failed for output\n");
     exit(1);
   }
 
-  for (long long i = 0; i < gs->class_size; i++) {
+  for (long long i = 0; i < gs->label_size; i++) {
     gs->output[i] = 0.0f; // Initialize output weights to zero
   }
 
-  // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
+  // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
 
-  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
+  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
   // TODO: if classifation, gs->labels should be passed
   // create_binary_tree(gs->vocab, gs->vocab_size);
-  create_binary_tree(gs->labels, gs->class_size);
+  create_binary_tree(gs->labels, gs->label_size);
   return ;
 }
 
@@ -99,7 +99,7 @@ void save_model(char *output_file, global_setting *gs) {
   fwrite(gs->label_hash, sizeof(int), gs->label_hash_size, fo);
   fwrite(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fo);
   fwrite(gs->labels, sizeof(vocab_word), gs->label_max_size, fo);
-  // fwrite(gs->labels, sizeof(vocab_word), gs->class_size, fo);
+  // fwrite(gs->labels, sizeof(vocab_word), gs->label_size, fo);
   // for (int i=0;i<100; i++)  {
   //   // printf vocab
   //   printf("[DEBUG] vocab[%d]: , cn: %lld\n", i, gs->vocab[i].cn);
@@ -111,12 +111,12 @@ void save_model(char *output_file, global_setting *gs) {
   //   printf("[INFO] Layer1[%lld]: %f\n", i, gs->layer1[i]);
   // }
   printf("[INFO] Layer1 weights saved to %s\n", output_file);
-  fwrite(gs->layer2, sizeof(float), gs->layer1_size * gs->class_size, fo);
-  // for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
+  fwrite(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fo);
+  // for (long long i = 0; i < gs->layer1_size * gs->label_size; i++) {
   //   printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
   // }
   printf("[INFO] Layer2 weights saved to %s\n", output_file);
-  fwrite(gs->output, sizeof(float), gs->class_size, fo);
+  fwrite(gs->output, sizeof(float), gs->label_size, fo);
   printf("[INFO] Layer weights saved to %s\n", output_file);
   fwrite(gs->start_offsets, sizeof(long long), gs->num_threads, fo);
   fwrite(gs->end_offsets, sizeof(long long), gs->num_threads, fo);
@@ -175,7 +175,7 @@ void *train_thread(thread_args *args) {
     char concat_word[MAX_STRING];
     long long offset = 0;
     // long long labels[MAX_LABELS]; // [0, 3, -1, -1, -1 ...]
-    long long *labels = malloc(sizeof(long long) * gs->class_size);
+    long long *labels = malloc(sizeof(long long) * gs->label_size);
     if (labels == NULL) {
         fprintf(stderr, "[ERROR] Memory allocation failed for labels\n");
         exit(1);
@@ -197,9 +197,9 @@ void *train_thread(thread_args *args) {
     
 
     float *neu1 = (float *)malloc(gs->layer1_size * sizeof(float));
-    float *neu2 = (float *)malloc(gs->class_size * sizeof(float));
+    float *neu2 = (float *)malloc(gs->label_size * sizeof(float));
     float *neu1err = (float *)malloc(gs->layer1_size * sizeof(float));
-    float *neu2err = (float *)malloc(gs->class_size * sizeof(float));
+    float *neu2err = (float *)malloc(gs->label_size * sizeof(float));
 
     long long avg_ngram = 0;
     long long avg_failure_ngram = 0;
@@ -214,7 +214,7 @@ void *train_thread(thread_args *args) {
 
     // copy of layer1, layer 2
     // float *layer1 = (float *)malloc(gs->vocab_size * gs->layer1_size * sizeof(float));
-    // float *layer2 = (float *)malloc(gs->layer1_size * gs->class_size * sizeof(float));
+    // float *layer2 = (float *)malloc(gs->layer1_size * gs->label_size * sizeof(float));
     // if (layer1 == NULL || layer2 == NULL) {
     //     fprintf(stderr, "[ERROR] Memory allocation failed for layer1 or layer2\n");
     //     exit(1);
@@ -252,7 +252,7 @@ void *train_thread(thread_args *args) {
 
       // copy from gs->layer1 to laeyr1
       // memcpy(layer1, gs->layer1, gs->vocab_size * gs->layer1_size * sizeof(float));
-      // memcpy(layer2, gs->layer2, gs->layer1_size * gs->class_size * sizeof(float));
+      // memcpy(layer2, gs->layer2, gs->layer1_size * gs->label_size * sizeof(float));
       while (token != NULL) {
         if (strlen(token) > MAX_STRING) {
           token = strtok(NULL, " ");
@@ -360,7 +360,7 @@ void *train_thread(thread_args *args) {
       if (sentence_length > 0) {
         // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
         memset(neu1, 0, gs->layer1_size * sizeof(float));
-        memset(neu2, 0, gs->class_size * sizeof(float));
+        memset(neu2, 0, gs->label_size * sizeof(float));
         for (long long j = 0; j <  sentence_length; j++) {
           if (words[j] != -1) {
             for (long long k = 0; k < gs->layer1_size; k++) {
@@ -379,9 +379,9 @@ void *train_thread(thread_args *args) {
           
 
 
-          // for (long long j = 0; j < gs->class_size; j++) {
+          // for (long long j = 0; j < gs->label_size; j++) {
           //   for (long long k = 0; k < gs->layer1_size; k++) {
-          //     neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+          //     neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
           //   }
           // }
           // Hierarchical softmax
@@ -400,17 +400,17 @@ void *train_thread(thread_args *args) {
               
               float f = 0.0f;
               // layer1: vocab * hidden
-              // layer2: hidden * class_size
+              // layer2: hidden * label_size
               // neu1: 1 * hidden
               // neu1err: 1 * hidden
               // like neu2
-              long long point = gs->labels[golden_label].point[d]; // class_size!c (1이면 1번째 lable을 가리키는 것
+              long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
               long long l2 = point * gs->layer1_size;
               // printf("\n%lld gs->labels[golden_label].point[d]: %lld, code: %lld l2: %lld\n", d, gs->labels[golden_label].point[d],  gs->labels[golden_label].code[d], l2);
               for (long long j = 0; j < gs->layer1_size; j++) {
-                // 1 * hidden * hidden * class_size
+                // 1 * hidden * hidden * label_size
                 // f += neu1[j] * gs->layer2[l2 + j];
-                f += neu1[j] * gs->layer2[j * gs->class_size + point];
+                f += neu1[j] * gs->layer2[j * gs->label_size + point];
               }
               // if (f <= -6) {
               //   // neu2[d] = 0.0f;
@@ -427,8 +427,8 @@ void *train_thread(thread_args *args) {
               if (g > 6) g = 6;
               if (g < -6) g = -6;
               for (long long j = 0; j < gs->layer1_size; j++) {
-                neu1err[j] += g * gs->layer2[j * gs->class_size + point]; // to neu1
-                gs->layer2[j * gs->class_size + point] += g * neu1[j]; // update layer2
+                neu1err[j] += g * gs->layer2[j * gs->label_size + point]; // to neu1
+                gs->layer2[j * gs->label_size + point] += g * neu1[j]; // update layer2
               }
               // printf("%f ",f);
               // printf("\n");
@@ -449,29 +449,29 @@ void *train_thread(thread_args *args) {
 
         } else { // if hierarchical softmax is not used
           // neu1 dot layer2
-          for (long long j = 0; j < gs->class_size; j++) {
+          for (long long j = 0; j < gs->label_size; j++) {
             for (long long k = 0; k < gs->layer1_size; k++) {
-              neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+              neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
             }
           }
 
           float max = neu2[0];
-          for (long long j = 1; j < gs->class_size; j++) {
+          for (long long j = 1; j < gs->label_size; j++) {
             if (neu2[j] > max) max = neu2[j];
           }
 
           float sum = 0.0f;
-          for (long long j = 0; j < gs->class_size; j++) {
+          for (long long j = 0; j < gs->label_size; j++) {
               neu2[j] = expf(neu2[j] - max);
               sum += neu2[j];
           }
-          for (long long j = 0; j < gs->class_size; j++)
+          for (long long j = 0; j < gs->label_size; j++)
               neu2[j] /= sum;
 
           float loss = 0.0f;
 
           memset(neu1err, 0, gs->layer1_size * sizeof(float));
-          memset(neu2err, 0, gs->class_size * sizeof(float));
+          memset(neu2err, 0, gs->label_size * sizeof(float));
           for (int i = 0; i < label_length; i++) {
             if (labels[i] >= 0) {
               golden_label = labels[i];
@@ -481,13 +481,13 @@ void *train_thread(thread_args *args) {
 
             float g = 0.0f;
             // multi answer 
-            for (long long j = 0; j < gs->class_size; j++) {
+            for (long long j = 0; j < gs->label_size; j++) {
               g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
               for (long long k = 0; k < gs->layer1_size; k++) {
-                neu1err[k] += g * gs->layer2[k * gs->class_size + j]; // to neu1
-                gs->layer2[k * gs->class_size + j] += g * neu1[k]; // update layer2
+                neu1err[k] += g * gs->layer2[k * gs->label_size + j]; // to neu1
+                gs->layer2[k * gs->label_size + j] += g * neu1[k]; // update layer2
               } 
             }
             
@@ -560,7 +560,7 @@ void train_model(global_setting *gs) {
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
   gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
-  gs->class_size = 0;
+  gs->label_size = 0;
 
   //   // gs->total_offset = 0;
   // gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
@@ -612,8 +612,8 @@ void train_model(global_setting *gs) {
   gs->vocab_size += gs->bucket_size;
   initialize_network(gs);
 
-  // printf("gs->vocab_size: %lld, gs->layer1_size: %lld, gs->class_size: %lld\n", 
-  //        gs->vocab_size, gs->layer1_size, gs->class_size);
+  // printf("gs->vocab_size: %lld, gs->layer1_size: %lld, gs->label_size: %lld\n", 
+  //        gs->vocab_size, gs->layer1_size, gs->label_size);
 
   // TODO: make unigram table
 
@@ -683,7 +683,7 @@ int main(int argc, char **argv) {
 
   global_setting gs = {
     .layer1_size = 10, // Default layer size 
-    .class_size = 10, // Default class size
+    .label_size = 10, // Default class size
     .binary = 0, // Default binary output
     .debug_mode = 2, // Default debug mode
     .cbow = 1, // Default CBOW model

@@ -35,31 +35,31 @@ void initialize_network(global_setting *gs) {
 
 
   printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
-  posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->class_size * sizeof(float));
+  posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->label_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
 
-  for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
+  for (long long i = 0; i < gs->layer1_size * gs->label_size; i++) {
     gs->layer2[i] = (float)rand() / RAND_MAX * 2 - 1; // Initialize with random values between -1 and 1
   }
-  // printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->class_size * sizeof(float));
-  posix_memalign((void **)&(gs->output), 64, gs->class_size * sizeof(float));
+  // printf("[INFO] Allocated memory for layer2 with size: %lld\n", gs->layer1_size * gs->label_size * sizeof(float));
+  posix_memalign((void **)&(gs->output), 64, gs->label_size * sizeof(float));
   if (gs->output == NULL) {
     fprintf(stderr, "Memory allocation failed for output\n");
     exit(1);
   }
 
-  for (long long i = 0; i < gs->class_size; i++) {
+  for (long long i = 0; i < gs->label_size; i++) {
     gs->output[i] = 0.0f; // Initialize output weights to zero
   }
-  // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
+  // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
 
-  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->class_size);
+  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
   // TODO: if classifation, gs->labels should be passed
   create_binary_tree(gs->vocab, gs->vocab_size);
-  // create_binary_tree(gs->labels, gs->class_size);
+  // create_binary_tree(gs->labels, gs->label_size);
   return ;
 }
 
@@ -158,19 +158,19 @@ void load_model(char *load_model_file, global_setting *gs) {
     fprintf(stderr, "Memory allocation failed for layer1\n");
     exit(1);
   }
-  posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->class_size * sizeof(float));
+  posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->label_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
 
-  posix_memalign((void **)&(gs->output), 64, gs->class_size * sizeof(float));
+  posix_memalign((void **)&(gs->output), 64, gs->label_size * sizeof(float));
   if (gs->output == NULL) {
     fprintf(stderr, "Memory allocation failed for output\n");
     exit(1);
   }
 
-  // fread(gs->labels, sizeof(vocab_word), gs->class_size, fi);
+  // fread(gs->labels, sizeof(vocab_word), gs->label_size, fi);
   fread(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fi);
   // printf("[INFO] Layer1 weights loaded from %s, read %zu elements\n", load_model_file, read);
 
@@ -178,11 +178,11 @@ void load_model(char *load_model_file, global_setting *gs) {
   //   printf("[INFO] Layer1[%lld]: %f\n", i, gs->layer1[i]);
   // }
 
-  fread(gs->layer2, sizeof(float), gs->layer1_size * gs->class_size, fi);
-  // for (long long i = 0; i < gs->layer1_size * gs->class_size; i++) {
+  fread(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fi);
+  // for (long long i = 0; i < gs->layer1_size * gs->label_size; i++) {
   //   printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
   // }
-  fread(gs->output, sizeof(float), gs->class_size, fi);
+  fread(gs->output, sizeof(float), gs->label_size, fi);
   gs->start_offsets= malloc(sizeof(long long) * gs->num_threads);
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
   gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
@@ -279,7 +279,7 @@ void test_thread(global_setting *gs) {
     char prev_word[MAX_STRING]; // only support for ngram=2
     char concat_word[MAX_STRING];
   // long long labels[MAX_LABELS]; // [0, 3, -1, -1, -1 ...]
-  long long *labels = (long long *)malloc(gs->class_size * sizeof(long long));
+  long long *labels = (long long *)malloc(gs->label_size * sizeof(long long));
   // long long words[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
   long long *words = (long long *)malloc(MAX_WORDS_PER_SENTENCE * sizeof(long long));
   long long ngram_words[MAX_WORDS_PER_SENTENCE];
@@ -305,7 +305,7 @@ void test_thread(global_setting *gs) {
 
 
   float *neu1 = (float *)malloc(gs->layer1_size * sizeof(float));
-  float *neu2 = (float *)malloc(gs->class_size * sizeof(float));
+  float *neu2 = (float *)malloc(gs->label_size * sizeof(float));
   long long avg_ngram =0;
   long long avg_failure_ngram = 0;
   long long avg_word =0;
@@ -456,9 +456,9 @@ void test_thread(global_setting *gs) {
       // }
     // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
       memset(neu1, 0, gs->layer1_size * sizeof(float));
-      memset(neu2, 0, gs->class_size * sizeof(float));
+      memset(neu2, 0, gs->label_size * sizeof(float));
       // memset(neu1err, 0, gs->layer1_size * sizeof(float));
-      // memset(neu2err, 0, gs->class_size * sizeof(float));
+      // memset(neu2err, 0, gs->label_size * sizeof(float));
 
       
       for (long long j = 0; j < sentence_length; j++) {
@@ -481,11 +481,11 @@ void test_thread(global_setting *gs) {
 
 
       // neu1 dot layer2
-      for (long long j = 0; j < gs->class_size; j++) {
+      for (long long j = 0; j < gs->label_size; j++) {
         // neu2: 1 x c
         neu2[j] = 0.0f;
         for (long long k = 0; k < gs->layer1_size; k++) {
-          neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+          neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
 
         }
         
@@ -501,7 +501,7 @@ void test_thread(global_setting *gs) {
       
       // 
       float max = neu2[0];
-      for (long long j = 0; j < gs->class_size; j++) {
+      for (long long j = 0; j < gs->label_size; j++) {
         if (neu2[j] > max) max = neu2[j];
         // printf("%f ", neu2[j]);
       }
@@ -511,33 +511,33 @@ void test_thread(global_setting *gs) {
       // printf("max: %f\n", max);
       // softmax
       // softmax: 기존과 동일
-      for (long long j = 0; j < gs->class_size; j++)
+      for (long long j = 0; j < gs->label_size; j++)
           neu2[j] = expf(neu2[j] - max);
 
       float sum = 0.0f;
-      for (long long j = 0; j < gs->class_size; j++)
+      for (long long j = 0; j < gs->label_size; j++)
           sum += neu2[j];
 
-      for (long long j = 0; j < gs->class_size; j++)
+      for (long long j = 0; j < gs->label_size; j++)
           neu2[j] /= sum;
     
-      // for (long long j = 0; j < gs->class_size; j++) {
+      // for (long long j = 0; j < gs->label_size; j++) {
       //   printf("%f %f", neu2[j], sum);
       // }
       // printf("\n");
       // neu2 copy and sort by decreasign
       // but, there are remianing information to index to original neu2
 
-      float *neu2_sorted = (float *)malloc(gs->class_size * sizeof(float));
-      long long *index_sorted = (long long *)malloc(gs->class_size * sizeof(long long));
-      for (long long j = 0; j < gs->class_size; j++) {
+      float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
+      long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
+      for (long long j = 0; j < gs->label_size; j++) {
         neu2_sorted[j] = neu2[j];
         index_sorted[j] = j;
       }
 
       // sort neu2_sorted and index_sorted by neu2_sorted
-      for (long long j = 0; j < gs->class_size - 1; j++) {
-        for (long long k = j + 1; k < gs->class_size; k++) {
+      for (long long j = 0; j < gs->label_size - 1; j++) {
+        for (long long k = j + 1; k < gs->label_size; k++) {
           if (neu2_sorted[j] < neu2_sorted[k]) {
             // swap neu2_sorted
             float temp_value = neu2_sorted[j];
@@ -553,17 +553,17 @@ void test_thread(global_setting *gs) {
 
       // printf("[INFO] Sorted neu2: %f %lld", neu2_sorted[0], index_sorted[0]);
       // TODO:
-      // for (long long j = 0; j < gs->class_size; j++) {
+      // for (long long j = 0; j < gs->label_size; j++) {
       //   printf("%f %lld ", neu2_sorted[j], index_sorted[j]);
       // }
       // printf("\n");
 
       
-      long long *gold = (long long *)malloc(gs->class_size * sizeof(long long));
-      long long *predicted = (long long *)malloc(gs->class_size * sizeof(long long));
+      long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
+      long long *predicted = (long long *)malloc(gs->label_size * sizeof(long long));
 
       long long gold_length = 0;
-      for (long long j = 0; j < gs->class_size; j++) {
+      for (long long j = 0; j < gs->label_size; j++) {
         if (labels[j] >= 0 && gold_length < gs->top_k) {
           gold[gold_length++] = labels[j];
         }
@@ -574,7 +574,7 @@ void test_thread(global_setting *gs) {
 
 
       long long predicted_length = 0;
-      for (long long j = 0; j < gs->class_size; j++) {
+      for (long long j = 0; j < gs->label_size; j++) {
         if (neu2_sorted[j] >= gs->answer_threshold) {
           predicted[predicted_length++] = index_sorted[j];
         }
@@ -595,7 +595,7 @@ void test_thread(global_setting *gs) {
 
       long long local_fp_cnt = predicted_length - local_tp_cnt;
       long long local_fn_cnt = gold_length - local_tp_cnt;
-      long long local_tn_cnt = gs->class_size - (local_tp_cnt + local_fp_cnt + local_fn_cnt);
+      long long local_tn_cnt = gs->label_size - (local_tp_cnt + local_fp_cnt + local_fn_cnt);
       // printf("[INFO] TP: %lld, FP: %lld, Gold length: %lld, Predicted length: %lld\n", local_tp_cnt, local_fp_cnt, gold_length, predicted_length);
       // printf("[INFO] expected value: %lld,golden value: %lld\n", predicted[0], gold[0]);
 
@@ -646,7 +646,7 @@ void test_model(global_setting *gs) {
 
 
   printf("[INFO] Starting training threads...\n");
-  printf("[INFO] Initializing network... %lld %lld\n", gs->layer1_size, gs->class_size);
+  printf("[INFO] Initializing network... %lld %lld\n", gs->layer1_size, gs->label_size);
   test_thread(gs);
 
   printf("[INFO] All test threads finished.\n");
@@ -695,7 +695,7 @@ int main(int argc, char **argv) {
 
   global_setting gs = {
     .layer1_size = 10, // Default layer size 
-    .class_size = 10, // Default class size
+    .label_size = 10, // Default class size
     .binary = 0, // Default binary output
     .debug_mode = 2, // Default debug mode
     .cbow = 1, // Default CBOW model
@@ -816,7 +816,7 @@ int main(int argc, char **argv) {
 
   printf("all information of global setting\n");
   printf("layer1_size: %lld\n", gs.layer1_size);
-  printf("class_size: %lld\n", gs.class_size);
+  printf("label_size: %lld\n", gs.label_size);
   printf("binary: %d\n", gs.binary);
   printf("debug_mode: %d\n", gs.debug_mode);
   printf("cbow: %d\n", gs.cbow);

@@ -15,7 +15,6 @@
 
 typedef struct {
   long long layer1_size; // hidden size/
-  long long class_size; // number of classes
   char train_file[MAX_STRING];
   char output_file[MAX_STRING];
   char save_vocab_file[MAX_STRING];
@@ -69,7 +68,6 @@ typedef struct {
   long long total_learned_lines; // total lines learned by all threads
   long long *total_line_by_thread; // total lines by each thread
 
-  long long hierarchical_softmax; // whether to use hierarchical softmax or not
   
 
   // for test
