@@ -327,6 +327,7 @@ void create_vocab_from_train_file(global_setting *gs) {
   while(1) {
     // printf("[DEBUG] Reading word...\n");
     read_word(word, f_in);
+    printf("[DEBUG] Read word: %s\n", word);
     if (feof(f_in)) break;
     // printf("[INFO] Read word: %s\n", word);
     // printf("8");
