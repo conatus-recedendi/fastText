@@ -77,7 +77,7 @@ read DIM GRAM LR <<< "$combo"
   # OUTPUT=$(../fasttext test "${OUTFILE}.bin" "${DATADIR}/YFCC100M/valid-processing")
   # log_time "$LOG_FILE" echo "$OUTPUT"
 
-  OUTPUT=$(log_time "$LOG_FILE" ../rewrite/bin/test -load-model "${OUTFILE}.bin" \
+  OUTPUT=$(log_time "$LOG_FILE" ../rewrite/bin/test -load-model "${OUTFILE}" \
     -test-file "${DATADIR}/YFCC100M/valid-processing") -topk 1 -answer-threshold 0.0
 
   # Extract P@1
