@@ -78,7 +78,7 @@ read DIM GRAM LR <<< "$combo"
   # log_time "$LOG_FILE" echo "$OUTPUT"
 
   OUTPUT=$(log_time "$LOG_FILE" ../rewrite/bin/test -load-model "${OUTFILE}" \
-    -test-file "${DATADIR}/YFCC100M/valid-processing") -topk 1 -answer-threshold 0.0
+    -test-file "${DATADIR}/YFCC100M/valid-processing" -topk 1 -answer-threshold 0.0)
 
   # Extract P@1
   echo $OUTPUT
