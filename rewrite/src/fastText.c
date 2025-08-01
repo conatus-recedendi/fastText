@@ -761,12 +761,28 @@ int main(int argc, char **argv) {
   // wordNgrams=
   // bucket
   gs.vocab = (vocab_word *)calloc(gs.vocab_max_size, sizeof(vocab_word));
+  if (gs.vocab == NULL) {
+    fprintf(stderr, "[ERROR] Memory allocation failed for vocabulary\n");
+    exit(1);
+  }
   gs.vocab_hash = (int *)calloc(gs.vocab_hash_size, sizeof(int));
+  if (gs.vocab_hash == NULL) {
+    fprintf(stderr, "[ERROR] Memory allocation failed for vocabulary hash table\n");
+    exit(1);
+  }
   for (int j = 0; j < gs.vocab_hash_size; j++) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
   }
   gs.labels = (vocab_word *)calloc(gs.label_hash_size, sizeof(vocab_word));
+  if (gs.labels == NULL) {
+    fprintf(stderr, "[ERROR] Memory allocation failed for labels\n");
+    exit(1);
+  }
   gs.label_hash = (int *)calloc(gs.label_hash_size, sizeof(int));
+  if (gs.label_hash == NULL) {
+    fprintf(stderr, "[ERROR] Memory allocation failed for label hash table\n");
+    exit(1);
+  }
   for (int j = 0; j < gs.label_hash_size; j++) {
     gs.label_hash[j] = -1; // Initialize the label hash table
   }
