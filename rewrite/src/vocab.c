@@ -383,7 +383,7 @@ void create_vocab_from_train_file(global_setting *gs) {
     printf("[INFO] Searching for word in vocabulary...\n");
     search_vocab_time = clock();
     temp_vocab_index = search_vocab(word, gs);
-    printf("[DEBUG] Search result for word '%s': %lld\n", prev_word, temp_vocab_hash);
+    printf("[DEBUG] Search result for word '%s': %lld\n", prev_word, temp_vocab_index);
     search_vocab_time = clock() - search_vocab_time;
     accum_search_vocab_time += search_vocab_time;
     // printf("[INFO] Search result: %lld\n", temp_vocab_hash);
@@ -417,7 +417,7 @@ void create_vocab_from_train_file(global_setting *gs) {
         // strcat_s(concat_word, MAX_STRING, "-");
         // memcpy(concat_word, prev_word, MAX_STRING);
         strncpy(concat_word, prev_word, strlen(prev_word));
-        printf("1. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
+        printf("1. concat_word: %s, prev_word: %s, word: %s\n", concat_word, prev_word, word);
         concat_word[strlen(prev_word)] = 0; // Add hyphen
 
         if(strlen(concat_word) < MAX_STRING) {
