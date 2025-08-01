@@ -375,42 +375,70 @@ void *train_thread(thread_args *args) {
           neu1[j] /= sentence_length; // 평균을 구함
         }
         // implement Hiereical softmax
-        if (gs->hierarchical_softmax) {
+        if (gs->hs) {
+          
+
+
+          // for (long long j = 0; j < gs->class_size; j++) {
+          //   for (long long k = 0; k < gs->layer1_size; k++) {
+          //     neu2[j] += neu1[k] * gs->layer2[k * gs->class_size + j];
+          //   }
+          // }
           // Hierarchical softmax
           // Implement hierarchical softmax here
           // For now, we will just use the average of the words
+          memset(neu1err, 0, gs->layer1_size * sizeof(float));
           for (int i = 0; i < label_length; i++) {
+            // memset(neu1err, 0, gs->layer1_size * sizeof(float));
             if (labels[i] >= 0) {
               golden_label = labels[i];
             } else {
               continue ;
             }
+
             for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
               
               float f = 0.0f;
-              long long l2 = gs->labels[golden_label].point[d] * gs->layer1_size;
+              // layer1: vocab * hidden
+              // layer2: hidden * class_size
+              // neu1: 1 * hidden
+              // neu1err: 1 * hidden
+              // like neu2
+              long long point = gs->labels[golden_label].point[d]; // class_size!c (1이면 1번째 lable을 가리키는 것
+              long long l2 = point * gs->layer1_size;
+              // printf("\n%lld gs->labels[golden_label].point[d]: %lld, code: %lld l2: %lld\n", d, gs->labels[golden_label].point[d],  gs->labels[golden_label].code[d], l2);
               for (long long j = 0; j < gs->layer1_size; j++) {
-                f += neu1[j] * gs->layer2[l2 + j];
+                // 1 * hidden * hidden * class_size
+                // f += neu1[j] * gs->layer2[l2 + j];
+                f += neu1[j] * gs->layer2[j * gs->class_size + point];
               }
-              if (f <= -6) {
-                // neu2[d] = 0.0f;
-                continue ;
-              } else if (f >= 6) {
-                continue ;
-              } else {
-                f = 1.0f / (1.0f + expf(-f));
-              }
+              // if (f <= -6) {
+              //   // neu2[d] = 0.0f;
+              //   f = -6;
+              //   continue;
+              // } else if (f >= 6) {
+              //   f = 6;
+              //   continue ;
+              // } else {
+              // f = 1.0f / (1.0f + expf(-f));
+              // }
+              f = 1.0f / (1.0f + expf(-f)); // sigmoid function
               float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
+              if (g > 6) g = 6;
+              if (g < -6) g = -6;
               for (long long j = 0; j < gs->layer1_size; j++) {
-                neu1err[j] += g * gs->layer2[l2 + j]; // to neu1
-                gs->layer2[l2 + j] += g * neu1[j]; // update layer2
+                neu1err[j] += g * gs->layer2[j * gs->class_size + point]; // to neu1
+                gs->layer2[j * gs->class_size + point] += g * neu1[j]; // update layer2
               }
               // printf("%f ",f);
               // printf("\n");
               gs->loss += -logf(f + 1e-10f);
+              if (isnan(gs->loss) || isinf(gs->loss)) {
+                printf("[ERROR] Loss is NaN or Inf at line %lld, golden_label: %lld, f: %f\n", line, golden_label, f);
+                getchar();
+              }
             }
           }
-
           for (long long j = 0; j < sentence_length; j++) {
             if (words[j] != -1) {
               for (long long k = 0; k < gs->layer1_size; k++) {
@@ -418,6 +446,7 @@ void *train_thread(thread_args *args) {
               }
             }
           }
+
         } else { // if hierarchical softmax is not used
           // neu1 dot layer2
           for (long long j = 0; j < gs->class_size; j++) {
@@ -441,14 +470,14 @@ void *train_thread(thread_args *args) {
 
           float loss = 0.0f;
 
+          memset(neu1err, 0, gs->layer1_size * sizeof(float));
+          memset(neu2err, 0, gs->class_size * sizeof(float));
           for (int i = 0; i < label_length; i++) {
             if (labels[i] >= 0) {
               golden_label = labels[i];
             } else {
               break ;
             }
-            memset(neu1err, 0, gs->layer1_size * sizeof(float));
-            memset(neu2err, 0, gs->class_size * sizeof(float));
 
             float g = 0.0f;
             // multi answer 
@@ -466,12 +495,12 @@ void *train_thread(thread_args *args) {
             if (isnan(loss) || isinf(loss)) {
               getchar();
             }
-            // Update neu1err
-            for (long long j = 0; j < sentence_length; j++) {
-              if (words[j] != -1) {
-                for (long long k = 0; k < gs->layer1_size; k++) {
-                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
-                }
+          }
+          // Update neu1err
+          for (long long j = 0; j < sentence_length; j++) {
+            if (words[j] != -1) {
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
               }
             }
           }
@@ -692,8 +721,7 @@ int main(int argc, char **argv) {
     .total_lines = 0, // Total lines in training file
     .start_offsets = NULL, // Start offsets for each thread
     .end_offsets = NULL, // End offsets for each thread
-    .start_line_by_thread = NULL, // Actual offset for each thread
-    .hierarchical_softmax = 0, // Default hierarchical softmax
+    .start_line_by_thread = NULL, // Actual offset for each thread\
     .ngram = 1,
     .bucket_size = 0,
     .min_count_label = 1,
@@ -722,7 +750,7 @@ int main(int argc, char **argv) {
     gs.vocab_hash_size = atoi(argv[i + 1]);
     gs.vocab_max_size = gs.vocab_hash_size; // Set max size to double the hash size
   }
-  if ((i = get_arg_pos((char *)"-hs", argc, argv)) > 0) gs.hierarchical_softmax = atoi(argv[i + 1]);
+  if ((i = get_arg_pos((char *)"-hs", argc, argv)) > 0) gs.hs = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-ngram", argc, argv)) > 0) gs.ngram = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-min-count-label", argc, argv)) > 0) gs.min_count_label = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-min-count-vocab", argc, argv)) > 0) gs.min_count_vocab = atoi(argv[i + 1]);
