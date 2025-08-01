@@ -165,7 +165,7 @@ int add_word_to_vocab(char *word, global_setting *gs) {
   int *vocab_hash = gs->vocab_hash;
   long long vocab_hash_size = gs->vocab_hash_size;
 
-  // printf("[INFO] Adding word: %s\n", word);
+  printf("[INFO] Adding word: %s\n", word);
   if (length > MAX_STRING) length = MAX_STRING;
   // printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
   // vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
@@ -187,14 +187,14 @@ int add_word_to_vocab(char *word, global_setting *gs) {
     // *vocab = (vocab_word *)realloc(*vocab, *vocab_max_size * sizeof(vocab_word));
     vocab = (vocab_word *)realloc(vocab, *vocab_max_size * sizeof(vocab_word));
   }
-  // printf("[INFO] Resizing vocab to max size: %lld\n", *vocab_max_size);
+  printf("[INFO] Resizing vocab to max size: %lld\n", *vocab_max_size);
   hash = get_word_hash(word, gs);
-  // printf("[INFO] Hash for new word '%s': %u\n", word, hash);
+  printf("[INFO] Hash for new word '%s': %u\n", word, hash);
   while (vocab_hash[hash] != -1) {
     hash = (hash + 1) % vocab_hash_size;
   }
 
-  // printf("[INFO] Inserting word '%s' at hash index %u\n", word, hash);
+  printf("[INFO] Inserting word '%s' at hash index %u\n", word, hash);
   vocab_hash[hash] = *vocab_size - 1; // Store the index
   
   return *vocab_size - 1; // Return the index of the new word
@@ -383,7 +383,7 @@ void create_vocab_from_train_file(global_setting *gs) {
     printf("[INFO] Searching for word in vocabulary...\n");
     search_vocab_time = clock();
     temp_vocab_index = search_vocab(word, gs);
-    printf("[DEBUG] Search result for word '%s': %lld\n", prev_word, temp_vocab_index);
+    printf("[DEBUG] Search result for word '%s': %lld\n", word, temp_vocab_index);
     search_vocab_time = clock() - search_vocab_time;
     accum_search_vocab_time += search_vocab_time;
     // printf("[INFO] Search result: %lld\n", temp_vocab_hash);
@@ -392,8 +392,8 @@ void create_vocab_from_train_file(global_setting *gs) {
       // printf("[INFO] Word not found in vocabulary, adding...\n");
       add_word_to_vocab_time = clock();
       temp_vocab_index = add_word_to_vocab(word, gs);
-    
-      printf("[DEBUG] Added word: %s at index %lld\n", prev_word, temp_vocab);
+
+      printf("[DEBUG] Added word: %s at index %lld\n", word, temp_vocab_index);
       add_word_to_vocab_time = clock() - add_word_to_vocab_time;
       accum_add_word_to_vocab_time += add_word_to_vocab_time;
     } else {
