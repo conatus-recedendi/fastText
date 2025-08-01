@@ -368,7 +368,7 @@ void create_vocab_from_train_file(global_setting *gs) {
     }
 
     train_words++;
-    // printf("[INFO] Current word count: %lld\n", train_words);
+    printf("[DEBUG] Current word count: %lld\n", train_words);
     // printf("1");
     if ((debug_mode > 1) && (train_words % 100000 == 0)) {
       printf("%lldK, search_label_time: %lld, add_label_to_vocab_time: %lld, search_vocab_time: %lld, add_word_to_vocab_time: %lld, vocab_length :%lld, label_length: %lld%c", train_words / 1000, accum_search_label_time, accum_add_label_to_vocab_time, accum_search_vocab_time, accum_add_word_to_vocab_time, gs->vocab_size, gs->label_size, 13);
@@ -380,10 +380,10 @@ void create_vocab_from_train_file(global_setting *gs) {
       fflush(stdout);
     }
     // printf("2");
-    // printf("[INFO] Searching for word in vocabulary...\n");
+    printf("[INFO] Searching for word in vocabulary...\n");
     search_vocab_time = clock();
     temp_vocab_index = search_vocab(word, gs);
-    // printf("[DEBUG] Search result for word '%s': %lld\n", prev_word, temp_vocab_hash);
+    printf("[DEBUG] Search result for word '%s': %lld\n", prev_word, temp_vocab_hash);
     search_vocab_time = clock() - search_vocab_time;
     accum_search_vocab_time += search_vocab_time;
     // printf("[INFO] Search result: %lld\n", temp_vocab_hash);
@@ -393,7 +393,7 @@ void create_vocab_from_train_file(global_setting *gs) {
       add_word_to_vocab_time = clock();
       temp_vocab_index = add_word_to_vocab(word, gs);
     
-      // printf("[DEBUG] Added word: %s at index %lld\n", prev_word, temp_vocab);
+      printf("[DEBUG] Added word: %s at index %lld\n", prev_word, temp_vocab);
       add_word_to_vocab_time = clock() - add_word_to_vocab_time;
       accum_add_word_to_vocab_time += add_word_to_vocab_time;
     } else {
@@ -403,13 +403,13 @@ void create_vocab_from_train_file(global_setting *gs) {
 
     long long temp_vocab_hash = get_word_hash(word, gs);
     if (gs->ngram > 1) {
-      // printf("[INFO] Adding ngram for word: %lld\n", prev_word_hash);
+      printf("[INFO] Adding ngram for word: %lld\n", prev_word_hash);
       if (prev_word[0] == 0) {
         // strcpy(prev_word, word);
         //   printf("%s %s\n", prev_word, word);
         //   getchar();
         // strncpy(prev_word, word, strlen(word) + 1 > MAX_STRING ? MAX_STRING : strlen(word) + 1);
-        // printf("%s\n", prev_word);
+        printf("%s\n", prev_word);
         strncpy(prev_word, word, sizeof(prev_word) - 1);
       } else {
         memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
@@ -417,7 +417,7 @@ void create_vocab_from_train_file(global_setting *gs) {
         // strcat_s(concat_word, MAX_STRING, "-");
         // memcpy(concat_word, prev_word, MAX_STRING);
         strncpy(concat_word, prev_word, strlen(prev_word));
-        // printf("1. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
+        printf("1. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
         concat_word[strlen(prev_word)] = 0; // Add hyphen
 
         if(strlen(concat_word) < MAX_STRING) {
