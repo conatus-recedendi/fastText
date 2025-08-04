@@ -127,10 +127,6 @@ void load_model(char *load_model_file, global_setting *gs) {
     exit(1);
   }
   printf("[INFO] Vocab and labels allocated with size: %lld, %lld\n", gs->vocab_max_size, gs->label_max_size);
-  for (int i=0;i< 10; i++)  {
-    // printf vocab
-    printf("[DEBUG] labels[%d]: , word: %s, cn: %lld, codelen: %d\n", i, gs->labels[i].word, gs->labels[i].cn ,gs->labels[i].codelen);
-  }
 
 
   for (int j = 0; j < gs->label_max_size; j++) {
@@ -145,7 +141,10 @@ void load_model(char *load_model_file, global_setting *gs) {
   fread(gs->label_hash, sizeof(int), gs->label_hash_size, fi);
   fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi);
   fread(gs->labels, sizeof(vocab_word), gs->label_max_size, fi);
-
+  for (int i=0;i< 10; i++)  {
+    // printf vocab
+    printf("[DEBUG] labels[%d]: , word: %s, cn: %lld, codelen: %d\n", i, gs->labels[i].word, gs->labels[i].cn ,gs->labels[i].codelen);
+  }
 
   // for (int i=0;i<100; i++)  {
   //   // printf vocab
