@@ -246,6 +246,8 @@ void load_model(char *load_model_file, global_setting *gs) {
 void test_thread(global_setting *gs) {
   // Implement the test logic here
   long long thread_id = 0; // Assuming single thread for testing
+struct timespec start;
+clock_gettime(CLOCK_MONOTONIC, &start);
   // Placeholder for thread-specific test logic
 
   long long file_size = gs->file_size;
@@ -291,7 +293,7 @@ void test_thread(global_setting *gs) {
     
   // }
   long long line = 0;
-  long long max_line = gs->total_lines;
+  long long max_line = count_lines(fi);
 
   long long correct_cnt = 0;
   long long total_cnt = 0;
@@ -313,12 +315,13 @@ void test_thread(global_setting *gs) {
 
   while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
     line++;
-      if (line % 1000 == 0) {
-        // printf("[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld\n", avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000);
-        avg_ngram = 0;
-        avg_failure_ngram = 0;
-        avg_word = 0;
-      }
+    if (line % 1000 == 0) {
+      // printf("%c[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld, total: %lld/%lld\n", 13,avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000, line, (gs->train_words / gs->iter));
+      // fflush(stdout);
+      avg_ngram = 0;
+      avg_failure_ngram = 0;
+      avg_word = 0;
+    }
 
 
     // printf("")
@@ -421,13 +424,16 @@ void test_thread(global_setting *gs) {
     
     if (gs->debug_mode > 1) {
       temp = 0;
-      clock_t now = clock();
+      // clock_t now = clock();
+      struct timespec ts;
+      clock_gettime(CLOCK_MONOTONIC, &ts);
 
-      // printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk",
-      //       13, gs->learning_rate_decay,
-      //       gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
-      //       gs->train_words / ((double)(now - gs->start + 1) / (double)CLOCKS_PER_SEC * 1000) / gs->num_threads);
-      // fflush(stdout);
+      printf("%cProgress: %.2f%%  Line/sec: %.2fk, Time: %.2fs",
+            13,
+            line / (double)(max_line) * 100,
+            line / ((double)(ts.tv_sec - start.tv_sec + 1) * (double)1000), 
+          ((double)(ts.tv_sec - start.tv_sec)) + (double)(ts.tv_nsec - start.tv_nsec) / 1000000000.0);
+      fflush(stdout);
     }
     
     // learning by line
@@ -464,20 +470,14 @@ void test_thread(global_setting *gs) {
         if (words[j] != -1) {
           for (long long k = 0; k < gs->layer1_size; k++) {
             neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
-            // printf("%f ", gs->layer1[words[j] * gs->layer1_size + k]);
           }
-          // printf("\nneu1[k]: %f", neu1[0]);
-          // printf("\n");
+
         }
       }
-      // printf("[INFO] neu1: ");
-
       for (long long j = 0; j < gs->layer1_size; j++) {
-        //neu1: 1 x h
-
-        // printf("\nneu1[%d]: %f, %lld, %f",j,  neu1[j], sentence_length, neu1[j] / sentence_length);
         neu1[j] /= sentence_length; // 평균을 구함
       }
+
       float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
@@ -498,64 +498,64 @@ void test_thread(global_setting *gs) {
           }
           neu2_sorted[j] = prob;
           index_sorted[j] = j;
+          }
         }
-      }
-    } else {
+      } else {
 
-      for (long long j = 0; j < gs->label_size; j++) {
-        // neu2: 1 x c
-        neu2[j] = 0.0f;
-        for (long long k = 0; k < gs->layer1_size; k++) {
-          neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
-  
+        for (long long j = 0; j < gs->label_size; j++) {
+          // neu2: 1 x c
+          neu2[j] = 0.0f;
+          for (long long k = 0; k < gs->layer1_size; k++) {
+            neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
+    
+          }
+          
+        }
+    
+        
+    
+        // printf neu1
+        // printf("[INFO] neu1: ");
+        // for (long long j = 0; j < gs->layer1_size; j++) {
+        //   printf("%f ", neu1[j]);
+        // }
+        // printf("\n");
+        
+        
+        // 
+        float max = neu2[0];
+        for (long long j = 0; j < gs->label_size; j++) {
+          if (neu2[j] > max) max = neu2[j];
+          // printf("%f ", neu2[j]);
         }
         
-      }
-  
-      
-  
-      // printf neu1
-      // printf("[INFO] neu1: ");
-      // for (long long j = 0; j < gs->layer1_size; j++) {
-      //   printf("%f ", neu1[j]);
-      // }
-      // printf("\n");
-      
-      
-      // 
-      float max = neu2[0];
-      for (long long j = 0; j < gs->label_size; j++) {
-        if (neu2[j] > max) max = neu2[j];
-        // printf("%f ", neu2[j]);
-      }
-      
-  
-      // printf("\n");
-      // printf("max: %f\n", max);
-      // softmax
-      // softmax: 기존과 동일
-      for (long long j = 0; j < gs->label_size; j++)
-          neu2[j] = expf(neu2[j] - max);
-  
-      float sum = 0.0f;
-      for (long long j = 0; j < gs->label_size; j++)
-          sum += neu2[j];
-  
-      for (long long j = 0; j < gs->label_size; j++)
-          neu2[j] /= sum;
     
-      // for (long long j = 0; j < gs->label_size; j++) {
-      //   printf("%f %f", neu2[j], sum);
-      // }
-      // printf("\n");
-      // neu2 copy and sort by decreasign
-      // but, there are remianing information to index to original neu2
-  
-      for (long long j = 0; j < gs->label_size; j++) {
-        neu2_sorted[j] = neu2[j];
-        index_sorted[j] = j;
+        // printf("\n");
+        // printf("max: %f\n", max);
+        // softmax
+        // softmax: 기존과 동일
+        for (long long j = 0; j < gs->label_size; j++)
+            neu2[j] = expf(neu2[j] - max);
+    
+        float sum = 0.0f;
+        for (long long j = 0; j < gs->label_size; j++)
+            sum += neu2[j];
+    
+        for (long long j = 0; j < gs->label_size; j++)
+            neu2[j] /= sum;
+      
+        // for (long long j = 0; j < gs->label_size; j++) {
+        //   printf("%f %f", neu2[j], sum);
+        // }
+        // printf("\n");
+        // neu2 copy and sort by decreasign
+        // but, there are remianing information to index to original neu2
+    
+        for (long long j = 0; j < gs->label_size; j++) {
+          neu2_sorted[j] = neu2[j];
+          index_sorted[j] = j;
+        }
       }
-    }
 
       // neu1 dot layer2
 
@@ -670,11 +670,15 @@ void test_model(global_setting *gs) {
 
   printf("[INFO] Starting training threads...\n");
   printf("[INFO] Initializing network... %lld %lld\n", gs->layer1_size, gs->label_size);
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
   test_thread(gs);
+  clock_gettime(CLOCK_MONOTONIC, &end);
 
   printf("[INFO] All test threads finished.\n");
   // print precision@k, recall@k, f1-score
-  
+  double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+  printf("[INFO] Testing completed in %.3f seconds.\n", elapsed);
 
 
   // for (int i = 0; i < gs->num_threads; i++) {
