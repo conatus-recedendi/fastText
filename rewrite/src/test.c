@@ -445,7 +445,6 @@ void test_thread(global_setting *gs) {
     // logging by N lines
     long long golden_label = -1;
 
-
     if (sentence_length > 0 && label_length > 0) {
       // for (long long j = 0; j < ngram_sentences_length; j++) {
       //   // printf("ngram_words[%lld]: %lld ", j, ngram_words[j]);
@@ -472,25 +471,49 @@ void test_thread(global_setting *gs) {
         }
       }
       // printf("[INFO] neu1: ");
+
       for (long long j = 0; j < gs->layer1_size; j++) {
         //neu1: 1 x h
 
         // printf("\nneu1[%d]: %f, %lld, %f",j,  neu1[j], sentence_length, neu1[j] / sentence_length);
         neu1[j] /= sentence_length; // 평균을 구함
       }
+      float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
+      long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
+      if (gs->hs)  {
+        for (long long j = 0; j < gs->label_size; j++) {
+          float prob = 1.0f;
+          for (int k = 0; k < gs->labels[j].codelen; k++) { {
+            long long point = gs->labels[j].point[k];
+            long long code = gs->labels[j].code[k];
+            float dot = 0.0f;
 
-      // neu1 dot layer2
+            for (int j =0; j < gs->layer1_size; j++) {
+              dot += neu1[j] * gs->layer2[j * gs->label_size + point];
+            }
+
+            float sigmoid = 1.0f / (1.0f + expf(-dot));
+            prob *= (code ==0 ? sigmoid : 1.0f - sigmoid);
+          }
+          neu2_sorted[j] = prob;
+          index_sorted[j] = j;
+        }
+      }
+    } else {
+
       for (long long j = 0; j < gs->label_size; j++) {
         // neu2: 1 x c
         neu2[j] = 0.0f;
         for (long long k = 0; k < gs->layer1_size; k++) {
           neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
-
+  
         }
         
       }
-
+  
+      
+  
       // printf neu1
       // printf("[INFO] neu1: ");
       // for (long long j = 0; j < gs->layer1_size; j++) {
@@ -506,18 +529,18 @@ void test_thread(global_setting *gs) {
         // printf("%f ", neu2[j]);
       }
       
-
+  
       // printf("\n");
       // printf("max: %f\n", max);
       // softmax
       // softmax: 기존과 동일
       for (long long j = 0; j < gs->label_size; j++)
           neu2[j] = expf(neu2[j] - max);
-
+  
       float sum = 0.0f;
       for (long long j = 0; j < gs->label_size; j++)
           sum += neu2[j];
-
+  
       for (long long j = 0; j < gs->label_size; j++)
           neu2[j] /= sum;
     
@@ -527,13 +550,14 @@ void test_thread(global_setting *gs) {
       // printf("\n");
       // neu2 copy and sort by decreasign
       // but, there are remianing information to index to original neu2
-
-      float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
-      long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
+  
       for (long long j = 0; j < gs->label_size; j++) {
         neu2_sorted[j] = neu2[j];
         index_sorted[j] = j;
       }
+    }
+
+      // neu1 dot layer2
 
       // sort neu2_sorted and index_sorted by neu2_sorted
       for (long long j = 0; j < gs->label_size - 1; j++) {
@@ -558,7 +582,6 @@ void test_thread(global_setting *gs) {
       // }
       // printf("\n");
 
-      
       long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
       long long *predicted = (long long *)malloc(gs->label_size * sizeof(long long));
 

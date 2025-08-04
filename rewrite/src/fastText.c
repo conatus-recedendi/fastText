@@ -63,6 +63,22 @@ void initialize_network(global_setting *gs) {
   // TODO: if classifation, gs->labels should be passed
   // create_binary_tree(gs->vocab, gs->vocab_size);
   create_binary_tree(gs->labels, gs->label_size);
+
+  for (int j = 0; j < gs->label_size; j++) {
+    printf("[DEBUG] label[%d]: %s, cn: %lld, codelen: %lld\n", j, gs->labels[j].word, gs->labels[j].cn, gs->labels[j].codelen);
+
+    for (int k = 0; k < gs->labels[j].codelen; k++) {
+      // if (gs->labels[j].code[k] == '\0') break;
+      printf("%d ", gs->labels[j].code[k]);
+    }
+    printf("\n");
+
+    for (int k = 0; k < gs->label_size; k++) {
+      // if (gs->labels[j].point[k] == '\0') break;
+      printf("%d ", gs->labels[j].point[k]);
+    }
+    printf("\n"); 
+  }
   return ;
 }
 
@@ -349,7 +365,7 @@ void *train_thread(thread_args *args) {
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC, &end_time);
         printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , loss: %f, Lines: %lld, setnence length: %lld, offset: %lld",
-              13, gs->learning_rate_decay,
+              13, learning_rate_decay,
               gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
               (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), gs->loss / gs->total_learned_lines, gs->total_learned_lines, sentence_length, offset
             );
@@ -444,7 +460,7 @@ void *train_thread(thread_args *args) {
           for (long long j = 0; j < sentence_length; j++) {
             if (words[j] != -1) {
               for (long long k = 0; k < gs->layer1_size; k++) {
-                gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
+                gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
               }
             }
           }
