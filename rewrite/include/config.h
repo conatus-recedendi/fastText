@@ -4,6 +4,7 @@
 #define CONFIG_H
 
 #define MAX_STRING 400
+#define BULK_SIZE 16284 // 16KB
 #define EXP_TABLE_SIZE 1000
 #define MAX_EXP 6
 #define MAX_SENTENCE_LENGTH 16000 // 한줄에 최대  몇개 단어거ㅏ 오느닞

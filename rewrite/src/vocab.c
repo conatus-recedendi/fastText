@@ -55,6 +55,7 @@ long long read_word(char *word, FILE *fin) {
         if (ch == '\n') ungetc(ch, fin);
         break;
       }
+      continue ;
       if (ch == '\n') {
         strcpy(word, (char *)"</s>");
         return ftell(fin);

@@ -156,16 +156,16 @@ void *train_thread(thread_args *args) {
   
 
   FILE *fi = fopen(gs->train_file, "rb");
-  fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
-
+  
   // printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
   for (int iter = 0; iter < gs->iter; iter++) {
-  
-
+    
+    
     // Reset sentence length and position for each iteration
     sentence_length = 0;
     sentence_position = 0;
     // Read the file line by line
+    // fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
     
 
@@ -204,6 +204,7 @@ void *train_thread(thread_args *args) {
     long long avg_ngram = 0;
     long long avg_failure_ngram = 0;
     long long avg_word =0;
+    float learning_rate_decay = gs->learning_rate;
 
     if (neu1 == NULL || neu2 == NULL || neu1err == NULL || neu2err == NULL) {
         fprintf(stderr, "[ERROR] Memory allocation failed for neu1, neu2, neu1err, or neu2err\n");
@@ -336,13 +337,13 @@ void *train_thread(thread_args *args) {
       // printf("\nlabels %p\n", labels);
       gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
       // gs->train_words += word_count(word);
-      gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
+      learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
       // gs->learning_rate_decay = gs->learning_rate;
       // if(thread_id == 1) {
       //   printf("\nftell: %lld, sentence: %s\n", ftell(fi), sen  );
       // }
 
-      if (gs->debug_mode > 1 && temp > 0) {
+      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1) == thread_id * 1) {
         temp = 0;
         clock_t now = clock();
         struct timespec end_time;
@@ -424,7 +425,7 @@ void *train_thread(thread_args *args) {
               // f = 1.0f / (1.0f + expf(-f));
               // }
               f = 1.0f / (1.0f + expf(-f)); // sigmoid function
-              float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
+              float g = learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
               for (long long j = 0; j < gs->layer1_size; j++) {
@@ -484,7 +485,7 @@ void *train_thread(thread_args *args) {
             float g = 0.0f;
             // multi answer 
             for (long long j = 0; j < gs->label_size; j++) {
-              g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
+              g = learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
               for (long long k = 0; k < gs->layer1_size; k++) {
