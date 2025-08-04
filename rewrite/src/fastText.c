@@ -62,8 +62,8 @@ void initialize_network(global_setting *gs) {
   printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
   // // TODO: if classifation, gs->labels should be passed
   // // create_binary_tree(gs->vocab, gs->vocab_size);
-  // create_binary_tree(gs->labels, gs->label_size);
-
+  create_binary_tree(gs->labels, gs->label_size);
+// 
   // for (int j = 0; j < gs->label_size; j++) {
   //   printf("[DEBUG] label[%d]: %s, cn: %lld, codelen: %lld\n", j, gs->labels[j].word, gs->labels[j].cn, gs->labels[j].codelen);
 
@@ -120,10 +120,11 @@ void save_model(char *output_file, global_setting *gs) {
   fwrite(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fo);
   fwrite(gs->labels, sizeof(vocab_word), gs->label_max_size, fo);
   // fwrite(gs->labels, sizeof(vocab_word), gs->label_size, fo);
-  // for (int i=0;i<100; i++)  {
-  //   // printf vocab
-  //   printf("[DEBUG] vocab[%d]: , cn: %lld\n", i, gs->vocab[i].cn);
-  // }
+  for (int i=0;i< 10; i++)  {
+    // printf vocab
+    printf("[DEBUG] labels[%d]: , word: %s, cn: %lld, codelen: %d\n", i, gs->labels[i].word, gs->labels[i].cn ,gs->labels[i].codelen);
+
+  }
 
   printf("[INFO] Vocabulary and labels saved to %s\n", output_file);
   fwrite(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fo);
@@ -399,13 +400,6 @@ void *train_thread(thread_args *args) {
         // implement Hiereical softmax
         if (gs->hs) {
           
-
-
-          // for (long long j = 0; j < gs->label_size; j++) {
-          //   for (long long k = 0; k < gs->layer1_size; k++) {
-          //     neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
-          //   }
-          // }
           // Hierarchical softmax
           // Implement hierarchical softmax here
           // For now, we will just use the average of the words
@@ -634,6 +628,11 @@ void train_model(global_setting *gs) {
   gs->pure_vocab_size = gs->vocab_size;
   gs->vocab_size += gs->bucket_size;
   initialize_network(gs);
+  for (int i=0;i< 10; i++)  {
+    // printf vocab
+    printf("[DEBUG] labels[%d]: , word: %s, cn: %lld, codelen: %d\n", i, gs->labels[i].word, gs->labels[i].cn ,gs->labels[i].codelen);
+
+  }
 
   // printf("gs->vocab_size: %lld, gs->layer1_size: %lld, gs->label_size: %lld\n", 
   //        gs->vocab_size, gs->layer1_size, gs->label_size);

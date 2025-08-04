@@ -127,13 +127,17 @@ void load_model(char *load_model_file, global_setting *gs) {
     exit(1);
   }
   printf("[INFO] Vocab and labels allocated with size: %lld, %lld\n", gs->vocab_max_size, gs->label_max_size);
+  for (int i=0;i< 10; i++)  {
+    // printf vocab
+    printf("[DEBUG] labels[%d]: , word: %s, cn: %lld, codelen: %d\n", i, gs->labels[i].word, gs->labels[i].cn ,gs->labels[i].codelen);
+  }
 
 
-
-  for (int j = 0; j < gs->vocab_max_size; j++) {
+  for (int j = 0; j < gs->label_max_size; j++) {
     // gs->vocab[j].word = (char *)calloc(MAX_STRING, sizeof(char));
     // gs->vocab[j].code = (char *)calloc(MAX_CODE_LENGTH, sizeof(char));
     // gs->vocab[j].point = (int *)calloc(MAX_CODE_LENGTH + 1, sizeof(int));
+    // printf("[DEBUG] labels[%d]: %s, cn: %lld\n", j, gs->labels[j].word, gs->labels[j].cn);
   }
 // 
   // posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
@@ -428,11 +432,11 @@ clock_gettime(CLOCK_MONOTONIC, &start);
       struct timespec ts;
       clock_gettime(CLOCK_MONOTONIC, &ts);
 
-      printf("%cProgress: %.2f%%  Line/sec: %.2fk, Time: %.2fs",
-            13,
-            line / (double)(max_line) * 100,
-            line / ((double)(ts.tv_sec - start.tv_sec + 1) * (double)1000), 
-          ((double)(ts.tv_sec - start.tv_sec)) + (double)(ts.tv_nsec - start.tv_nsec) / 1000000000.0);
+      // printf("%cProgress: %.2f%%  Line/sec: %.4fk, Time: %.2fs",
+      //       13,
+      //       line / (double)(max_line) * 100,
+      //       line / ((double)(ts.tv_sec - start.tv_sec + 1) * (double)1000), 
+      //     ((double)(ts.tv_sec - start.tv_sec)) + (double)(ts.tv_nsec - start.tv_nsec) / 1000000000.0);
       fflush(stdout);
     }
     
@@ -482,24 +486,49 @@ clock_gettime(CLOCK_MONOTONIC, &start);
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
       if (gs->hs)  {
+         // MEMO: hierarchical softmax는 prec 값만 구함.
+         // precision 외의 값을 구하기 위해서는 전체 label의 등장확률을 구해야하고 - softmax 보다 느림.
+         // 즉, heirecal softmax로 얻은 max 값이 golden labels 내에 존재하기만 하면 됨
+
+        long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
+        long long local_tp_cnt = 0;
+        long long local_fp_cnt = 0;
+  
+        long long gold_length = 0;
         for (long long j = 0; j < gs->label_size; j++) {
+          if (labels[j] >= 0 && gold_length < gs->top_k) {
+            gold[gold_length++] = labels[j];
+          }
+        }
+
+        // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
+  
+        for (long long j = 0; j < gold_length; j++) {
           float prob = 1.0f;
-          for (int k = 0; k < gs->labels[j].codelen; k++) { {
-            long long point = gs->labels[j].point[k];
-            long long code = gs->labels[j].code[k];
+          // printf("labels[%lld].colden: %lld \n", gold[j], gs->labels[gold[j]].codelen);
+          for (int k = 0; k < gs->labels[gold[j]].codelen; k++) {
+            long long point = gs->labels[gold[j]].point[k];
+            long long code = gs->labels[gold[j]].code[k];
             float dot = 0.0f;
 
-            for (int j =0; j < gs->layer1_size; j++) {
-              dot += neu1[j] * gs->layer2[j * gs->label_size + point];
+            for (int l =0; l < gs->layer1_size; l++) {
+              dot += neu1[l] * gs->layer2[l * gs->label_size + point];
             }
 
             float sigmoid = 1.0f / (1.0f + expf(-dot));
-            prob *= (code ==0 ? sigmoid : 1.0f - sigmoid);
+            prob *= (code == 0 ? sigmoid : 1.0f - sigmoid);
           }
-          neu2_sorted[j] = prob;
-          index_sorted[j] = j;
+          if (prob >= 0.5)  {
+            local_tp_cnt++;
+          } else {
+            local_fp_cnt++;
           }
+          // neu2_sorted[j] = prob;
+          // index_sorted[j] = j;
         }
+        tp_cnt += local_tp_cnt;
+        fp_cnt += local_fp_cnt;
+        total_cnt += gold_length; // Total number of true labels
       } else {
 
         for (long long j = 0; j < gs->label_size; j++) {
@@ -512,28 +541,12 @@ clock_gettime(CLOCK_MONOTONIC, &start);
           
         }
     
-        
-    
-        // printf neu1
-        // printf("[INFO] neu1: ");
-        // for (long long j = 0; j < gs->layer1_size; j++) {
-        //   printf("%f ", neu1[j]);
-        // }
-        // printf("\n");
-        
-        
-        // 
+      
         float max = neu2[0];
         for (long long j = 0; j < gs->label_size; j++) {
           if (neu2[j] > max) max = neu2[j];
-          // printf("%f ", neu2[j]);
         }
-        
-    
-        // printf("\n");
-        // printf("max: %f\n", max);
-        // softmax
-        // softmax: 기존과 동일
+
         for (long long j = 0; j < gs->label_size; j++)
             neu2[j] = expf(neu2[j] - max);
     
@@ -555,78 +568,78 @@ clock_gettime(CLOCK_MONOTONIC, &start);
           neu2_sorted[j] = neu2[j];
           index_sorted[j] = j;
         }
+        for (long long j = 0; j < gs->label_size - 1; j++) {
+          for (long long k = j + 1; k < gs->label_size; k++) {
+            if (neu2_sorted[j] < neu2_sorted[k]) {
+              // swap neu2_sorted
+              float temp_value = neu2_sorted[j];
+              neu2_sorted[j] = neu2_sorted[k];
+              neu2_sorted[k] = temp_value;  
+              // swap index_sorted
+              long long temp_index = index_sorted[j];
+              index_sorted[j] = index_sorted[k];  
+              index_sorted[k] = temp_index;
+            }
+          }
+        }
+  
+        // printf("[INFO] Sorted neu2: %f %lld", neu2_sorted[0], index_sorted[0]);
+        // TODO:
+        // for (long long j = 0; j < gs->label_size; j++) {
+        //   printf("%f %lld ", neu2_sorted[j], index_sorted[j]);
+        // }
+        // printf("\n");
+  
+        long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
+        long long *predicted = (long long *)malloc(gs->label_size * sizeof(long long));
+  
+        long long gold_length = 0;
+        for (long long j = 0; j < gs->label_size; j++) {
+          if (labels[j] >= 0 && gold_length < gs->top_k) {
+            gold[gold_length++] = labels[j];
+          }
+        }
+  
+        // printf()
+        // printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
+  
+  
+        long long predicted_length = 0;
+        for (long long j = 0; j < gs->label_size; j++) {
+          if (neu2_sorted[j] >= gs->answer_threshold) {
+            predicted[predicted_length++] = index_sorted[j];
+          }
+          if (predicted_length >= gs->top_k) {
+            break; // Stop if we have enough predictions
+          }
+        }
+  
+        long long local_tp_cnt = 0;
+        for (long long j = 0; j < predicted_length; j++) {
+          for (long long k = 0; k < gold_length; k++) {
+            if (predicted[j] == gold[k]) {
+              local_tp_cnt++;
+              break;
+            }
+          }
+        }
+  
+        long long local_fp_cnt = predicted_length - local_tp_cnt;
+        long long local_fn_cnt = gold_length - local_tp_cnt;
+        long long local_tn_cnt = gs->label_size - (local_tp_cnt + local_fp_cnt + local_fn_cnt);
+        // printf("[INFO] TP: %lld, FP: %lld, Gold length: %lld, Predicted length: %lld\n", local_tp_cnt, local_fp_cnt, gold_length, predicted_length);
+        // printf("[INFO] expected value: %lld,golden value: %lld\n", predicted[0], gold[0]);
+  
+        tp_cnt += local_tp_cnt;
+        fp_cnt += local_fp_cnt;
+        fn_cnt += local_fn_cnt;
+        tn_cnt += local_tn_cnt;
+        total_cnt += gold_length; // Total number of true labels
       }
 
       // neu1 dot layer2
 
       // sort neu2_sorted and index_sorted by neu2_sorted
-      for (long long j = 0; j < gs->label_size - 1; j++) {
-        for (long long k = j + 1; k < gs->label_size; k++) {
-          if (neu2_sorted[j] < neu2_sorted[k]) {
-            // swap neu2_sorted
-            float temp_value = neu2_sorted[j];
-            neu2_sorted[j] = neu2_sorted[k];
-            neu2_sorted[k] = temp_value;  
-            // swap index_sorted
-            long long temp_index = index_sorted[j];
-            index_sorted[j] = index_sorted[k];  
-            index_sorted[k] = temp_index;
-          }
-        }
-      }
-
-      // printf("[INFO] Sorted neu2: %f %lld", neu2_sorted[0], index_sorted[0]);
-      // TODO:
-      // for (long long j = 0; j < gs->label_size; j++) {
-      //   printf("%f %lld ", neu2_sorted[j], index_sorted[j]);
-      // }
-      // printf("\n");
-
-      long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
-      long long *predicted = (long long *)malloc(gs->label_size * sizeof(long long));
-
-      long long gold_length = 0;
-      for (long long j = 0; j < gs->label_size; j++) {
-        if (labels[j] >= 0 && gold_length < gs->top_k) {
-          gold[gold_length++] = labels[j];
-        }
-      }
-
-      // printf()
-      // printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
-
-
-      long long predicted_length = 0;
-      for (long long j = 0; j < gs->label_size; j++) {
-        if (neu2_sorted[j] >= gs->answer_threshold) {
-          predicted[predicted_length++] = index_sorted[j];
-        }
-        if (predicted_length >= gs->top_k) {
-          break; // Stop if we have enough predictions
-        }
-      }
-
-      long long local_tp_cnt = 0;
-      for (long long j = 0; j < predicted_length; j++) {
-        for (long long k = 0; k < gold_length; k++) {
-          if (predicted[j] == gold[k]) {
-            local_tp_cnt++;
-            break;
-          }
-        }
-      }
-
-      long long local_fp_cnt = predicted_length - local_tp_cnt;
-      long long local_fn_cnt = gold_length - local_tp_cnt;
-      long long local_tn_cnt = gs->label_size - (local_tp_cnt + local_fp_cnt + local_fn_cnt);
-      // printf("[INFO] TP: %lld, FP: %lld, Gold length: %lld, Predicted length: %lld\n", local_tp_cnt, local_fp_cnt, gold_length, predicted_length);
-      // printf("[INFO] expected value: %lld,golden value: %lld\n", predicted[0], gold[0]);
-
-      tp_cnt += local_tp_cnt;
-      fp_cnt += local_fp_cnt;
-      fn_cnt += local_fn_cnt;
-      tn_cnt += local_tn_cnt;
-      total_cnt += gold_length; // Total number of true labels
     }
 
     // get precision@K and recall@K
