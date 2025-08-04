@@ -84,7 +84,9 @@ void initialize_network(global_setting *gs) {
 
 void save_vector(char *output_file, global_setting *gs) {
   // Implement the logic to save the vector representations
+  printf("[INFO] Saving vector representations to %s\n", output_file);
   FILE *fo = fopen(output_file, "w");
+  printf("[INFO] Writing vector representations to %s\n", output_file);
   fprintf(fo, "%lld %lld\n", gs->vocab_size, gs->layer1_size);
   for (long long i = 0; i < gs->vocab_size; i++) {
     fprintf(fo, "%s ", gs->vocab[i].word);
@@ -93,6 +95,8 @@ void save_vector(char *output_file, global_setting *gs) {
     }
     fprintf(fo, "\n");
   }
+  printf("[INFO] Vector representations saved to %s\n", output_file);
+  fclose(fo);
 }
 
 void save_model(char *output_file, global_setting *gs) {
@@ -684,6 +688,7 @@ void train_model(global_setting *gs) {
   save_model(output_file, gs);
   printf("[INFO] Model saved to %s\n", output_file);
   save_vector(save_vocab_file , gs);
+  printf("[INFO] Vector Saved to %s\n", save_vocab_file);
   // foramt
   // __label1__ __label2__ ... input
   // 2-1. input infeernece 
