@@ -187,6 +187,7 @@ int add_word_to_vocab(char *word, global_setting *gs) {
     *vocab_max_size += 1000;
     // *vocab = (vocab_word *)realloc(*vocab, *vocab_max_size * sizeof(vocab_word));
     vocab = (vocab_word *)realloc(vocab, *vocab_max_size * sizeof(vocab_word));
+    gs->vocab = vocab;
   }
   // printf("[INFO] Resizing vocab to max size: %lld\n", *vocab_max_size);
   hash = get_word_hash(word, gs);

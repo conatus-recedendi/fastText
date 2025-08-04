@@ -60,25 +60,25 @@ void initialize_network(global_setting *gs) {
   // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
 
   printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
-  // TODO: if classifation, gs->labels should be passed
-  // create_binary_tree(gs->vocab, gs->vocab_size);
-  create_binary_tree(gs->labels, gs->label_size);
+  // // TODO: if classifation, gs->labels should be passed
+  // // create_binary_tree(gs->vocab, gs->vocab_size);
+  // create_binary_tree(gs->labels, gs->label_size);
 
-  for (int j = 0; j < gs->label_size; j++) {
-    printf("[DEBUG] label[%d]: %s, cn: %lld, codelen: %lld\n", j, gs->labels[j].word, gs->labels[j].cn, gs->labels[j].codelen);
+  // for (int j = 0; j < gs->label_size; j++) {
+  //   printf("[DEBUG] label[%d]: %s, cn: %lld, codelen: %lld\n", j, gs->labels[j].word, gs->labels[j].cn, gs->labels[j].codelen);
 
-    for (int k = 0; k < gs->labels[j].codelen; k++) {
-      // if (gs->labels[j].code[k] == '\0') break;
-      printf("%d ", gs->labels[j].code[k]);
-    }
-    printf("\n");
+  //   for (int k = 0; k < gs->labels[j].codelen; k++) {
+  //     // if (gs->labels[j].code[k] == '\0') break;
+  //     printf("%d ", gs->labels[j].code[k]);
+  //   }
+  //   printf("\n");
 
-    for (int k = 0; k < gs->label_size; k++) {
-      // if (gs->labels[j].point[k] == '\0') break;
-      printf("%d ", gs->labels[j].point[k]);
-    }
-    printf("\n"); 
-  }
+  //   for (int k = 0; k < gs->label_size; k++) {
+  //     // if (gs->labels[j].point[k] == '\0') break;
+  //     printf("%d ", gs->labels[j].point[k]);
+  //   }
+  //   printf("\n"); 
+  // }
   return ;
 }
 
