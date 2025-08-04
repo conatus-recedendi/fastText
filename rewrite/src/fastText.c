@@ -232,7 +232,6 @@ void *train_thread(thread_args *args) {
         avg_word = 0;
       }
 
-      // pritnf("[DEBUG] Thread %lld, line %lld, total learned lines: %lld\n", thread_id, line, gs->total_learned_lines);
       // if (line % 1000 == 0) {
       //   printf("[INFO] Thread %lld, line %lld, total learned lines: %lld\n", thread_id, line, gs->total_learned_lines);
       // }
@@ -254,81 +253,83 @@ void *train_thread(thread_args *args) {
       // memcpy(layer1, gs->layer1, gs->vocab_size * gs->layer1_size * sizeof(float));
       // memcpy(layer2, gs->layer2, gs->layer1_size * gs->label_size * sizeof(float));
       while (token != NULL) {
-        if (strlen(token) > MAX_STRING) {
+        if (strlen(token) >= MAX_STRING) {
           token = strtok(NULL, " ");
           continue; // Skip tokens that are too long
         }
         
-          if (strncmp(token, "__label__", 9) == 0) {
-            memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-            // 라벨인 경우 __label_1__
-            long long label_index = search_label(token, gs);
-            if (label_index != -1 && label_index < MAX_LABELS) {
-                labels[label_length++] = label_index;  // Set the label index to 1
-            } else {
-              // labels[label_length++] = -1; // unknown label
-            }
+        if (strncmp(token, "__label__", 9) == 0) {
+          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+          // 라벨인 경우 __label_1__
+          long long label_index = search_label(token, gs);
+          if (label_index != -1 && label_index < MAX_LABELS) {
+              labels[label_length++] = label_index;  // Set the label index to 1
           } else {
-            // printf("[DEBUG] Token: %s\n", token); 
-              // 일반 단어인 경우
-              
-              long long word_hash = get_word_hash(token, gs);
+            // labels[label_length++] = -1; // unknown label
+          }
+        } else {
+          // printf("[DEBUG] Token: %s\n", token); 
+            // 일반 단어인 경우
+            
+            long long word_hash = get_word_hash(token, gs);
 
-              long long word_index = search_vocab(token, gs);
+            long long word_index = search_vocab(token, gs);
 
-              if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
-                words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
-                avg_word++;
-                if (gs->ngram > 1) {
-                  if (prev_word[0] == 0) {
-                    strncpy(prev_word, token, sizeof(prev_word) - 1);
-                    
+            if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+              words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
+              avg_word++;
+              if (gs->ngram > 1) {
+                if (prev_word[0] == 0) {
+                  strncpy(prev_word, token, sizeof(prev_word) - 1);
+                  
+                } else {
+                  memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
+                  // printf("%lld \n", sizeof(concat_word));
+                  // strcpy_s(concat_word, MAX_STRING, prev_word);
+                  // strcat_s(concat_word, MAX_STRING, "-");
+                  // memcpy(concat_word, prev_word, MAX_STRING);
+
+                  // strncpy(concat_word, prev_word, strlen(prev_word));
+                  // // printf("1. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
+                  // concat_word[strlen(prev_word)] = 0; // Add hyphen
+
+                  // if(strlen(concat_word) < MAX_STRING) {
+                  //   // printf("2.. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
+                  //   memcpy(concat_word + strlen(prev_word), "-", 1); // 0 -> '-'
+                  //   // printf("3. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
+                  //   concat_word[strlen(prev_word) + 1] = '\0'; // Ensure null termination
+                  //   if (strlen(concat_word) + strlen(token) < MAX_STRING) {
+                  //     // strcat_s(concat_word, MAX_STRING, token);
+                  //     memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
+                  //   }
+                  //   // strcat_s(concat_word, MAX_STRING, token);
+                  //   // memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
+                  //   // skip
+                  // }
+                  // concat_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+                  snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+
+                  long long index = search_vocab(concat_word, gs);
+                  if (index == -1) {
+                    // skip
+                    // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
+                    avg_failure_ngram++;
+                    // getchar();
                   } else {
-                    memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
-                    // printf("%lld \n", sizeof(concat_word));
-                    // strcpy_s(concat_word, MAX_STRING, prev_word);
-                    // strcat_s(concat_word, MAX_STRING, "-");
-                    // memcpy(concat_word, prev_word, MAX_STRING);
-
-                    strncpy(concat_word, prev_word, strlen(prev_word));
-                    // printf("1. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
-                    concat_word[strlen(prev_word)] = 0; // Add hyphen
-
-                    if(strlen(concat_word) < MAX_STRING) {
-                      // printf("2.. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
-                      memcpy(concat_word + strlen(prev_word), "-", 1); // 0 -> '-'
-                      // printf("3. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
-                      concat_word[strlen(prev_word) + 1] = '\0'; // Ensure null termination
-                      if (strlen(concat_word) + strlen(token) < MAX_STRING) {
-                        // strcat_s(concat_word, MAX_STRING, token);
-                        memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
-                      }
-                      // strcat_s(concat_word, MAX_STRING, token);
-                      // memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
-                      // skip
-                    }
-                    concat_word[MAX_STRING - 1] = '\0'; // Ensure null termination
-
-                    long long index = search_vocab(concat_word, gs);
-                    if (index == -1) {
-                      // skip
-                      // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
-                      avg_failure_ngram++;
-                      // getchar();
-                    } else {
-                      avg_ngram++;
-                      words[sentence_length++] = index; // ngram word
-                    }
+                    avg_ngram++;
+                    words[sentence_length++] = index; // ngram word
                   }
                 }
-              } else if(word_index != -1) {
-                  // words[sentence_length] = -1; // unknown word
               }
-              memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-              strncpy(prev_word, token, strlen(token)); // Update previous word
+            } else if(word_index != -1) {
+                // words[sentence_length] = -1; // unknown word
+            }
+            memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+            strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+            prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
 
-          }
-          token = strtok(NULL, " ");
+        }
+        token = strtok(NULL, " ");
       }
       // strcpy_s(prev_word, MAX_STRING, ""); // Reset previous word for next sentence
       memcpy(prev_word, "", 1); // Reset previous word for next sentence
@@ -341,9 +342,9 @@ void *train_thread(thread_args *args) {
       //   printf("\nftell: %lld, sentence: %s\n", ftell(fi), sen  );
       // }
 
-      // printf("temp: %lld, line: %lld, max_line: %lld, sentence_length: %lld, label_length: %lld\n", temp, line, max_line, sentence_length, label_length);
-      if (gs->debug_mode > 1) {
-        // clock_t now = clock();
+      if (gs->debug_mode > 1 && temp > 0) {
+        temp = 0;
+        clock_t now = clock();
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC, &end_time);
         printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , loss: %f, Lines: %lld, setnence length: %lld, offset: %lld",
@@ -448,6 +449,7 @@ void *train_thread(thread_args *args) {
           }
 
         } else { // if hierarchical softmax is not used
+
           // neu1 dot layer2
           for (long long j = 0; j < gs->label_size; j++) {
             for (long long k = 0; k < gs->layer1_size; k++) {
