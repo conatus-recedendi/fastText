@@ -442,6 +442,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
     // learning by line
     // logging by N lines
     long long golden_label = -1;
+    if (label_length==0) wrong_cnt++;
 
     if (sentence_length > 0 && label_length > 0) {
       // for (long long j = 0; j < ngram_sentences_length; j++) {
@@ -513,9 +514,6 @@ clock_gettime(CLOCK_MONOTONIC, &start);
           }
           // neu2_sorted[j] = prob;
           // index_sorted[j] = j;
-        }
-        if (local_tp_cnt == 0 && local_fp_cnt == 0) {
-          wrong_cnt++;
         }
         tp_cnt += local_tp_cnt;
         fp_cnt += local_fp_cnt;
