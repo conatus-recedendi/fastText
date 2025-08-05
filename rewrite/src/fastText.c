@@ -426,10 +426,6 @@ void *train_thread(thread_args *args) {
               // printf("%f ",f);
               // printf("\n");
               gs->loss += -logf(f + 1e-10f);
-              if (isnan(gs->loss) || isinf(gs->loss)) {
-                printf("[ERROR] Loss is NaN or Inf at line %lld, golden_label: %lld, f: %f\n", line, golden_label, f);
-                getchar();
-              }
             }
           }
           for (long long j = 0; j < sentence_length; j++) {
