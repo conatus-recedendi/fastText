@@ -664,6 +664,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
 
   printf("\n[INFO] Precision@K: %.4f, Recall@K: %.4f, F1-Score: %.4f\n", precision, recall, 2 * precision * recall / (precision + recall));  
   printf("[INFO] Total TP: %lld, FP: %lld, FN: %lld, TN: %lld\n", tp_cnt, fp_cnt, fn_cnt, tn_cnt);
+  printf("[INFO] Total: %lld, Total Gold: %lld\n", total_cnt);
   printf("[INFO] Total sentences processed: %lld\n", line);
 }
 
