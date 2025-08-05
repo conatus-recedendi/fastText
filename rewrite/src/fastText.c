@@ -59,7 +59,7 @@ void initialize_network(global_setting *gs) {
 
   // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
 
-  printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
+  printf("[INFO] Network initialized with layer1 size: %lld, vocab size: %lld,  class size: %lld\n", gs->layer1_size, gs->vocab_size, gs->label_size);
   // // TODO: if classifation, gs->labels should be passed
   // // create_binary_tree(gs->vocab, gs->vocab_size);
   create_binary_tree(gs->labels, gs->label_size);
@@ -306,29 +306,6 @@ void *train_thread(thread_args *args) {
                   
                 } else {
                   memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
-                  // printf("%lld \n", sizeof(concat_word));
-                  // strcpy_s(concat_word, MAX_STRING, prev_word);
-                  // strcat_s(concat_word, MAX_STRING, "-");
-                  // memcpy(concat_word, prev_word, MAX_STRING);
-
-                  // strncpy(concat_word, prev_word, strlen(prev_word));
-                  // // printf("1. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
-                  // concat_word[strlen(prev_word)] = 0; // Add hyphen
-
-                  // if(strlen(concat_word) < MAX_STRING) {
-                  //   // printf("2.. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
-                  //   memcpy(concat_word + strlen(prev_word), "-", 1); // 0 -> '-'
-                  //   // printf("3. concat_word: %s, prev_word: %s, token: %s\n", concat_word, prev_word, token);
-                  //   concat_word[strlen(prev_word) + 1] = '\0'; // Ensure null termination
-                  //   if (strlen(concat_word) + strlen(token) < MAX_STRING) {
-                  //     // strcat_s(concat_word, MAX_STRING, token);
-                  //     memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
-                  //   }
-                  //   // strcat_s(concat_word, MAX_STRING, token);
-                  //   // memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
-                  //   // skip
-                  // }
-                  // concat_word[MAX_STRING - 1] = '\0'; // Ensure null termination
                   snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
 
                   long long index = search_vocab(concat_word, gs);
@@ -364,7 +341,7 @@ void *train_thread(thread_args *args) {
       //   printf("\nftell: %lld, sentence: %s\n", ftell(fi), sen  );
       // }
 
-      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1) == thread_id * 1) {
+      if (gs->debug_mode > 1 && temp % (gs->num_threads * 100000) == thread_id * 100000) {
         temp = 0;
         clock_t now = clock();
         struct timespec end_time;
