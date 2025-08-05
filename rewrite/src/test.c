@@ -357,7 +357,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
 
 
         // printf("[INFO] Found label: %s, index: %lld\n", token, label_index);
-          if (label_index != -1 && label_index < MAX_LABELS) {
+          if (label_index != -1) {
               labels[label_length++] = label_index;  // Set the label index to 1
           } else {
             // labels[label_length++] = -1; // unknown label

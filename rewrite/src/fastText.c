@@ -284,7 +284,7 @@ void *train_thread(thread_args *args) {
           memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
           // 라벨인 경우 __label_1__
           long long label_index = search_label(token, gs);
-          if (label_index != -1 && label_index < MAX_LABELS) {
+          if (label_index != -1) {
               labels[label_length++] = label_index;  // Set the label index to 1
           } else {
             // labels[label_length++] = -1; // unknown label

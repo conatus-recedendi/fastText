@@ -8,7 +8,6 @@
 #define EXP_TABLE_SIZE 1000
 #define MAX_EXP 6
 #define MAX_SENTENCE_LENGTH 16000 // 한줄에 최대  몇개 단어거ㅏ 오느닞
-#define MAX_LABELS 100 // 한 문제에 최대 몇 개의 label이 존재할 수 있는지
 #define MAX_WORDS_PER_SENTENCE 4000 // MAX sentence length랑 동일
 
 #define MAX_LINE_LEN 1000000
