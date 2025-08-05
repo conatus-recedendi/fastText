@@ -383,27 +383,14 @@ clock_gettime(CLOCK_MONOTONIC, &start);
                     // strcat_s(concat_word, MAX_STRING, "-");
                     // memcpy(concat_word, prev_word, MAX_STRING);
 
-                    strncpy(concat_word, prev_word, strlen(prev_word));
-                    concat_word[strlen(prev_word)] = 0; // Add hyphen
+                    snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
 
-                    if(strlen(concat_word) < MAX_STRING) {
-                      memcpy(concat_word + strlen(prev_word), "-", 1);
-                      concat_word[strlen(prev_word) + 1] = '\0'; // Ensure null termination
-                      if (strlen(concat_word) + strlen(token) < MAX_STRING) {
-                        // strcat_s(concat_word, MAX_STRING, token);
-                        memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
-                      }
-                      // strcat_s(concat_word, MAX_STRING, token);
-                      // memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
-                      // skip
-                    }
-                    concat_word[MAX_STRING - 1] = '\0'; // Ensure null termination
                     long long index = search_vocab(concat_word, gs);
                     if (index == -1) {
                       // skip
                       // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
-                      // getchar();
                       avg_failure_ngram++;
+                      // getchar();
                     } else {
                       avg_ngram++;
                       words[sentence_length++] = index; // ngram word
@@ -413,8 +400,9 @@ clock_gettime(CLOCK_MONOTONIC, &start);
               } else {
                   // words[sentence_length++] = -1; // unknown word
               }
-              memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-              strncpy(prev_word, token, strlen(token)); // Update previous word
+          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+            strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+            prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
         }
         token = strtok(NULL, " ");
         // printf("[DEBUG] Token: %s, Sentence Length: %lld, Label Length: %lld\n", token, sentence_length, label_length);
