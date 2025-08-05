@@ -307,6 +307,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
   long long tn_cnt = 0;
   long long fp_cnt = 0;
   long long fn_cnt = 0;
+  long long wrong_cnt = 0;
 
 
   float *neu1 = (float *)malloc(gs->layer1_size * sizeof(float));
@@ -513,6 +514,9 @@ clock_gettime(CLOCK_MONOTONIC, &start);
           // neu2_sorted[j] = prob;
           // index_sorted[j] = j;
         }
+        if (local_tp_cnt == 0 && local_fp_cnt == 0) {
+          wrong_cnt++;
+        }
         tp_cnt += local_tp_cnt;
         fp_cnt += local_fp_cnt;
         total_cnt += gold_length; // Total number of true labels
@@ -654,6 +658,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
   printf("[INFO] Total TP: %lld, FP: %lld, FN: %lld, TN: %lld\n", tp_cnt, fp_cnt, fn_cnt, tn_cnt);
   printf("[INFO] Total: %lld, Total Gold: %lld\n", total_cnt);
   printf("[INFO] Total sentences processed: %lld\n", line);
+  printf("[INFO] Total wrong predictions: %lld\n", wrong_cnt);
 }
 
 
