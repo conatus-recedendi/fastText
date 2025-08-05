@@ -290,7 +290,7 @@ void *train_thread(thread_args *args) {
             // labels[label_length++] = -1; // unknown label
           }
         } else {
-          // printf("[DEBUG] Token: %s\n", token); 
+          // printf("[DEBUG] xToken: %s\n", token); 
             // 일반 단어인 경우
             
             long long word_hash = get_word_hash(token, gs);
