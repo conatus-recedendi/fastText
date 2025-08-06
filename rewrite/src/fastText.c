@@ -239,17 +239,6 @@ void *train_thread(thread_args *args) {
         fprintf(stderr, "[ERROR] Memory allocation failed for neu1, neu2, neu1err, or neu2err\n");
         exit(1);
     }
-
-    // printf("[INFO] Thread %lld started training with %lld lines\n", thread_id, max_line);
-
-    // copy of layer1, layer 2
-    // float *layer1 = (float *)malloc(gs->vocab_size * gs->layer1_size * sizeof(float));
-    // float *layer2 = (float *)malloc(gs->layer1_size * gs->label_size * sizeof(float));
-    // if (layer1 == NULL || layer2 == NULL) {
-    //     fprintf(stderr, "[ERROR] Memory allocation failed for layer1 or layer2\n");
-    //     exit(1);
-    // } 
-    // printf("start_offsets: %lld, end_offsets: %lld, total_lines: %lld\n", gs->start_offsets[thread_id], gs->end_offsets[thread_id], gs->total_line_by_thread[thread_id]);
   
     while ( fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
       line++;
@@ -354,10 +343,12 @@ void *train_thread(thread_args *args) {
         clock_t now = clock();
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC, &end_time);
-        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk  , loss: %f, Lines: %lld, setnence length: %lld, offset: %lld",
+        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/thread/sec: %.fk, loss: %f, Lines: %lld, setnence length: %lld, offset: %lld",
               13, gs->learning_rate_decay,
               gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
-              (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), gs->loss / gs->total_learned_lines, gs->total_learned_lines, sentence_length, offset
+              (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
+              (gs->total_learned_lines / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)),
+               gs->loss / gs->total_learned_lines, gs->total_learned_lines, sentence_length, offset
             );
 
         fflush(stdout);
@@ -555,24 +546,7 @@ void train_model(global_setting *gs) {
   gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->label_size = 0;
 
-  //   // gs->total_offset = 0;
-  // gs->start_offsets = malloc(sizeof(long long) * gs->num_threads);
-  // gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
-  // gs->offset_actual = malloc(sizeof(long long) * gs->num_threads);
-
-
-  // printf("yes\n");
   compute_thread_offsets(fp, gs);
-  // compute_thread_offsets(fp, gs->num_threads, gs->total_lines, gs->start_offsets, gs->end_offsets, &gs->total_offset, gs->offset_actual, gs->data_lines);
-  // printf("[INFO] Total lines: %lld, Start offsets: ", gs->total_lines);
-
-  // for (int i = 0; i < gs->num_threads; i++) {
-  //   // fseek(fi, gs->start_offsets[i], SEEK_SET);
-  //   long long line = count_lines_until_offset(gs->train_file, gs->end_offsets[i]);
-
-  //   printf("%lld , what line: real: %lld, expected: %lld\n", gs->start_offsets[i], line, gs->total_line_by_thread[i]);
-  // }
-  // // given offset, what lines?
 
 
   printf("[INFO] read vocabulary...\n");
@@ -610,13 +584,7 @@ void train_model(global_setting *gs) {
 
   }
 
-  // printf("gs->vocab_size: %lld, gs->layer1_size: %lld, gs->label_size: %lld\n", 
-  //        gs->vocab_size, gs->layer1_size, gs->label_size);
-
-  // TODO: make unigram table
-
   for (int i = 0; i < gs->num_threads; i++) {
-    // print start_offset, end offset, strat_line_by_thread, total_line_by_thread
     printf("[INFO] Thread %d: Start Offset: %lld, End Offset: %lld, Start Line: %lld, Total Lines: %lld\n",
            i, gs->start_offsets[i], gs->end_offsets[i], gs->start_line_by_thread[i], gs->total_line_by_thread[i]);
   }
