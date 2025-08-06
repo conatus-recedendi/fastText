@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     char *vocab = (char *)malloc(words * max_w);
     float *M = (float *)malloc(words * size * sizeof(float));
     for (int i = 0; i < words; i++) {
-        fscanf(f, "%s", &vocab[i * max_w]);
+        fscanf(f, "%s ", &vocab[i * max_w]);
         if (i < 10) {
             printf("[DEBUG] Word %d: %s;\n", i, &vocab[i * max_w]);
         }
