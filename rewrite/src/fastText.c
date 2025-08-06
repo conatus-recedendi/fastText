@@ -172,7 +172,6 @@ void *train_thread(thread_args *args) {
   long long sentence_end = 0;
   long long sen[MAX_SENTENCE_LENGTH];
   
-  // printf("[INFO] Thread %lld started training...\n", thread_id);
   
   
 
@@ -188,6 +187,7 @@ void *train_thread(thread_args *args) {
     // Read the file line by line
     // fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
+    printf("[INFO] Thread %lld seeking to offset %lld\n", thread_id, gs->start_offsets[thread_id]);
     
 
     char word[MAX_STRING];
