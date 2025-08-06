@@ -526,14 +526,6 @@ clock_gettime(CLOCK_MONOTONIC, &start);
             local_tp_cnt++;
           }
 
-          // if (prob >= 0.5)  {
-          //   local_tp_cnt++;
-          // } else {
-          //   // printf("[WARN] Hierarchical softmax: prob: %f, gold: %lld\n", prob, gold[j]);
-          //   local_fp_cnt++;
-          // }
-          // neu2_sorted[j] = prob;
-          // index_sorted[j] = j;
         }
         tp_cnt += local_tp_cnt;
         fp_cnt += local_fp_cnt;

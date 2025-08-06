@@ -334,7 +334,6 @@ void create_vocab_from_train_file(global_setting *gs) {
       temp_label_hash = search_label(word, gs);
       if (temp_label_hash == -1) {
         temp_label = add_label_to_vocab(word, gs);
-        gs->label_size = temp_label + 1;
         gs->labels[temp_label].cn = 1; // Initialize count to 1
       } else {
         gs->labels[temp_label_hash].cn++; 
@@ -354,11 +353,10 @@ void create_vocab_from_train_file(global_setting *gs) {
     temp_vocab_index = search_vocab(word, gs);
     if (temp_vocab_index == -1) {
       temp_vocab_index = add_word_to_vocab(word, gs);
+      gs->vocab[temp_vocab_index].cn = 1; // Initialize count to
     } else {
       vocab[temp_vocab_index].cn++; // Increment count for existing word
     }
-
-    long long temp_vocab_hash = get_word_hash(word, gs);
     if (gs->ngram > 1) {
       if (prev_word[0] == 0) {
         strncpy(prev_word, word, sizeof(prev_word) - 1);
@@ -367,7 +365,8 @@ void create_vocab_from_train_file(global_setting *gs) {
         snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, word);
         long long index = search_vocab(concat_word, gs);
         if (index == -1) {
-          add_word_to_vocab(concat_word, gs);
+          index = add_word_to_vocab(concat_word, gs);
+          vocab[index].cn = 1; // Initialize count to 1
           create_ngram++;
         } else {
           vocab[index].cn++; // Increment count for existing ngram word
