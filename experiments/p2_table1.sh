@@ -28,29 +28,29 @@ combinations=(
   "1 300 /20250710/wiki.ar.txt ar /tasks/WS353_AR.csv WS353 skip-gram"
   "1 300 /20250710/wiki.ar.txt ar /tasks/WS353_AR.csv WS353 cbow"
 
-  # "1 300 /20250710/wiki.de.txt de /tasks/Gur350_DE.csv Gur350 skip-gram"
-  # "1 300 /20250710/wiki.de.txt de /tasks/Gur350_DE.csv Gur350 cbow"
-  # "1 300 /20250710/wiki.de.txt de /tasks/Gur65_DE.csv Gru65 skip-gram"
-  # "1 300 /20250710/wiki.de.txt de /tasks/Gur65_DE.csv Gru65 cbow"
-  # "1 300 /20250710/wiki.de.txt de /tasks/ZG222_DE.csv ZG222 skip-gram"
-  # "1 300 /20250710/wiki.de.txt de /tasks/ZG222_DE.csv ZG222 cbow"
+  "1 300 /20250710/wiki.de.txt de /tasks/Gur350_DE.csv Gur350 skip-gram"
+  "1 300 /20250710/wiki.de.txt de /tasks/Gur350_DE.csv Gur350 cbow"
+  "1 300 /20250710/wiki.de.txt de /tasks/Gur65_DE.csv Gru65 skip-gram"
+  "1 300 /20250710/wiki.de.txt de /tasks/Gur65_DE.csv Gru65 cbow"
+  "1 300 /20250710/wiki.de.txt de /tasks/ZG222_DE.csv ZG222 skip-gram"
+  "1 300 /20250710/wiki.de.txt de /tasks/ZG222_DE.csv ZG222 cbow"
 
-  # "1 300 /20250710/wiki.en.txt en /tasks/rw.csv RW skip-gram"
-  # "1 300 /20250710/wiki.en.txt en /tasks/rw.csv RW cbow"
-  # "1 300 /20250710/wiki.en.txt en /tasks/WS353_EN.csv WS353 skip-gram"
-  # "1 300 /20250710/wiki.en.txt en /tasks/WS353_EN.csv WS353 cbow"
+  "1 300 /20250710/wiki.en.txt en /tasks/rw.csv RW skip-gram"
+  "1 300 /20250710/wiki.en.txt en /tasks/rw.csv RW cbow"
+  "1 300 /20250710/wiki.en.txt en /tasks/WS353_EN.csv WS353 skip-gram"
+  "1 300 /20250710/wiki.en.txt en /tasks/WS353_EN.csv WS353 cbow"
 
-  # "1 300 /20250801/wiki.es.txt es /tasks/WS353_ES.csv WS353 skip-gram"
-  # "1 300 /20250801/wiki.es.txt es /tasks/WS353_ES.csv WS353 cbow"
+  "1 300 /20250801/wiki.es.txt es /tasks/WS353_ES.csv WS353 skip-gram"
+  "1 300 /20250801/wiki.es.txt es /tasks/WS353_ES.csv WS353 cbow"
 
-  # "1 300 /20250801/wiki.fr.txt fr /tasks/RG65_FR.csv RG65 skip-gram"
-  # "1 300 /20250801/wiki.fr.txt fr /tasks/RG65_FR.csv RG65 cbow"
+  "1 300 /20250801/wiki.fr.txt fr /tasks/RG65_FR.csv RG65 skip-gram"
+  "1 300 /20250801/wiki.fr.txt fr /tasks/RG65_FR.csv RG65 cbow"
 
-  # "1 300 /20250805/wiki.ro.txt ro /tasks/WS353_RO.csv WS353 skip-gram"
-  # "1 300 /20250805/wiki.ro.txt ro /tasks/WS353_RO.csv WS353 cbow"
+  "1 300 /20250805/wiki.ro.txt ro /tasks/WS353_RO.csv WS353 skip-gram"
+  "1 300 /20250805/wiki.ro.txt ro /tasks/WS353_RO.csv WS353 cbow"
 
-  # "1 300 /20250805/wiki.ru.txt ru /tasks/hj.csv HJ skip-gram"
-  # "1 300 /20250805/wiki.ru.txt ru /tasks/hj.csv HJ cbow"
+  "1 300 /20250805/wiki.ru.txt ru /tasks/hj.csv HJ skip-gram"
+  "1 300 /20250805/wiki.ru.txt ru /tasks/hj.csv HJ cbow"
 
 )
 
