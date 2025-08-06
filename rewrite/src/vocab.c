@@ -327,134 +327,56 @@ void create_vocab_from_train_file(global_setting *gs) {
   // char prev_word[MAX_STRING];
   long long prev_word_hash = -1; // for ngram
   while(1) {
-    // printf("[DEBUG] Reading word...\n");
     read_word(word, f_in);
-    // printf("[DEBUG] Read word: %s\n", word);
     if (feof(f_in)) break;
-    // printf("[INFO] Read word: %s\n", word);
-    // printf("8");
-    // printf("[DEBUG] Current word: %s\n", word);
-
     if (strncmp(word, "__label__", 9) == 0) {
       prev_word_hash = -1;
-      // printf("run? %s\n", word);
-      // printf("[INFO] Found label: %s\n", word);
-      // prev_subword_length = 0;
-      // memset(prev_word, 0, sizeof(prev_word));
-      // printf("[DEBUG] Resetting previous word to empty string.\n");
-      // TODO Skip class names
-      // search_label_time = clock();
       temp_label_hash = search_label(word, gs);
-      // search_label_time = clock() - search_label_time;
-      // accum_search_label_time += search_label_time;
-
-      // printf("[INFO] Label hash: %lld\n", temp_label_hash);
       if (temp_label_hash == -1) {
-        // add_label_to_vocab_time = clock();
-        // printf("[INFO] Adding label: %s\n", word);
         temp_label = add_label_to_vocab(word, gs);
-        // printf("[DEBUG] Added label: %s at index %lld\n", word, temp_label);
         gs->label_size = temp_label + 1;
-        // printf("[INFO] Added label: %s, index: %lld, class size: %lld\n", gs->labels[temp_label].word, temp_label, gs->label_size);
-        // 
-        // add_label_to_vocab_time = clock() - add_label_to_vocab_time;
-        // accum_add_label_to_vocab_time += add_label_to_vocab_time;
         gs->labels[temp_label].cn = 1; // Initialize count to 1
       } else {
-        gs->labels[temp_label_hash].cn++; // Increment count for existing label
+        gs->labels[temp_label_hash].cn++; 
       }
-      // printf("[INFO] Added label: %s, count: %lld\n", gs->labels[temp_label].word, gs->labels[temp_label].cn);
-      // do not reduce
-      // do not sort?
       continue;
     }
 
     train_words++;
-    // printf("[DEBUG] Current word count: %lld\n", train_words);
-    // printf("1");
     if ((debug_mode > 1) && (train_words % 100000 == 0)) {
       printf("%lldK, search_label_time: %lld, add_label_to_vocab_time: %lld, search_vocab_time: %lld, add_word_to_vocab_time: %lld, vocab_length :%lld, label_length: %lld%c", train_words / 1000, accum_search_label_time, accum_add_label_to_vocab_time, accum_search_vocab_time, accum_add_word_to_vocab_time, gs->vocab_size, gs->label_size, 13);
       accum_search_label_time = 0;
       accum_add_label_to_vocab_time = 0;
       accum_search_vocab_time = 0;
       accum_add_word_to_vocab_time = 0;
-      // printf("%lldK, %c", train_words / 1000, 13);
       fflush(stdout);
     }
-    // printf("2");
-    // printf("[INFO] Searching for word in vocabulary...\n");
-    search_vocab_time = clock();
     temp_vocab_index = search_vocab(word, gs);
-    // printf("[DEBUG] Search result for word '%s': %lld\n", word, temp_vocab_index);
-    search_vocab_time = clock() - search_vocab_time;
-    accum_search_vocab_time += search_vocab_time;
-    // printf("[INFO] Search result: %lld\n", temp_vocab_hash);
-    // printf("3");
     if (temp_vocab_index == -1) {
-      // printf("[INFO] Word not found in vocabulary, adding...\n");
-      add_word_to_vocab_time = clock();
       temp_vocab_index = add_word_to_vocab(word, gs);
-
-      // printf("[DEBUG] Added word: %s at index %lld\n", word, temp_vocab_index);
-      add_word_to_vocab_time = clock() - add_word_to_vocab_time;
-      accum_add_word_to_vocab_time += add_word_to_vocab_time;
     } else {
       vocab[temp_vocab_index].cn++; // Increment count for existing word
-
     }
 
     long long temp_vocab_hash = get_word_hash(word, gs);
     if (gs->ngram > 1) {
-      // printf("[INFO] Adding ngram for word: %lld\n", prev_word_hash);
       if (prev_word[0] == 0) {
-        // strcpy(prev_word, word);
-        //   printf("%s %s\n", prev_word, word);
-        //   getchar();
-        // strncpy(prev_word, word, strlen(word) + 1 > MAX_STRING ? MAX_STRING : strlen(word) + 1);
-        // printf("%s\n", prev_word);
         strncpy(prev_word, word, sizeof(prev_word) - 1);
       } else {
         memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
-        // strcpy_s(concat_word, MAX_STRING, prev_word);
-        // strcat_s(concat_word, MAX_STRING, "-");
-        // memcpy(concat_word, prev_word, MAX_STRING);
-        strncpy(concat_word, prev_word, strlen(prev_word));
-        // printf("1. concat_word: %s, prev_word: %s, word: %s\n", concat_word, prev_word, word);
-        concat_word[strlen(prev_word)] = 0; // Add hyphen
-
-        if(strlen(concat_word) < MAX_STRING) {
-          memcpy(concat_word + strlen(prev_word), "-", 1);
-          concat_word[strlen(prev_word) + 1] = '\0'; // Ensure null termination
-          if (strlen(concat_word) + strlen(word) < MAX_STRING) {
-            // strcat_s(concat_word, MAX_STRING, token);
-            memcpy(concat_word + strlen(prev_word) + 1, word, strlen(word) + 1);
-          }
-          // strcat_s(concat_word, MAX_STRING, token);
-          // memcpy(concat_word + strlen(prev_word) + 1, token, strlen(token) + 1);
-          // skip
-        }
-        concat_word[MAX_STRING - 1] = '\0'; // Ensure null termination
-        // memcpy(concat_word, prev_word, strlen(prev_word));
-        // memcpy(concat_word + strlen(prev_word), "-", 1);
-        // memcpy(concat_word + strlen(prev_word) + 1, word, strlen(word) + 1);
+        snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, word);
         long long index = search_vocab(concat_word, gs);
         if (index == -1) {
-          // printf("[INFO] Ngram not found, adding: %s\n", concat_word);
           add_word_to_vocab(concat_word, gs);
           create_ngram++;
         } else {
-          // printf("%s\n", concat_word);
-          // getchar();
           vocab[index].cn++; // Increment count for existing ngram word
         }
       }
-      // strcpy_s(prev_word, MAX_STRING, word); // Update previous word
-      //TOOD: same logic?
       memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
       strncpy(prev_word, word, strlen(word)); // Update previous word
       prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
     }
-    // printf("[INFO] Added word: %s, count: %lld\n", vocab[temp_vocab].word, vocab[temp_vocab].cn);
     if (gs->vocab_size >= vocab_hash_size * 0.7) {
       printf("[INFO] Vocabulary reduced. Current size: %lld\n", gs->vocab_size);
       reduce_vocab(gs, gs->min_count_vocab);
@@ -466,8 +388,6 @@ void create_vocab_from_train_file(global_setting *gs) {
       printf("[INFO] Label size after reduction: %lld\n", gs->label_size);
     }
   }
-  // printf("[INFO] Total create ngram in training file: %lld\n", create_ngram);
-  // printf("\n[INFO] Finished reading words from training file.\n");
   reduce_vocab(gs, gs->min_count_vocab);
   reduce_label(gs, gs->min_count_label);
   sort_vocab(gs);
