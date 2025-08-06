@@ -27,4 +27,4 @@ compute-spearman: compute-spearman.c
 	$(CC) compute-spearman.c -o ${BIN_DIR}/compute-spearman $(CFLAGS)
 
 clean:
-	pushd ${BIN_DIR} && rm -rf word2vec word2phrase distance word-analogy compute-accuracy compute-accuracy-debug word2vec-p1-exp; popd 
+	pushd ${BIN_DIR} && rm -rf word2vec word2phrase distance word-analogy compute-accuracy compute-accuracy-debug compute-spearman; popd 
