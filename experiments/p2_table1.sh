@@ -14,7 +14,8 @@ log_time() {
 
 EXPERIMENT_ID="p2_table1"
 TIMESTAMP=$(date +"%Y%m%d_%H%M")
-LOG_FILE="../logs/${EXPERIMENT_ID}_${TIMESTAMP}.log"
+# LOG_FILE="../logs/${EXPERIMENT_ID}_${TIMESTAMP}.log"
+BASE_OUTPUT_DIR="../output/${EXPERIMENT_ID}_${TIMESTAMP}"
 
 mkdir -p "$BASE_OUTPUT_DIR"
 
