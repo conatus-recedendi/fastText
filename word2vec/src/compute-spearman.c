@@ -21,6 +21,16 @@ typedef struct {
     int model_rank;
 } Pair;
 
+void to_upper_english_only(char *str) {
+    for (int i = 0; str[i] != '\0' || i < MAX_STRING; i++) {
+        // 영어 알파벳 (ASCII)만 대문자로 변환
+        if ((unsigned char)str[i] < 128 && isalpha(str[i])) {
+            str[i] = toupper((unsigned char)str[i]);
+        }
+    }
+}
+
+
 // 코사인 유사도
 float cosine_similarity(float *vec1, float *vec2, int size) {
     float dot = 0.0, norm1 = 0.0, norm2 = 0.0;
@@ -109,6 +119,8 @@ int main(int argc, char **argv) {
     Pair pairs[MAX_PAIRS];
     int n = 0;
     while (fscanf(f, "%[^,],%[^,],%f\n", pairs[n].word1, pairs[n].word2, &pairs[n].gt_score) == 3) {
+        to_upper_english_only(pairs[n].word1);
+        to_upper_english_only(pairs[n].word2);
         // 대문자 변환
         for (int k = 0; k < strlen(pairs[n].word1); k++) pairs[n].word1[k] = toupper(pairs[n].word1[k]);
         for (int k = 0; k < strlen(pairs[n].word2); k++) pairs[n].word2[k] = toupper(pairs[n].word2[k]);
