@@ -130,7 +130,8 @@ int main(int argc, char **argv) {
 
     // 스피어만 계산
     float rho = compute_spearman(pairs, n);
-    printf("Spearman correlation: %.4f\n", rho);
+    printf("[INFO] Total pairs: %d\n", n);
+    printf("[INFO] Spearman correlation: %.4f\n", rho);
 
     // 디버깅용 출력
     for (int i = 0; i < n; i++) {
