@@ -21,8 +21,10 @@ compute-accuracy : compute-accuracy.c
 compute-accuracy-debug: compute-accuracy-debug.c
 	$(CC) compute-accuracy-debug.c -o ${BIN_DIR}/compute-accuracy-debug $(CFLAGS)
 # 	chmod +x ${SCRIPTS_DIR}/*.sh
-word2vec-p1-exp9: word2vec-p1-exp9.c
-	$(CC) word2vec-p1-exp9.c -o ${BIN_DIR}/word2vec-p1-exp9 $(CFLAGS)
+# word2vec-p1-exp9: word2vec-p1-exp9.c
+# 	$(CC) word2vec-p1-exp9.c -o ${BIN_DIR}/word2vec-p1-exp9 $(CFLAGS)
+compute-spearman: compute-spearman.c
+	$(CC) compute-spearman.c -o ${BIN_DIR}/compute-spearman $(CFLAGS)
 
 clean:
 	pushd ${BIN_DIR} && rm -rf word2vec word2phrase distance word-analogy compute-accuracy compute-accuracy-debug word2vec-p1-exp; popd 
