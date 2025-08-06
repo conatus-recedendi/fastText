@@ -236,7 +236,7 @@ void reduce_vocab(global_setting *gs, long long min_reduce) {
   long long vocab_hash_size = gs->vocab_hash_size;
   long long min_count = gs->min_count;
 
-  for (a = 0; a < *vocab_size; a++) if (vocab[a].cn > min_reduce) {
+  for (a = 0; a < *vocab_size; a++) if (vocab[a].cn >= min_reduce) {
     vocab[b].cn = vocab[a].cn;
     for (int c = 0; c < MAX_STRING; c++) {
       vocab[b].word[c] = vocab[a].word[c]; // Copy the word

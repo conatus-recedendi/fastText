@@ -222,6 +222,15 @@ void *train_thread(thread_args *args) {
     float *neu1err = (float *)malloc(gs->layer1_size * sizeof(float));
     float *neu2err = (float *)malloc(gs->label_size * sizeof(float));
 
+    float *local_layer1 = (float *)malloc(gs->vocab_size * gs->layer1_size * sizeof(float));
+    float *local_layer2 = (float *)malloc(gs->layer1_size * gs->label_size * sizeof(float));
+    if (local_layer1 == NULL || local_layer2 == NULL) {
+        fprintf(stderr, "[ERROR] Memory allocation failed for local_layer1 or local_layer2\n");
+        exit(1);
+    }
+
+
+
     long long avg_ngram = 0;
     long long avg_failure_ngram = 0;
     long long avg_word =0;
@@ -340,7 +349,7 @@ void *train_thread(thread_args *args) {
       //   printf("\nftell: %lld, sentence: %s\n", ftell(fi), sen  );
       // }
 
-      if (gs->debug_mode > 1 && temp % (gs->num_threads * 100000) == thread_id * 100000) {
+      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1) == thread_id * 1) {
         temp = 0;
         clock_t now = clock();
         struct timespec end_time;
@@ -357,6 +366,10 @@ void *train_thread(thread_args *args) {
       long long golden_label = 0;
         
       if (sentence_length > 0) {
+
+        // memcpy(local_layer1, gs->layer1, gs->vocab_size * gs->layer1_size * sizeof(float));
+        // memcpy(local_layer2, gs->layer2, gs->layer1_size * gs->label_size * sizeof(float));
+        // printf("[DEBUG] local_layer1: %p, local
         // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
         memset(neu1, 0, gs->layer1_size * sizeof(float));
         memset(neu2, 0, gs->label_size * sizeof(float));
@@ -375,7 +388,7 @@ void *train_thread(thread_args *args) {
         }
         // implement Hiereical softmax
         if (gs->hs) {
-          
+          float loss = 0.0f;
           // Hierarchical softmax
           // Implement hierarchical softmax here
           // For now, we will just use the average of the words
@@ -400,20 +413,8 @@ void *train_thread(thread_args *args) {
               long long l2 = point * gs->layer1_size;
               // printf("\n%lld gs->labels[golden_label].point[d]: %lld, code: %lld l2: %lld\n", d, gs->labels[golden_label].point[d],  gs->labels[golden_label].code[d], l2);
               for (long long j = 0; j < gs->layer1_size; j++) {
-                // 1 * hidden * hidden * label_size
-                // f += neu1[j] * gs->layer2[l2 + j];
                 f += neu1[j] * gs->layer2[j * gs->label_size + point];
               }
-              // if (f <= -6) {
-              //   // neu2[d] = 0.0f;
-              //   f = -6;
-              //   continue;
-              // } else if (f >= 6) {
-              //   f = 6;
-              //   continue ;
-              // } else {
-              // f = 1.0f / (1.0f + expf(-f));
-              // }
               f = 1.0f / (1.0f + expf(-f)); // sigmoid function
               float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
               if (g > 6) g = 6;
@@ -424,17 +425,20 @@ void *train_thread(thread_args *args) {
               }
               // printf("%f ",f);
               // printf("\n");
-              gs->loss += -logf(f + 1e-10f);
+              loss += -logf(f + 1e-10f);
             }
           }
           for (long long j = 0; j < sentence_length; j++) {
             if (words[j] != -1) {
               for (long long k = 0; k < gs->layer1_size; k++) {
-                gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
+                gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
               }
             }
           }
-
+          if (label_length > 0) {
+            loss /= label_length;
+            gs->loss += loss;
+          }
         } else { // if hierarchical softmax is not used
 
           // neu1 dot layer2

@@ -83,11 +83,15 @@ int main(int argc, char **argv) {
 
     long long words, size;
     fscanf(f, "%lld %lld", &words, &size);
+    printf("[INFO] Loaded %lld words with vector size %lld\n", words, size);
 
     char *vocab = (char *)malloc(words * max_w);
     float *M = (float *)malloc(words * size * sizeof(float));
     for (int i = 0; i < words; i++) {
         fscanf(f, "%s", &vocab[i * max_w]);
+        if (i < 10) {
+            printf("[DEBUG] Word %d: %s\n", i, &vocab[i * max_w]);
+        }
         for (int j = 0; j < size; j++) {
             fread(&M[i * size + j], sizeof(float), 1, f);
         }
