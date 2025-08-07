@@ -364,49 +364,48 @@ clock_gettime(CLOCK_MONOTONIC, &start);
           
           }
         // printf("[DEBUG] Label Length: %lld, Labels: ", label_length);
-        } else {
+      } else {
 
-            // 일반 단어인 경우
-            long long word_hash = get_word_hash(token, gs);
-            long long word_index = search_vocab(token, gs);
-            // printf("[DEBUG] Token: %s, Word Hash: %lld, Word Index: %lld\n", token, word_hash, word_index);
-            if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
-                words[sentence_length++] = word_index;
-                avg_word++;
-                if (gs->ngram > 1) {
+          // 일반 단어인 경우
+          long long word_hash = get_word_hash(token, gs);
+          long long word_index = search_vocab(token, gs);
+          // printf("[DEBUG] Token: %s, Word Hash: %lld, Word Index: %lld\n", token, word_hash, word_index);
+          if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+              words[sentence_length++] = word_index;
+              avg_word++;
+              if (gs->ngram > 1) {
 
-                  if (prev_word[0] == 0) {
-                    strncpy(prev_word, token, sizeof(prev_word) - 1);
+                if (prev_word[0] == 0) {
+                  strncpy(prev_word, token, sizeof(prev_word) - 1);
+                } else {
+                  memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
+                  // strcpy_s(concat_word, MAX_STRING, prev_word);
+                  
+                  // strcat_s(concat_word, MAX_STRING, "-");
+                  // memcpy(concat_word, prev_word, MAX_STRING);
+
+                  snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+
+                  long long index = search_vocab(concat_word, gs);
+                  if (index == -1) {
+                    // skip
+                    // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
+                    avg_failure_ngram++;
+                    // getchar();
                   } else {
-                    memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
-                    // strcpy_s(concat_word, MAX_STRING, prev_word);
-                    
-                    // strcat_s(concat_word, MAX_STRING, "-");
-                    // memcpy(concat_word, prev_word, MAX_STRING);
-
-                    snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
-
-                    long long index = search_vocab(concat_word, gs);
-                    if (index == -1) {
-                      // skip
-                      // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
-                      avg_failure_ngram++;
-                      // getchar();
-                    } else {
-                      avg_ngram++;
-                      words[sentence_length++] = index; // ngram word
-                    }
+                    avg_ngram++;
+                    words[sentence_length++] = index; // ngram word
                   }
                 }
-              } else {
-                  // words[sentence_length++] = -1; // unknown word
               }
-          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-            strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
-            prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
-        }
-        token = strtok(NULL, " ");
-        // printf("[DEBUG] Token: %s, Sentence Length: %lld, Label Length: %lld\n", token, sentence_length, label_length);
+            } else {
+                // words[sentence_length++] = -1; // unknown word
+            }
+        memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+          strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+          prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+      }
+      token = strtok(NULL, " ");
     }
     memcpy(prev_word, "", 1); // Reset previous word for next sentence
     // exit(1);
@@ -485,14 +484,14 @@ clock_gettime(CLOCK_MONOTONIC, &start);
   
         long long gold_length = 0;
         for (long long j = 0; j < gs->label_size; j++) {
-          if (labels[j] >= 0 && gold_length < gs->top_k) {
+          if (labels[j] >= 0) {
             gold[gold_length++] = labels[j];
           }
         }
 
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
         int out_flag = 0;
-        printf("[INFO] Gold length: %lld\n", gold_length );
+        printf("[INFO] Label Length: %lld, Gold length: %lld\n", label_length, gold_length );
         for (long long j = 0; j < gold_length; j++) {
           float prob = 1.0f;
           int flag = 0;
