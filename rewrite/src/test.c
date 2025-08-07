@@ -9,8 +9,6 @@
 #include "vocab.h"
 #include "utils.h"
 
-
-
 void initialize_network(global_setting *gs) {
   // printf("[INFO] Initializing network... %lld %lld \n", gs->vocab_size, gs->layer1_size);
   posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
@@ -356,6 +354,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
           long long label_index = search_label(token, gs);
 
 
+
         // printf("[INFO] Found label: %s, index: %lld\n", token, label_index);
           if (label_index != -1) {
               labels[label_length++] = label_index;  // Set the label index to 1
@@ -441,6 +440,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
     // learning by line
     // logging by N lines
     long long golden_label = -1;
+    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     if (label_length==0 || sentence_length == 0) wrong_cnt++;
 
     if (sentence_length > 0 && label_length > 0) {
@@ -491,7 +491,6 @@ clock_gettime(CLOCK_MONOTONIC, &start);
 
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
         int out_flag = 0;
-        printf("[INFO] Label Length: %lld, Gold length: %lld\n", label_length, gold_length );
         for (long long j = 0; j < gold_length; j++) {
           float prob = 1.0f;
           int flag = 0;
@@ -506,13 +505,13 @@ clock_gettime(CLOCK_MONOTONIC, &start);
             }
 
             float sigmoid = 1.0f / (1.0f + expf(-dot));
-            prob *= (code == 0 ? sigmoid : 1.0f - sigmoid);
-            if (code == 0 && sigmoid < 0.5) {
+            prob *= (code == 0 ? logf(sigmoid + 1e-10) : logf(1.0f - sigmoid + 1e-10));
+            if (code == 0 && sigmoid < 0.45) {
               // local_fp_cnt++;
               flag++;
               break ;
               // printf("[WARN] Hierarchical softmax: prob: %f, gold: %lld\n", prob, gold[j]);
-            } else if (code == 1 && sigmoid > 0.5) {
+            } else if (code == 1 && sigmoid > 0.55) {
               // local_fp_cnt++;
               flag++;
               break ;
@@ -528,6 +527,8 @@ clock_gettime(CLOCK_MONOTONIC, &start);
             break ;
           }
         }
+
+        // dfs(gs, 2 * gs->label_size - 2, 0.0); // Traverse the binary tree to update output
         if (out_flag) {
           local_tp_cnt++;
         } else {

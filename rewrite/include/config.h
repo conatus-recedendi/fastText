@@ -79,6 +79,7 @@ typedef struct {
   long long min_count_label; // minimum count for labels
   long long min_count_vocab; // minimum count for vocabulary
 
+
 } global_setting;
 
 
