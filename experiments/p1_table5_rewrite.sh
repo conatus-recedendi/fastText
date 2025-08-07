@@ -69,16 +69,18 @@ read DIM GRAM LR <<< "$combo"
   OUTFILE="${RESULTDIR}/dim${DIM}_gram${GRAM}_lr${LR}.bin"
 
   echo "Downloading dataset with dimensions ${DIM} and n-grams ${GRAM}"
+  # e.g.) ../rewrite/bin/fastText -train ../data/YFCC100M/train-processing -output ../result/dim50_gram1_lr0.05.bin -size 50 -lr 0.05 -ngram 1 -min-count-vocab 100 -min-count-label 100 -bucket 100000000 -iter 5 -thread 10 -hs 1
   log_time "$LOG_FILE" ../rewrite/bin/fastText -train "${DATADIR}/YFCC100M/train-processing" \
     -output ${OUTFILE} -size ${DIM} -lr ${LR} -ngram ${GRAM} \
-    -min-count-vocab 100 -min-count-label 100 -bucket ${BUCKET} -iter 5 -thread 1 -hs 0 > /dev/null
+    -min-count-vocab 100 -min-count-label 100 -bucket ${BUCKET} -iter 5 -thread 10 -hs 1
 
   # log_time "$LOG_FILE" echo "Testing on validation set"
   # OUTPUT=$(../fasttext test "${OUTFILE}.bin" "${DATADIR}/YFCC100M/valid-processing")
   # log_time "$LOG_FILE" echo "$OUTPUT"
 
+  # e.g.) ../rewrite/bin/test -load-model ../output/result/dim50_gram1_lr0.05.bin -test-file ../data/YFCC100M/test-processing -topk 1 -answer-threshold 0.0
   OUTPUT=$(log_time "$LOG_FILE" ../rewrite/bin/test -load-model "${OUTFILE}" \
-    -test-file "${DATADIR}/YFCC100M/valid-processing" -topk 1 -answer-threshold 0.0)
+    -test-file "${DATADIR}/YFCC100M/test-processing" -topk 1 -answer-threshold 0.0)
 
   # Extract P@1
   echo $OUTPUT
