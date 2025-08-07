@@ -506,12 +506,12 @@ clock_gettime(CLOCK_MONOTONIC, &start);
 
             float sigmoid = 1.0f / (1.0f + expf(-dot));
             prob *= (code == 0 ? logf(sigmoid + 1e-10) : logf(1.0f - sigmoid + 1e-10));
-            if (code == 0 && sigmoid < 0.45) {
+            if (code == 0 && sigmoid < 0.40) {
               // local_fp_cnt++;
               flag++;
               break ;
               // printf("[WARN] Hierarchical softmax: prob: %f, gold: %lld\n", prob, gold[j]);
-            } else if (code == 1 && sigmoid > 0.55) {
+            } else if (code == 1 && sigmoid > 0.60) {
               // local_fp_cnt++;
               flag++;
               break ;
