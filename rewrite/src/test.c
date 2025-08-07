@@ -339,8 +339,8 @@ clock_gettime(CLOCK_MONOTONIC, &start);
     long long sentence_length = 0;
     long long ngram_sentences_length = 0;
     long long label_length = 0;
-    memset(labels, -1,  sizeof(labels)); // Initialize labels to 0
-    memset(words, -1,  sizeof(words)); // Initialize words to -1 (unknown word)
+    memset(labels, -1, gs->label_size * sizeof(long long)); // Initialize labels to 0
+    memset(words, -1, MAX_WORDS_PER_SENTENCE * sizeof(long long)); // Initialize words to -1 (unknown word)
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
 
     while (token != NULL) {
