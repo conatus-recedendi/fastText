@@ -525,6 +525,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
           if (flag == 0) {
             // local_tp_cnt++;
             out_flag = 1;
+            break ;
           }
         }
         if (out_flag) {
