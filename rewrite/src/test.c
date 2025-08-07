@@ -492,6 +492,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
 
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
         int out_flag = 0;
+        printf("[INFO] Gold length: %lld\n", gold_length );
         for (long long j = 0; j < gold_length; j++) {
           float prob = 1.0f;
           int flag = 0;
