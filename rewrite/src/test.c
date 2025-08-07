@@ -442,7 +442,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
     // learning by line
     // logging by N lines
     long long golden_label = -1;
-    if (label_length==0) wrong_cnt++;
+    if (label_length==0 || sentence_length == 0) wrong_cnt++;
 
     if (sentence_length > 0 && label_length > 0) {
       // for (long long j = 0; j < ngram_sentences_length; j++) {
@@ -495,7 +495,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
         for (long long j = 0; j < gold_length; j++) {
           float prob = 1.0f;
           int flag = 0;
-          // printf("labels[%lld].colden: %lld \n", gold[j], gs->labels[gold[j]].codelen);
+          printf("labels[%lld].colden: %lld \n", gold[j], gs->labels[gold[j]].codelen);
           for (int k = 0; k < gs->labels[gold[j]].codelen; k++) {
             long long point = gs->labels[gold[j]].point[k];
             long long code = gs->labels[gold[j]].code[k];
