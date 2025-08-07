@@ -356,7 +356,7 @@ void *train_thread(thread_args *args) {
 
       long long golden_label = 0;
         
-      if (sentence_length > 0) {
+      if (sentence_length > 0 && label_length > 0) {
 
         // memcpy(local_layer1, gs->layer1, gs->vocab_size * gs->layer1_size * sizeof(float));
         // memcpy(local_layer2, gs->layer2, gs->layer1_size * gs->label_size * sizeof(float));

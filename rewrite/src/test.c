@@ -491,11 +491,11 @@ clock_gettime(CLOCK_MONOTONIC, &start);
         }
 
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
-  
+        int out_flag = 0;
         for (long long j = 0; j < gold_length; j++) {
           float prob = 1.0f;
           int flag = 0;
-          printf("labels[%lld].colden: %lld \n", gold[j], gs->labels[gold[j]].codelen);
+          // printf("labels[%lld].colden: %lld \n", gold[j], gs->labels[gold[j]].codelen);
           for (int k = 0; k < gs->labels[gold[j]].codelen; k++) {
             long long point = gs->labels[gold[j]].point[k];
             long long code = gs->labels[gold[j]].code[k];
@@ -508,12 +508,12 @@ clock_gettime(CLOCK_MONOTONIC, &start);
             float sigmoid = 1.0f / (1.0f + expf(-dot));
             prob *= (code == 0 ? sigmoid : 1.0f - sigmoid);
             if (code == 0 && sigmoid < 0.5) {
-              local_fp_cnt++;
+              // local_fp_cnt++;
               flag++;
               break ;
               // printf("[WARN] Hierarchical softmax: prob: %f, gold: %lld\n", prob, gold[j]);
             } else if (code == 1 && sigmoid > 0.5) {
-              local_fp_cnt++;
+              // local_fp_cnt++;
               flag++;
               break ;
             } else {
@@ -523,9 +523,14 @@ clock_gettime(CLOCK_MONOTONIC, &start);
             // printf("[DEBUG] Hierarchical softmax: point: %lld, code: %lld, dot: %f, sigmoid: %f, prob: %f\n", point, code, dot, sigmoid, prob);
           }
           if (flag == 0) {
-            local_tp_cnt++;
+            // local_tp_cnt++;
+            out_flag = 1;
           }
-
+        }
+        if (out_flag) {
+          local_tp_cnt++;
+        } else {
+          local_fp_cnt++;
         }
         tp_cnt += local_tp_cnt;
         fp_cnt += local_fp_cnt;
