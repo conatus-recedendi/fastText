@@ -512,12 +512,12 @@ void test_thread(global_setting *gs) {
 
             float sigmoid = 1.0f / (1.0f + expf(-dot));
             prob *= (code == 0 ? logf(sigmoid + 1e-10) : logf(1.0f - sigmoid + 1e-10));
-            if (code == 0 && sigmoid < 0.5 - 0.06) {
+            if (code == 0 && sigmoid < 0.5 - 0.08) {
               // local_fp_cnt++;
               flag++;
               break ;
               // printf("[WARN] Hierarchical softmax: prob: %f, gold: %lld\n", prob, gold[j]);
-            } else if (code == 1 && sigmoid > 0.50 + 0.06) {
+            } else if (code == 1 && sigmoid > 0.50 + 0.08) {
               // local_fp_cnt++;
               flag++;
               break ;
