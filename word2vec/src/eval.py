@@ -55,6 +55,7 @@ fin.readline()  # Skip header line
 for _, line in enumerate(fin):
     try:
         tab = compat_splitting(line)
+        print(tab)
         vec = np.array(tab[1:], dtype=float)
         word = tab[0]
         if np.linalg.norm(vec) == 0:
