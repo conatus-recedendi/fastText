@@ -75,9 +75,22 @@ float compute_spearman(Pair *pairs, int n) {
 
 // 단어 인덱스 찾기
 int find_word_index(char *word, char *vocab, long long words) {
-    for (int i = 0; i < words; i++) {
-        if (strcmp(toupper(word), toupper(&vocab[i * max_w])) == 0) return i;
+    char *vocab_element = (char *)malloc(max_w);
+
+    if (vocab_element == NULL) {
+        printf("Memory allocation failed for vocab_element\n");
+        return -1;
     }
+
+    
+    for (int i = 0; i < words; i++) {
+        memcpy(vocab_element, &vocab[i * max_w], max_w);
+        if (strcmp(toupper(word), toupper(vocab_element)) == 0) {
+            free(vocab_element);
+            return i;
+        }
+    }
+    free(vocab_element);
     return -1;
 }
 
