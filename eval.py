@@ -20,7 +20,8 @@ import argparse
 
 
 def compat_splitting(line):
-    return line.decode("utf8").split()
+    # split by ,
+    return line.decode("utf8").strip().split(",")
 
 
 def similarity(v1, v2):
