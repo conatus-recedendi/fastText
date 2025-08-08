@@ -268,15 +268,16 @@ void test_thread(global_setting *gs) {
   
 
   FILE *fi = fopen(gs->test_file, "rb");
-  printf("[DEBUG] Thread %lld opened file %s\n", thread_id, gs->test_file);
+  if (fi == NULL) {
+    fprintf(stderr, "Error opening file %s for reading\n", gs->test_file);
+    exit(1);
+  }
 
     // Reset sentence length and position for each iteration
   sentence_length = 0;
   sentence_position = 0;
   // Read the file line by line
   fseek(fi, 0, SEEK_SET);
-  getchar();
-  printf("[DEBUG] Thread %lld set file position to start\n", thread_id);
   
 
   // char word[MAX_SENTENCE_LENGTH];
@@ -295,13 +296,9 @@ void test_thread(global_setting *gs) {
   // while (1) {
   //   fgets(word, MAX_STRING, fi);
     
-  getchar();
-  printf("[DEBUG] Starting to read sentences from file...\n");
   // }
   long long line = 0;
   long long max_line = count_lines(fi);
-  printf("[DEBUG] Total lines in test file: %lld\n", max_line);
-  getchar();
 
   long long correct_cnt = 0;
   long long total_cnt = 0;
@@ -320,8 +317,6 @@ void test_thread(global_setting *gs) {
   long long avg_ngram =0;
   long long avg_failure_ngram = 0;
   long long avg_word =0;
-  printf("[DEBUG] Starting to process sentences...\n");
-  getchar();
   
 
   while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
