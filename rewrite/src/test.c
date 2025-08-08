@@ -247,8 +247,8 @@ void load_model(char *load_model_file, global_setting *gs) {
 void test_thread(global_setting *gs) {
   // Implement the test logic here
   long long thread_id = 0; // Assuming single thread for testing
-struct timespec start;
-clock_gettime(CLOCK_MONOTONIC, &start);
+  struct timespec start;
+  clock_gettime(CLOCK_MONOTONIC, &start);
   // Placeholder for thread-specific test logic
 
   long long file_size = gs->file_size;
@@ -264,7 +264,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
   long long sentence_end = 0;
   
 
-  // printf("[INFO] Thread %lld started testing...\n", thread_id);
+  printf("[INFO] test_thread started testing...\n");
   
 
   FILE *fi = fopen(gs->test_file, "rb");
@@ -327,6 +327,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
 
 
     // printf("")
+    printf("[DEBUG] Processing line %lld: %s", line, sen);
     // gs->total_learned_lines++;
     // word를 label, words로 분리.
     // 줄 끝 개행 문자 제거
@@ -366,46 +367,41 @@ clock_gettime(CLOCK_MONOTONIC, &start);
       } else {
 
           // 일반 단어인 경우
-          long long word_hash = get_word_hash(token, gs);
           long long word_index = search_vocab(token, gs);
+          // long long word_hash = get_word_hash(token, gs);
           // printf("[DEBUG] Token: %s, Word Hash: %lld, Word Index: %lld\n", token, word_hash, word_index);
           if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
-              words[sentence_length++] = word_index;
-              avg_word++;
-              if (gs->ngram > 1) {
+            words[sentence_length++] = word_index;
+            avg_word++;
+            if (gs->ngram > 1) {
 
-                if (prev_word[0] == 0) {
-                  strncpy(prev_word, token, sizeof(prev_word) - 1);
+              if (prev_word[0] == 0) {
+                strncpy(prev_word, token, sizeof(prev_word) - 1);
+                // prev_word[sizeof(prev_word) - 1] = '\0'; // Ensure null termination
+              } else {
+                memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
+                snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+
+                long long index = search_vocab(concat_word, gs);
+                if (index == -1) {
+                  // skip
+                  // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
+                  avg_failure_ngram++;
+                  // getchar();
                 } else {
-                  memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
-                  // strcpy_s(concat_word, MAX_STRING, prev_word);
-                  
-                  // strcat_s(concat_word, MAX_STRING, "-");
-                  // memcpy(concat_word, prev_word, MAX_STRING);
-
-                  snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
-
-                  long long index = search_vocab(concat_word, gs);
-                  if (index == -1) {
-                    // skip
-                    // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
-                    avg_failure_ngram++;
-                    // getchar();
-                  } else {
-                    avg_ngram++;
-                    words[sentence_length++] = index; // ngram word
-                  }
+                  avg_ngram++;
+                  words[sentence_length++] = index; // ngram word
                 }
               }
-            } else {
-                // words[sentence_length++] = -1; // unknown word
             }
-        memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+          } 
+          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
           strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
           prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
       }
       token = strtok(NULL, " ");
     }
+    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     memcpy(prev_word, "", 1); // Reset previous word for next sentence
     // exit(1);
     gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
@@ -473,6 +469,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
       float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
+      printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
       if (gs->hs)  {
          // MEMO: hierarchical softmax는 prec 값만 구함.
          // precision 외의 값을 구하기 위해서는 전체 label의 등장확률을 구해야하고 - softmax 보다 느림.
@@ -650,6 +647,7 @@ clock_gettime(CLOCK_MONOTONIC, &start);
       // sort neu2_sorted and index_sorted by neu2_sorted
     }
 
+    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     // get precision@K and recall@K
   
     if (tp_cnt + fp_cnt > 0) {

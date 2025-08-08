@@ -317,8 +317,6 @@ void *train_thread(thread_args *args) {
                   }
                 }
               }
-            } else if(word_index != -1) {
-                // words[sentence_length] = -1; // unknown word
             }
             memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
             strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
