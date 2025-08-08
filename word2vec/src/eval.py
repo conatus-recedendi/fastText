@@ -86,8 +86,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-vectors = {}
-load_c_style_vectors(args.modelPath)
+# vectors = {}
+vectors = load_c_style_vectors(args.modelPath)
 # fin = open(args.modelPath, "rb")
 # fin.readline()  # Skip header line
 # for _, line in enumerate(fin):
