@@ -61,9 +61,9 @@ do
 read DIM GRAM LR <<< "$combo"
 
   if [[ "$GRAM" == "2" ]]; then
-    BUCKET=10000000  # 10M
+    BUCKET=100000000 # 10M
   else
-    BUCKET=100000000 # 100M
+    BUCKET=10000000 # 100M
   fi
 
   OUTFILE="${RESULTDIR}/dim${DIM}_gram${GRAM}_lr${LR}"
@@ -71,7 +71,7 @@ read DIM GRAM LR <<< "$combo"
   echo "Downloading dataset with dimensions ${DIM} and n-grams ${GRAM}"
   log_time "$LOG_FILE" ../fasttext supervised -input "${DATADIR}/YFCC100M/train-processing" \
     -output ${OUTFILE} -dim ${DIM} -lr ${LR} -wordNgrams ${GRAM} \
-    -minCount 100 -minCountLabel 100 -bucket ${BUCKET} -epoch 5 -thread 20 -loss hs > /dev/null
+    -minCount 100 -minCountLabel 100 -bucket ${BUCKET} -epoch 5 -thread 10 -loss hs > /dev/null
 
   # log_time "$LOG_FILE" echo "Testing on validation set"
   # OUTPUT=$(../fasttext test "${OUTFILE}.bin" "${DATADIR}/YFCC100M/valid-processing")
@@ -80,13 +80,14 @@ read DIM GRAM LR <<< "$combo"
   OUTPUT=$(log_time "$LOG_FILE" ../fasttext test "${OUTFILE}.bin" \
     "${DATADIR}/YFCC100M/valid-processing")
 
+  log_time ${LOG_FILE} ../
   # Extract P@1
-  P1=$(echo "$OUTPUT" | awk '/P@1/ {print $2}')
-  key="${DIM}_${GRAM}"
-  if [[ -z "${best_p1[$key]}" || $(echo "$P1 > ${best_p1[$key]}" | bc -l) -eq 1 ]]; then
-    best_p1[$key]=$P1
-    best_lr[$key]=$LR
-  fi
+  # P1=$(echo "$OUTPUT" | awk '/P@1/ {print $2}')
+  # key="${DIM}_${GRAM}"
+  # if [[ -z "${best_p1[$key]}" || $(echo "$P1 > ${best_p1[$key]}" | bc -l) -eq 1 ]]; then
+  #   best_p1[$key]=$P1
+  #   best_lr[$key]=$LR
+  # fi
 # log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/dim${DIM}_gram${GRAM}.bin" \
 #     "${DATADIR}/YFCC100M/test-processing" 
 # log_time ${LOG_FILE} ../fasttext predict "../output/p1_table5_20250703_0921/dim50_gram1.bin" \
@@ -98,14 +99,14 @@ done
 
 
 # Final result summary
-log_time "$LOG_FILE"  echo -e "\n===== BEST RESULTS PER (DIM, GRAM) ====="
-for key in "${!best_p1[@]}"; do
+# log_time "$LOG_FILE"  echo -e "\n===== BEST RESULTS PER (DIM, GRAM) ====="
+# for key in "${!best_p1[@]}"; do
 
-  log_time "$LOG_FILE" echo "DIM_GRAM: $key   Best P@1: ${best_p1[$key]}   LR: ${best_lr[$key]}"
-  GRAM=$(echo "$key" | cut -d'_' -f2)
-  DIM=$(echo "$key" | cut -d'_' -f1)
+#   log_time "$LOG_FILE" echo "DIM_GRAM: $key   Best P@1: ${best_p1[$key]}   LR: ${best_lr[$key]}"
+#   GRAM=$(echo "$key" | cut -d'_' -f2)
+#   DIM=$(echo "$key" | cut -d'_' -f1)
 
-  OUTFILE="${RESULTDIR}/dim${DIM}_gram${GRAM}_lr${best_lr[$key]}"
-  log_time "$LOG_FILE" ../fasttext test "${OUTFILE}.bin" \
-    "${DATADIR}/YFCC100M/test-processing"
-done | sort
+#   OUTFILE="${RESULTDIR}/dim${DIM}_gram${GRAM}_lr${best_lr[$key]}"
+#   log_time "$LOG_FILE" ../fasttext test "${OUTFILE}.bin" \
+#     "${DATADIR}/YFCC100M/test-processing"
+# done | sort
