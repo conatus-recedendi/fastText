@@ -21,6 +21,11 @@ import argparse
 
 def compat_splitting(line):
     # split by ,
+    return line.decode("utf8").split()
+
+
+def compat_splitting_by_comma(line):
+    # split by comma
     return line.decode("utf8").strip().split(",")
 
 
@@ -68,7 +73,7 @@ nwords = 0.0
 
 fin = open(args.dataPath, "rb")
 for line in fin:
-    tline = compat_splitting(line)
+    tline = compat_splitting_by_comma(line)
     # show tline infor
     print("Processing:", tline)
     word1 = tline[0].lower()
