@@ -175,6 +175,7 @@ int main(int argc, char **argv) {
         }
     }
     assign_rank(pairs, non_nan_count, 1); // GT 순위
+    assign_rank(pairs, non_nan_count, 0); // Model 순위
 
     // 스피어만 계산
     float rho = compute_spearman(pairs, non_nan_count);
