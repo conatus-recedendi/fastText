@@ -76,7 +76,7 @@ float compute_spearman(Pair *pairs, int n) {
 // 단어 인덱스 찾기
 int find_word_index(char *word, char *vocab, long long words) {
     for (int i = 0; i < words; i++) {
-        if (strcmp(word, &vocab[i * max_w]) == 0) return i;
+        if (strcmp(toupper(word), toupper(&vocab[i * max_w])) == 0) return i;
     }
     return -1;
 }
@@ -119,8 +119,8 @@ int main(int argc, char **argv) {
     Pair pairs[MAX_PAIRS];
     int n = 0;
     while (fscanf(f, "%[^,],%[^,],%f\n", pairs[n].word1, pairs[n].word2, &pairs[n].gt_score) == 3) {
-        to_upper_english_only(pairs[n].word1);
-        to_upper_english_only(pairs[n].word2);
+        // to_upper_english_only(pairs[n].word1);
+        // to_upper_english_only(pairs[n].word2);
         // 대문자 변환
         for (int k = 0; k < strlen(pairs[n].word1); k++) pairs[n].word1[k] = toupper(pairs[n].word1[k]);
         for (int k = 0; k < strlen(pairs[n].word2); k++) pairs[n].word2[k] = toupper(pairs[n].word2[k]);
