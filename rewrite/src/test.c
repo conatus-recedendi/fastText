@@ -275,6 +275,7 @@ void test_thread(global_setting *gs) {
   sentence_position = 0;
   // Read the file line by line
   fseek(fi, 0, SEEK_SET);
+  getchar();
   printf("[DEBUG] Thread %lld set file position to start\n", thread_id);
   
 
@@ -294,11 +295,13 @@ void test_thread(global_setting *gs) {
   // while (1) {
   //   fgets(word, MAX_STRING, fi);
     
+  getchar();
   printf("[DEBUG] Starting to read sentences from file...\n");
   // }
   long long line = 0;
   long long max_line = count_lines(fi);
   printf("[DEBUG] Total lines in test file: %lld\n", max_line);
+  getchar();
 
   long long correct_cnt = 0;
   long long total_cnt = 0;
@@ -318,6 +321,7 @@ void test_thread(global_setting *gs) {
   long long avg_failure_ngram = 0;
   long long avg_word =0;
   printf("[DEBUG] Starting to process sentences...\n");
+  getchar();
   
 
   while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
@@ -332,7 +336,7 @@ void test_thread(global_setting *gs) {
 
 
     // printf("")
-    printf("[DEBUG] Processing line %lld: %s", line, sen);
+    // printf("[DEBUG] Processing line %lld: %s", line, sen);
     // gs->total_learned_lines++;
     // word를 label, words로 분리.
     // 줄 끝 개행 문자 제거
@@ -406,7 +410,7 @@ void test_thread(global_setting *gs) {
       }
       token = strtok(NULL, " ");
     }
-    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     memcpy(prev_word, "", 1); // Reset previous word for next sentence
     // exit(1);
     gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
@@ -474,7 +478,7 @@ void test_thread(global_setting *gs) {
       float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
-      printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+      // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
       if (gs->hs)  {
          // MEMO: hierarchical softmax는 prec 값만 구함.
          // precision 외의 값을 구하기 위해서는 전체 label의 등장확률을 구해야하고 - softmax 보다 느림.
@@ -508,12 +512,12 @@ void test_thread(global_setting *gs) {
 
             float sigmoid = 1.0f / (1.0f + expf(-dot));
             prob *= (code == 0 ? logf(sigmoid + 1e-10) : logf(1.0f - sigmoid + 1e-10));
-            if (code == 0 && sigmoid < 0.42) {
+            if (code == 0 && sigmoid < 0.5 - 0.06) {
               // local_fp_cnt++;
               flag++;
               break ;
               // printf("[WARN] Hierarchical softmax: prob: %f, gold: %lld\n", prob, gold[j]);
-            } else if (code == 1 && sigmoid > 0.58) {
+            } else if (code == 1 && sigmoid > 0.50 + 0.06) {
               // local_fp_cnt++;
               flag++;
               break ;
@@ -652,7 +656,7 @@ void test_thread(global_setting *gs) {
       // sort neu2_sorted and index_sorted by neu2_sorted
     }
 
-    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     // get precision@K and recall@K
   
     if (tp_cnt + fp_cnt > 0) {
