@@ -293,9 +293,14 @@ void *train_thread(thread_args *args) {
           // printf("[DEBUG] Token: %s\n", token); 
             // 일반 단어인 경우
             
-            long long word_hash = get_word_hash(token, gs);
+            // TODO: new_token을 "<" + token + ">" 로 변경. 단, token의 최대 길이는 MAX_STRING - 2
+            char new_token[MAX_STRING];
+            token[MAX_STRING - 1] = 0;
+            token[MAX_STRING - 2] = 0; // force to remove
+            snprintf(new_token, sizeof(new_token), "<%s>", token);
+            long long word_hash = get_word_hash(new_token, gs);
 
-            long long word_index = search_vocab(token, gs);
+            long long word_index = search_vocab(new_token, gs);
 
             if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
               words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
@@ -341,6 +346,26 @@ void *train_thread(thread_args *args) {
                     avg_ngram++;
                     words[sentence_length++] = index; // ngram word
                   }
+                }
+              }
+              if (gs->subword > 1) {
+                while(1) {
+                  // TODO: gs->subword만큼 쪼개기. newtoken="<apple>" 이고 subword=3이면 "<ap" "app" "ppl" "ple" "le>"
+                  // 그리고 쪼갠 단어를 전부 hash찾고 words[sentence_length++]로 추가
+                  char subword[MAX_STRING];
+                  if (strlen(token) < gs->subword) {
+                    // printf("[DEBUG] current line: %lld, subword too short: %s\n", line, token);
+                    break; // Skip if the token is too short for subword
+                  }
+                  for (int i = 0; i <= strlen(token) - gs->subword; i++) {
+                    strncpy(subword, token + i, gs->subword);
+                    subword[gs->subword] = '\0';
+                    long long subword_index = search_vocab(subword, gs);
+                    if (subword_index != -1) {
+                      words[sentence_length++] = subword_index;
+                    }
+                  }
+                  break;
                 }
               }
             } else if(word_index != -1) {
@@ -398,7 +423,9 @@ void *train_thread(thread_args *args) {
           neu1[j] /= sentence_length; // 평균을 구함
         }
         // implement Hiereical softmax
-        if (gs->hs) {
+        if (gs->ns) {
+          
+        } else if (gs->hs) {
           
           // Hierarchical softmax
           // Implement hierarchical softmax here

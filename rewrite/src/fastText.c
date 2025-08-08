@@ -476,9 +476,9 @@ void *train_thread(thread_args *args) {
             }
             
             loss += -logf(neu2[golden_label] + 1e-10f);
-            if (isnan(loss) || isinf(loss)) {
-              getchar();
-            }
+            // if (isnan(loss) || isinf(loss)) {
+            //   getchar();
+            // }
           }
           // Update neu1err
           for (long long j = 0; j < sentence_length; j++) {
