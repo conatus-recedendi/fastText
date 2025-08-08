@@ -174,21 +174,22 @@ int main(int argc, char **argv) {
             non_nan_count++;
         }
     }
-    assign_rank(pairs, non_nan_count, 1); // GT 순위
-    assign_rank(pairs, non_nan_count, 0); // Model 순위
+
+    assign_rank(pairs, n, 1); // GT 순위
+    assign_rank(pairs, n, 0); // Model 순위
 
     // 스피어만 계산
-    float rho = compute_spearman(pairs, non_nan_count);
+    float rho = compute_spearman(pairs, n);
     printf("[INFO] Total pairs: %d, Non nan_count: %d\n", n, non_nan_count);
     printf("[INFO] Spearman correlation: %.4f\n", rho);
 
     // 디버깅용 출력
-    for (int i = 0; i < non_nan_count; i++) {
-        printf("%s,%s | GT: %.2f (Rank %d), Model: %.4f (Rank %d)\n",
-            pairs[i].word1, pairs[i].word2,
-            pairs[i].gt_score, pairs[i].gt_rank,
-            pairs[i].model_score, pairs[i].model_rank);
-    }
+    // for (int i = 0; i < non_nan_count; i++) {
+    //     printf("%s,%s | GT: %.2f (Rank %d), Model: %.4f (Rank %d)\n",
+    //         pairs[i].word1, pairs[i].word2,
+    //         pairs[i].gt_score, pairs[i].gt_rank,
+    //         pairs[i].model_score, pairs[i].model_rank);
+    // }
 
     free(vocab);
     free(M);
