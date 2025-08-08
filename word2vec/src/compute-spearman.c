@@ -49,8 +49,8 @@ int compare_gt(const void *a, const void *b) {
 // 비교 함수: 내림차순 (model)
 int compare_model(const void *a, const void *b) {
     // null/nan값이라면 가장 낮은 순위로
-    int isnan_a = isnan(((Pair *)a)->model_score) || ((Pair *)a)->model_score < 0;
-    int isnan_b = isnan(((Pair *)b)->model_score) || ((Pair *)b)->model_score < 0;
+    int isnan_a = isnan(((Pair *)a)->model_score);
+    int isnan_b = isnan(((Pair *)b)->model_score);
     if (isnan_a && isnan_b) {
         return 0; // 둘 다 null/nan이면 순위 동일
     } else if (isnan_a) {
