@@ -19,6 +19,43 @@ import math
 import argparse
 
 
+def load_c_style_vectors(filename):
+    vectors = {}
+
+    with open(filename, "rb") as f:
+        # 1. 헤더 읽기
+        header = f.readline()
+        words, size = map(int, header.strip().split())
+        print(f"[INFO] Loaded {words} words with vector size {size}")
+
+        for i in range(words):
+            # 2. 단어 읽기
+            word_bytes = []
+            while True:
+                ch = f.read(1)
+                if ch == b" ":
+                    break
+                if ch != b"\n":
+                    word_bytes.append(ch)
+            word = b"".join(word_bytes).decode("utf-8", errors="replace")
+
+            # 3. 벡터 읽기 (float32)
+            vec = np.frombuffer(f.read(4 * size), dtype=np.float32)
+
+            # 4. 정규화
+            norm = np.linalg.norm(vec)
+            if norm != 0:
+                vec = vec / norm
+
+            # 5. 딕셔너리에 저장 (list 형태로)
+            vectors[word] = vec.tolist()
+
+            if i < 5:  # 디버그용
+                print(f"[DEBUG] {word} → {vectors[word][:5]}...")
+
+    return vectors
+
+
 def compat_splitting(line):
     # split by ,
     return line.decode("utf8").split()
@@ -50,23 +87,24 @@ parser.add_argument(
 args = parser.parse_args()
 
 vectors = {}
-fin = open(args.modelPath, "rb")
-fin.readline()  # Skip header line
-for _, line in enumerate(fin):
-    try:
-        tab = compat_splitting(line)
-        print(tab)
-        vec = np.array(tab[1:], dtype=float)
-        word = tab[0]
-        if np.linalg.norm(vec) == 0:
-            continue
-        if not word in vectors:
-            vectors[word] = vec
-    except ValueError:
-        continue
-    except UnicodeDecodeError:
-        continue
-fin.close()
+load_c_style_vectors(args.modelPath)
+# fin = open(args.modelPath, "rb")
+# fin.readline()  # Skip header line
+# for _, line in enumerate(fin):
+#     try:
+#         tab = compat_splitting(line)
+#         print(tab)
+#         vec = np.array(tab[1:], dtype=float)
+#         word = tab[0]
+#         if np.linalg.norm(vec) == 0:
+#             continue
+#         if not word in vectors:
+#             vectors[word] = vec
+#     except ValueError:
+#         continue
+#     except UnicodeDecodeError:
+#         continue
+# fin.close()
 
 mysim = []
 gold = []
