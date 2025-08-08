@@ -89,7 +89,10 @@ int find_word_index(char *word, char *vocab, long long words) {
         vocab_element[max_w - 1] = '\0'; // Ensure null-termination
         // 대소문자 구분 없이 비교
         printf("[DEBUG] Comparing with: %s\n", vocab_element);
-        if (strcmp(toupper(word), toupper(vocab_element)) == 0) {
+        for (int j = 0; j < max_w && vocab_element[j] != '\0'; j++) {
+            vocab_element[j] = toupper(vocab_element[j]);
+        }
+        if (strcmp(word, vocab_element) == 0) {
             free(vocab_element);
             return i;
         }
