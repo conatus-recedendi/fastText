@@ -61,9 +61,9 @@ do
 read DIM GRAM LR <<< "$combo"
 
   if [[ "$GRAM" == "2" ]]; then
-    BUCKET=10000000  # 10M
+    BUCKET=100000000  # 10M
   else
-    BUCKET=100000000 # 100M
+    BUCKET=10000000 # 100M
   fi
 
   OUTFILE="${RESULTDIR}/dim${DIM}_gram${GRAM}_lr${LR}.bin"
