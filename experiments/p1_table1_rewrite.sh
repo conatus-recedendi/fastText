@@ -116,7 +116,7 @@ do
 
   log_time ${LOG_FILE} ../rewrite/bin/fastText  -train "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}_bi.bin" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
-    -min-count 1 -bucket 10000000 -iter 5 -thread 10 -save-vocab "${RESULTDIR}/${DATASET[i]}_bi.vec"
+    -min-count 1 -bucket 10000000 -iter 5 -thread 1 -save-vocab "${RESULTDIR}/${DATASET[i]}_bi.vec"
 
   # log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
   #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
@@ -134,7 +134,7 @@ do
 
   log_time ${LOG_FILE} ../rewrite/bin/fastText  -train "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}.bin" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
-    -min-count 1 -bucket 100000000 -iter 5 -thread 10 -save-vocab "${RESULTDIR}/${DATASET[i]}.vec"
+    -min-count 1 -bucket 100000000 -iter 5 -thread 1 -save-vocab "${RESULTDIR}/${DATASET[i]}.vec"
 
   # log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
   #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
