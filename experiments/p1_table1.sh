@@ -99,22 +99,22 @@ make
 for i in {0..7}
 do
 #  ./fasttext supervised -input ./data/ag_news.train -output ./output/test  -dim 10 -lr 0.25 -wordNgrams 2   -minCount 1 -bucket 10000000 -epoch 5 -thread 2 > /dev/null
-  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for bigrams"
+  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for bigrams, threshold 0.08"
   log_time ${LOG_FILE} ../fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}" -dim 10 -lr "${LR[i]}" -wordNgrams 2 \
-    -minCount 1 -bucket 10000000 -epoch 5 -thread 20 > /dev/nulldata/
-# ./fasttext test ./output/p1_test/ag_news ./data/ag_news.test
+
+# ./fasttext test ./output/test.bin ./data/ag_news.test
   log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}.bin" \
-    "${DATADIR}/${DATASET[i]}.test"
+    "${DATADIR}/${DATASET[i]}.test" -answer-threshold 0.08
 done
 
 
 for i in {0..7}
 do
-  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for 1-grams"
+  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for 1-grams, threshold 0.08"
   log_time ${LOG_FILE} ../fasttext supervised -input "${DATADIR}/${DATASET[i]}.train" \
     -output "${RESULTDIR}/${DATASET[i]}_1gram" -dim 10 -lr "${LR[i]}" -wordNgrams 1 \
     -minCount 1 -bucket 100000000 -epoch 5 -thread 20 > /dev/null
   log_time ${LOG_FILE} ../fasttext test "${RESULTDIR}/${DATASET[i]}_1gram.bin" \
-    "${DATADIR}/${DATASET[i]}.test"
+    "${DATADIR}/${DATASET[i]}.test" -answer-threshold 0.08
 done
