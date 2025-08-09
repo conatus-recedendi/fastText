@@ -267,7 +267,7 @@ void test_thread(global_setting *gs) {
   printf("[INFO] test_thread started testing...\n");
   
 
-  FILE *fi = fopen(gs->test_file, "rb");
+  FILE *fi = fopen(gs->test_file, "r");
   if (fi == NULL) {
     fprintf(stderr, "Error opening file %s for reading\n", gs->test_file);
     exit(1);
@@ -507,12 +507,12 @@ void test_thread(global_setting *gs) {
 
             float sigmoid = 1.0f / (1.0f + expf(-dot));
             prob *= (code == 0 ? logf(sigmoid + 1e-10) : logf(1.0f - sigmoid + 1e-10));
-            if (code == 0 && sigmoid < 0.5 - 0.08) {
+            if (code == 0 && sigmoid < 0.5 - gs->answer_threshold) {
               // local_fp_cnt++;
               flag++;
               break ;
               // printf("[WARN] Hierarchical softmax: prob: %f, gold: %lld\n", prob, gold[j]);
-            } else if (code == 1 && sigmoid > 0.50 + 0.08) {
+            } else if (code == 1 && sigmoid > 0.50 + gs->answer_threshold) {
               // local_fp_cnt++;
               flag++;
               break ;

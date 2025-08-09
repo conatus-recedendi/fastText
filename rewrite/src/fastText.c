@@ -690,7 +690,7 @@ int main(int argc, char **argv) {
     .ngram = 1,
     .bucket_size = 0,
     .min_count_label = 1,
-    .min_count_vocab = 1,
+    .min_count_vocab = 1
   };
   printf("[INFO] FastText training started.\n");
 
