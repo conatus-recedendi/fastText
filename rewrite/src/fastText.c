@@ -358,7 +358,7 @@ void *train_thread(thread_args *args) {
       gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
       gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
 
-      if (gs->debug_mode > 1 && temp % (gs->num_threads * 100000) == thread_id * 100000) {
+      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
         temp = 0;
         clock_t now = clock();
         struct timespec end_time;
