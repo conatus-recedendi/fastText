@@ -260,14 +260,6 @@ void *train_thread(thread_args *args) {
     float *neu1err = (float *)malloc(gs->layer1_size * sizeof(float));
     float *neu2err = (float *)malloc(gs->label_size * sizeof(float));
 
-    float *local_layer1 = (float *)malloc(gs->vocab_size * gs->layer1_size * sizeof(float));
-    float *local_layer2 = (float *)malloc(gs->layer1_size * gs->label_size * sizeof(float));
-    if (local_layer1 == NULL || local_layer2 == NULL) {
-        fprintf(stderr, "[ERROR] Memory allocation failed for local_layer1 or local_layer2\n");
-        exit(1);
-    }
-
-
 
     long long avg_ngram = 0;
     long long avg_failure_ngram = 0;
@@ -328,7 +320,7 @@ void *train_thread(thread_args *args) {
           // printf("[DEBUG] xToken: %s\n", token); 
             // 일반 단어인 경우
             
-            long long word_hash = get_word_hash(token, gs);
+            // long long word_hash = get_word_hash(token, gs);
 
             long long word_index = search_vocab(token, gs);
 
@@ -394,9 +386,7 @@ void *train_thread(thread_args *args) {
         
       if (sentence_length > 0 && label_length > 0) {
 
-        // memcpy(local_layer1, gs->layer1, gs->vocab_size * gs->layer1_size * sizeof(float));
-        // memcpy(local_layer2, gs->layer2, gs->layer1_size * gs->label_size * sizeof(float));
-        // printf("[DEBUG] local_layer1: %p, local
+
         // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
         memset(neu1, 0, gs->layer1_size * sizeof(float));
         memset(neu2, 0, gs->label_size * sizeof(float));
@@ -442,14 +432,14 @@ void *train_thread(thread_args *args) {
               long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
               long long M = gs->layer1_size - 1; // hidden size
               // printf("\n%lld gs->labels[golden_label].point[d]: %lld, code: %lld l2: %lld\n", d, gs->labels[golden_label].point[d],  gs->labels[golden_label].code[d], l2);
-              for (long long j = 0; j < gs->layer1_size; j++) {
+              for (long long j = 0; j < M; j++) {
                 f += neu1[j] * gs->layer2[point * M + j];
               }
               f = 1.0f / (1.0f + expf(-f)); // sigmoid function
               float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
-              for (long long j = 0; j < gs->layer1_size; j++) {
+              for (long long j = 0; j < M; j++) {
                 neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
                 gs->layer2[point * M + j] += g * neu1[j]; // update layer2
               }
