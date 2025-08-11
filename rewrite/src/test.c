@@ -9,6 +9,74 @@
 #include "vocab.h"
 #include "utils.h"
 
+typedef struct {
+    float score;     // 누적 log 확률
+    long long word;  // 단어 인덱스 (leaf node일 때 vocab index)
+} Prediction;
+// 시그모이드 계산
+static inline float sigmoidf(float x) {
+    if (x > 6) return 1.0f;
+    else if (x < -6) return 0.0f;
+    return 1.0f / (1.0f + expf(-x));
+}
+
+
+void dfs(int k, long long node, float score,
+         Prediction *heap, int *heap_size,
+         global_setting *gs, float *hidden) {
+
+
+    // printf("[DEBUG] Cutoff: %lld, %f, %f\n", node, score, heap[0].score);          // 컷오프: score가 너무 작고 이미 heap이 꽉 찼을 때
+    // for (int i = 0; i < gs->label_size * 2 - 1; i++) {
+    //     printf("%lld ", gs->left_node[i]);
+    // }
+    // printf("\n");
+    if (*heap_size == k && score < heap[0].score) {
+      // printf("[DEBUG] Cutoff: %lld, %f, %f\n", node, score, heap[0].score);
+      return;
+
+    }
+
+    // 리프 노드 판정
+    if (gs->left_node[node] == -1 && gs->right_node[node] == -1) {
+        // heap에 추가
+        if (*heap_size < k) {
+            heap[*heap_size].score = score;
+            heap[*heap_size].word = node;
+            (*heap_size)++;
+        } else {
+            // 최소값보다 크면 교체
+            int min_idx = 0;
+            for (int i = 1; i < *heap_size; i++) {
+                if (heap[i].score < heap[min_idx].score) min_idx = i;
+            }
+            if (score > heap[min_idx].score) {
+                heap[min_idx].score = score;
+                heap[min_idx].word = node;
+            }
+        }
+        return;
+    }
+
+    // 현재 노드에서 sigmoid 계산
+    long long out_idx = node - gs->label_size;
+    long long M = gs->layer1_size - 1; // hidden size
+    float dot = 0.0f;
+
+    for (int i = 0; i < gs->layer1_size; i++) {
+        dot += hidden[i] * gs->layer2[out_idx * M + i];
+    }
+    float prob = sigmoidf(dot);
+
+    // printf("[DEBUG] Node: %lld, Score: %f, Prob: %f\n", node, score, prob);
+    // 왼쪽 자식: binary=0 → prob 사용
+    dfs(k, gs->left_node[node], score + logf(prob), heap, heap_size, gs, hidden);
+
+    // 오른쪽 자식: binary=1 → 1-prob 사용
+    dfs(k, gs->right_node[node], score + logf(1.0f - prob), heap, heap_size, gs, hidden);
+}
+
+
 void initialize_network(global_setting *gs) {
   // printf("[INFO] Initializing network... %lld %lld \n", gs->vocab_size, gs->layer1_size);
   posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
@@ -55,8 +123,12 @@ void initialize_network(global_setting *gs) {
   // printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
 
   printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
+
+
   // TODO: if classifation, gs->labels should be passed
-  create_binary_tree(gs->vocab, gs->vocab_size);
+  // create_binary_tree(gs->vocab, gs->left_node, gs->right_node, gs->vocab_size);
+  // create_binary_tree(gs->labels, gs->left_node, gs->right_node, gs->label_size);
+
   // create_binary_tree(gs->labels, gs->label_size);
   return ;
 }
@@ -171,6 +243,20 @@ void load_model(char *load_model_file, global_setting *gs) {
     exit(1);
   }
 
+  gs->left_node = (long long *)malloc(sizeof(long long) * (gs->label_size * 2 - 1));
+  if (gs->left_node == NULL) {
+    fprintf(stderr, "Memory allocation failed for left_node\n");
+    exit(1);
+  }
+
+    gs->right_node = (long long *)malloc(sizeof(long long) * (gs->label_size * 2 - 1));
+  if (gs->right_node == NULL) {
+    fprintf(stderr, "Memory allocation failed for right_node\n");
+    exit(1);
+  }
+
+
+
   // fread(gs->labels, sizeof(vocab_word), gs->label_size, fi);
   fread(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fi);
   // printf("[INFO] Layer1 weights loaded from %s, read %zu elements\n", load_model_file, read);
@@ -192,10 +278,27 @@ void load_model(char *load_model_file, global_setting *gs) {
   fread(gs->start_offsets, sizeof(long long), gs->num_threads + 1, fi);
 
   printf("[INFO] Layer weights loaded from %s\n", load_model_file);
-  fread(gs->end_offsets, sizeof(long long), gs->num_threads, fi);
+  fread(gs->end_offsets, sizeof(long long), gs->num_threads + 1, fi);
   fread(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
   fread(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
+
+
+  fread(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fi);
+  fread(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fi);
+
+  for (int i = 0; i< gs->label_size * 2 - 1; i++) {
+    printf("%lld ", gs->left_node[i]);
+  }
+  printf("\n");
+
+    for (int i = 0; i< gs->label_size * 2 - 1; i++) {
+    printf("%lld ", gs->right_node[i]);
+  }
+  printf("\n");
+  // gs->left_node = (long long *)calloc(gs->label_size * 2 - 1, sizeof(long long));
+
   fclose(fi);
+
 
 
   if (read_vec_file[0]) {
@@ -474,7 +577,7 @@ void test_thread(global_setting *gs) {
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
       // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
-      if (gs->hs)  {
+      if (gs->hs == 2)  {
          // MEMO: hierarchical softmax는 prec 값만 구함.
          // precision 외의 값을 구하기 위해서는 전체 label의 등장확률을 구해야하고 - softmax 보다 느림.
          // 즉, heirecal softmax로 얻은 max 값이 golden labels 내에 존재하기만 하면 됨
@@ -527,6 +630,53 @@ void test_thread(global_setting *gs) {
             out_flag = 1;
             break ;
           }
+        }
+
+        if (out_flag) {
+          local_tp_cnt++;
+        } else {
+          local_fp_cnt++;
+        }
+        tp_cnt += local_tp_cnt;
+        fp_cnt += local_fp_cnt;
+        total_cnt += gold_length; // Total number of true labels
+      } else if (gs->hs == 1) {
+        long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
+        Prediction heap[5];
+        long long heap_size = 0;
+
+        long long local_tp_cnt = 0;
+        long long local_fp_cnt = 0;
+  
+        long long gold_length = 0;
+        for (long long j = 0; j < gs->label_size; j++) {
+          if (labels[j] >= 0) {
+            gold[gold_length++] = labels[j];
+          }
+        }
+
+        for (int j = 0; j < 5; j++) {
+          heap[j].score = -1e10; // Initialize heap with a very low score
+          heap[j].word = -1;
+        }
+
+        dfs(gs->top_k, 2 * gs->label_size - 2, 0.0f, heap, &heap_size, gs, neu1);
+
+        // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
+        int out_flag = 0;
+        for (long long j = 0; j < heap_size; j++) {
+          // printf("[DEBUG] Heap[%lld]: %s, Score: %f/ Golden: %lld, predicteid: %lld\n", j, gs->labels[heap[j].word].word, heap[j].score, gold[0], heap[j].word);
+          // for (long long k = 0; k < gs->label_size; k++) {
+          //   printf("heap[%lld].score: %f", k, heap[k].score);
+          // }
+          // printf("\n");
+            for (long long k = 0; k < gold_length; k++) {
+              // printf("[DEBUG] Heap[%lld]: %s, Score: %f, Gold: %lld, predicted: %lld\n", j, gs->labels[heap[j].word].word, heap[j].score, gold[k], heap[j].word);
+              if (heap[j].word == gold[k]) {
+                out_flag = 1;
+                break;
+              }
+            }
         }
 
         // dfs(gs, 2 * gs->label_size - 2, 0.0); // Traverse the binary tree to update output

@@ -439,7 +439,7 @@ void read_vocab(global_setting *gs) {
 }
 
 // oriignal binary tree is indicate same key value 
-void create_binary_tree(vocab_word *_vocab, long long size) {
+void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *right_node, long long size) {
   long long a, b, i, min1i, min2i, pos1, pos2, point[VOCAB_MAX_CODE_LENGTH];
   char code[VOCAB_MAX_CODE_LENGTH];
   long long vocab_size = size;
@@ -452,6 +452,11 @@ void create_binary_tree(vocab_word *_vocab, long long size) {
   for (a = vocab_size; a < vocab_size * 2; a++) count[a] = 1e15;
   pos1 = vocab_size - 1;
   pos2 = vocab_size;
+
+  for (a = 0; a < vocab_size * 2 - 1; a++) {
+    left_node[a] = -1;
+    right_node[a] = -1;
+  }
 
   printf("[INFO] Creating binary tree for vocabulary...\n");
   // Following algorithm constructs the Huffman tree by adding one node at a time
@@ -485,6 +490,9 @@ void create_binary_tree(vocab_word *_vocab, long long size) {
     parent_node[min1i] = vocab_size + a;
     parent_node[min2i] = vocab_size + a;
     binary[min2i] = 1;
+
+    left_node[vocab_size + a] = min1i;
+    right_node[vocab_size + a] = min2i;
   }
   printf("[INFO] Finished creating binary tree for vocabulary.\n");
   // Now assign binary code to each vocabulary word

@@ -62,7 +62,20 @@ void initialize_network(global_setting *gs) {
   printf("[INFO] Network initialized with layer1 size: %lld, class size: %lld\n", gs->layer1_size, gs->label_size);
   // // TODO: if classifation, gs->labels should be passed
   // // create_binary_tree(gs->vocab, gs->vocab_size);
-  create_binary_tree(gs->labels, gs->label_size);
+  printf("[INFO] intialize left/right node\n");
+  gs->left_node = (long long *)calloc(gs->label_size * 2 - 1, sizeof(long long));
+  if (gs->left_node == NULL) {
+    fprintf(stderr, "Memory allocation failed for left_node\n");
+    exit(1);
+  }
+  gs->right_node = (long long *)calloc(gs->label_size * 2 - 1, sizeof(long long));
+  if (gs->right_node == NULL) {     
+    fprintf(stderr, "Memory allocation failed for right_node\n");
+    exit(1);
+  } 
+  // TODO: if classifation, gs->labels should be passed
+  // create_binary_tree(gs->vocab, gs->left_node, gs->right_node, gs->vocab_size);
+  create_binary_tree(gs->labels, gs->left_node, gs->right_node, gs->label_size);
 // 
   // for (int j = 0; j < gs->label_size; j++) {
   //   printf("[DEBUG] label[%d]: %s, cn: %lld, codelen: %lld\n", j, gs->labels[j].word, gs->labels[j].cn, gs->labels[j].codelen);
@@ -145,6 +158,10 @@ void save_model(char *output_file, global_setting *gs) {
   fwrite(gs->start_line_by_thread, sizeof(long long), gs->num_threads , fo);
   fwrite(gs->total_line_by_thread, sizeof(long long), gs->num_threads, fo);
   printf("[INFO] Thread offsets saved to %s\n", output_file);
+
+  fwrite(gs->left_node, sizeof(long long), gs->vocab_size * 2 - 1, fo);
+  fwrite(gs->right_node, sizeof(long long), gs->vocab_size * 2 - 1, fo);
+  printf("[INFO] Binary tree nodes saved to %s\n", output_file);  
   // Save the vocabulary
   // Save the vocabulary hash table
 

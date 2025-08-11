@@ -62,7 +62,41 @@ void initialize_network(global_setting *gs) {
   printf("[INFO] Network initialized with layer1 size: %lld, vocab size: %lld,  class size: %lld\n", gs->layer1_size, gs->vocab_size, gs->label_size);
   // // TODO: if classifation, gs->labels should be passed
   // // create_binary_tree(gs->vocab, gs->vocab_size);
-  create_binary_tree(gs->labels, gs->label_size);
+  printf("[INFO] intialize left/right node\n");
+  gs->left_node = (long long *)calloc(gs->label_size * 2 - 1, sizeof(long long));
+  if (gs->left_node == NULL) {
+    fprintf(stderr, "Memory allocation failed for left_node\n");
+    exit(1);
+  }
+  gs->right_node = (long long *)calloc(gs->label_size * 2 - 1, sizeof(long long));
+  if (gs->right_node == NULL) {     
+    fprintf(stderr, "Memory allocation failed for right_node\n");
+    exit(1);
+  } 
+  // TODO: if classifation, gs->labels should be passed
+  // create_binary_tree(gs->vocab, gs->left_node, gs->right_node, gs->vocab_size);
+  create_binary_tree(gs->labels, gs->left_node, gs->right_node, gs->label_size);
+
+  for (int i = 0; i < gs->label_size * 2 - 1; i++) {
+    printf("%lld ", gs->left_node[i]);
+  }
+  printf("\n");
+  for (int i = 0; i< gs->label_size * 2 - 1; i++) {
+    printf("%lld ", gs->right_node[i]);
+  }
+  printf("\n");
+  for (int i = 0; i < gs->label_size; i++) {
+    for (int j = 0; j < gs->labels[i].codelen; j++) {
+      printf("%d ", gs->labels[i].code[j]);
+    }
+    printf("\n");
+  }
+  for (int i = 0; i < gs->label_size; i++) {
+    for (int j = 0; j < gs->labels[i].codelen; j++) {
+      printf("%d ", gs->labels[i].point[j]);
+    }
+    printf("\n");
+  }
 // 
   // for (int j = 0; j < gs->label_size; j++) {
   //   printf("[DEBUG] label[%d]: %s, cn: %lld, codelen: %lld\n", j, gs->labels[j].word, gs->labels[j].cn, gs->labels[j].codelen);
@@ -139,12 +173,16 @@ void save_model(char *output_file, global_setting *gs) {
   printf("[INFO] Layer2 weights saved to %s\n", output_file);
   fwrite(gs->output, sizeof(float), gs->label_size, fo);
   printf("[INFO] Layer weights saved to %s\n", output_file);
-  fwrite(gs->start_offsets, sizeof(long long), gs->num_threads, fo);
-  fwrite(gs->end_offsets, sizeof(long long), gs->num_threads, fo);
+  fwrite(gs->start_offsets, sizeof(long long), gs->num_threads+1, fo);
+  fwrite(gs->end_offsets, sizeof(long long), gs->num_threads +1, fo);
   printf("[INFO] Thread offsets saved to %s\n", output_file);
-  fwrite(gs->start_line_by_thread, sizeof(long long), gs->num_threads , fo);
-  fwrite(gs->total_line_by_thread, sizeof(long long), gs->num_threads, fo);
+  fwrite(gs->start_line_by_thread, sizeof(long long), gs->num_threads +1 , fo);
+  fwrite(gs->total_line_by_thread, sizeof(long long), gs->num_threads+1, fo);
   printf("[INFO] Thread offsets saved to %s\n", output_file);
+
+  fwrite(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fo);
+  fwrite(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fo);
+  
   // Save the vocabulary
   // Save the vocabulary hash table
 
@@ -264,7 +302,7 @@ void *train_thread(thread_args *args) {
       long long sentence_length = 0;
       long long ngram_sentences_length = 0;
       long long label_length = 0;
-      memset(labels, -1, sizeof(labels)); // Initialize labels to -1
+      memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
       memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
       memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
 
@@ -390,6 +428,9 @@ void *train_thread(thread_args *args) {
               continue ;
             }
 
+
+
+
             for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
               
               float f = 0.0f;
@@ -399,22 +440,28 @@ void *train_thread(thread_args *args) {
               // neu1err: 1 * hidden
               // like neu2
               long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
-              long long l2 = point * gs->layer1_size;
+              long long M = gs->layer1_size - 1; // hidden size
               // printf("\n%lld gs->labels[golden_label].point[d]: %lld, code: %lld l2: %lld\n", d, gs->labels[golden_label].point[d],  gs->labels[golden_label].code[d], l2);
               for (long long j = 0; j < gs->layer1_size; j++) {
-                f += neu1[j] * gs->layer2[j * gs->label_size + point];
+                f += neu1[j] * gs->layer2[point * M + j];
               }
               f = 1.0f / (1.0f + expf(-f)); // sigmoid function
               float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
               for (long long j = 0; j < gs->layer1_size; j++) {
-                neu1err[j] += g * gs->layer2[j * gs->label_size + point]; // to neu1
-                gs->layer2[j * gs->label_size + point] += g * neu1[j]; // update layer2
+                neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
+                gs->layer2[point * M + j] += g * neu1[j]; // update layer2
               }
               // printf("%f ",f);
               // printf("\n");
-              loss += -logf(f + 1e-10f);
+              if (gs->labels[golden_label].code[d] == 0) {
+                loss += -logf(f + 1e-10f); // log loss
+              } else {
+                // if code is 0, then we are at the internal node
+                loss += -logf(1 - f + 1e-10f); // log loss
+
+              }
             }
           }
           for (long long j = 0; j < sentence_length; j++) {
