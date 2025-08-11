@@ -79,6 +79,9 @@ typedef struct {
   long long min_count_label; // minimum count for labels
   long long min_count_vocab; // minimum count for vocabulary
 
+  long long *left_node; // left node for binary tree
+  long long *right_node; // right node for binary tree
+
 
 } global_setting;
 
