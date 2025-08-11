@@ -253,7 +253,7 @@ void reduce_vocab(global_setting *gs, long long min_reduce) {
     vocab_hash[hash] = a;
   }
   fflush(stdout);
-  min_reduce++;
+  gs->min_reduce++;
 }
 
 void reduce_label(global_setting *gs, long long min_reduce) {
@@ -282,7 +282,7 @@ void reduce_label(global_setting *gs, long long min_reduce) {
     vocab_hash[hash] = a;
   }
   fflush(stdout);
-  min_reduce++;
+  gs->min_reduce++;
 }
 
 
