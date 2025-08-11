@@ -115,8 +115,8 @@ do
   #   -min-count 1 -bucket 10000000 -iter 5 -thread 20"
 
   log_time ${LOG_FILE} ../rewrite/bin/fastText  -train "${DATADIR}/${DATASET[i]}.train" \
-    -output "${RESULTDIR}/${DATASET[i]}_bi.bin" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
-    -min-count 1 -bucket 10000000 -iter 5 -thread 1 -save-vocab "${RESULTDIR}/${DATASET[i]}_bi.vec"
+    -output "${RESULTDIR}/${DATASET[i]}_bi.bin" -size 10 -lr "${LR[i]}" -ngram 2 \
+    -min-count-vocab 1 -min-count-label 100 -bucket 10000000 -iter 5 -thread 1 -save-vocab "${RESULTDIR}/${DATASET[i]}_bi.vec"
 
   # log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
   #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
@@ -125,22 +125,22 @@ do
 done
 
 
-for i in {0..7}
-do
-  log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for 1grams, threshold ${THRESHOLD}"
-  # echo "../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
-  #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
-  #   -min-count 1 -bucket 10000000 -iter 5 -thread 20"
+# for i in {0..7}
+# do
+#   log_time ${LOG_FILE} echo "Working on dataset ${DATASET[i]} for 1grams, threshold ${THRESHOLD}"
+#   # echo "../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
+#   #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
+#   #   -min-count 1 -bucket 10000000 -iter 5 -thread 20"
 
-  log_time ${LOG_FILE} ../rewrite/bin/fastText  -train "${DATADIR}/${DATASET[i]}.train" \
-    -output "${RESULTDIR}/${DATASET[i]}.bin" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
-    -min-count 1 -bucket 100000000 -iter 5 -thread 1 -save-vocab "${RESULTDIR}/${DATASET[i]}.vec"
+#   log_time ${LOG_FILE} ../rewrite/bin/fastText  -train "${DATADIR}/${DATASET[i]}.train" \
+#     -output "${RESULTDIR}/${DATASET[i]}.bin" -size 10 -lr "${LR[i]}" -wordNgrams 1 \
+#     -min-count 1 -bucket 100000000 -iter 5 -thread 1 -save-vocab "${RESULTDIR}/${DATASET[i]}.vec"
 
-  # log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
-  #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
-    # -min-count 1 -bucket 10000000 -iter 5 -thread 20 > /dev/null
-  log_time ${LOG_FILE} ../rewrite/bin/test -load-model "${RESULTDIR}/${DATASET[i]}.bin" -test-file "${DATADIR}/${DATASET[i]}.test" -topk 1 -answer-threshold ${THRESHOLD}
-done
+#   # log_time ${LOG_FILE} ../rewrite/bin/fastText -train "${DATADIR}/${DATASET[i]}.train" \
+#   #   -output "${RESULTDIR}/${DATASET[i]}" -size 10 -lr "${LR[i]}" -wordNgrams 2 \
+#     # -min-count 1 -bucket 10000000 -iter 5 -thread 20 > /dev/null
+#   log_time ${LOG_FILE} ../rewrite/bin/test -load-model "${RESULTDIR}/${DATASET[i]}.bin" -test-file "${DATADIR}/${DATASET[i]}.test" -topk 1 -answer-threshold ${THRESHOLD}
+# done
 
 # for i in {0..7}
 # do
