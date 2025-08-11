@@ -374,7 +374,7 @@ void *train_thread(thread_args *args) {
       //   printf("\nftell: %lld, sentence: %s\n", ftell(fi), sen  );
       // }
 
-      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1) == thread_id * 1) {
+      if (gs->debug_mode > 1 && temp % (gs->num_threads * 100000) == thread_id * 100000) {
         temp = 0;
         clock_t now = clock();
         struct timespec end_time;
