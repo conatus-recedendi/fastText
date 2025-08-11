@@ -209,10 +209,6 @@ void *train_thread(thread_args *args) {
   long long sentence_start = 0;
   long long sentence_end = 0;
   long long sen[MAX_SENTENCE_LENGTH];
-  double token_time = 0.0;
-  double hs_time = 0.0;
-  double token_label_time = 0.0;
-  double token_vocab_time = 0.0;
   
   
   
@@ -310,8 +306,6 @@ void *train_thread(thread_args *args) {
           continue; // Skip tokens that are too long
         }
         if (strncmp(token, "__label__", 9) == 0) {
-          struct timespec token_label_start_time;
-          clock_gettime(CLOCK_MONOTONIC, &token_label_start_time);
           memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
           // 라벨인 경우 __label_1__
           long long label_index = search_label(token, gs);
@@ -321,16 +315,10 @@ void *train_thread(thread_args *args) {
             // labels[label_length++] = -1; // unknown label
           }
 
-          struct timespec token_label_end_time;
-          clock_gettime(CLOCK_MONOTONIC, &token_label_end_time);
-          token_label_time += (token_label_end_time.tv_sec - token_label_start_time.tv_sec) + (token_label_end_time.tv_nsec - token_label_start_time.tv_nsec) / 1e9;
         } else {
           // printf("[DEBUG] xToken: %s\n", token); 
             // 일반 단어인 경우
             
-            // long long word_hash = get_word_hash(token, gs);
-            struct timespec token_vocab_start_time;
-            clock_gettime(CLOCK_MONOTONIC, &token_vocab_start_time);
 
             long long word_index = search_vocab(token, gs);
 
@@ -361,17 +349,11 @@ void *train_thread(thread_args *args) {
             memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
             strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
             prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
-            struct timespec token_vocab_end_time;
-            clock_gettime(CLOCK_MONOTONIC, &token_vocab_end_time);
-            token_vocab_time += (token_vocab_end_time.tv_sec - token_vocab_start_time.tv_sec) + (token_vocab_end_time.tv_nsec - token_vocab_start_time.tv_nsec) / 1e9;
 
         }
         token = strtok(NULL, " ");
       }
 
-      struct timespec token_end_time;
-      clock_gettime(CLOCK_MONOTONIC, &token_end_time);
-      token_time += (token_end_time.tv_sec - token_st.tv_sec) + (token_end_time.tv_nsec - token_st.tv_nsec) / 1e9;
       memcpy(prev_word, "", 1); // Reset previous word for next sentence
       gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
       gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
@@ -415,8 +397,7 @@ void *train_thread(thread_args *args) {
           neu1[j] /= sentence_length; // 평균을 구함
         }
 
-        struct timespec hs_start_time;
-        clock_gettime(CLOCK_MONOTONIC, &hs_start_time);
+
         // implement Hiereical softmax
         if (gs->hs) {
           float loss = 0.0f;
@@ -531,9 +512,6 @@ void *train_thread(thread_args *args) {
             gs->loss += loss;
           }
         }
-        struct timespec hs_end_time;
-        clock_gettime(CLOCK_MONOTONIC, &hs_end_time);
-        hs_time += (hs_end_time.tv_sec - hs_start_time.tv_sec) + (hs_end_time.tv_nsec - hs_start_time.tv_nsec) / 1e9;
       }
 
       sentence_length = 0;
@@ -546,8 +524,6 @@ void *train_thread(thread_args *args) {
     free(labels);
   }
   fclose(fi);
-  printf("\n[DEBUG] Token time: %.2f seconds, HS time: %.2f seconds\n", token_time, hs_time);
-  printf("[DEBUG] Token label time: %.2f seconds, Token vocab time: %.2f seconds\n", token_label_time, token_vocab_time);
   // Implement the saving output here
   pthread_exit(NULL);
 
