@@ -507,6 +507,8 @@ void test_thread(global_setting *gs) {
       }
       token = strtok(NULL, " ");
     }
+
+    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     memcpy(prev_word, "", 1); // Reset previous word for next sentence
     // exit(1);
