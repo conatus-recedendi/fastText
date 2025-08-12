@@ -182,6 +182,29 @@ void save_model(char *output_file, global_setting *gs) {
 
   fwrite(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fo);
   fwrite(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fo);
+
+
+  printf("gs->left_node\n");
+  for (int i = 0 ; i< 10; i++) {
+    printf("%lld ", gs->left_node[i]);
+  }
+  printf("\n");
+  printf("gs->right_node\n");
+    for (int i = 0 ; i< 10; i++) {
+    printf("%lld ", gs->right_node[i]);
+  }
+  printf("\n");
+  printf("gs->left_node %lld ~ %lld \n", gs->label_size, gs->label_size + 10);
+    for (int i =gs->label_size  ;i< gs->label_size + 10 ; i++) {
+    printf("%lld ", gs->left_node[i]);
+  }
+  printf("\n");
+
+  printf("gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
+    for (int i =2 * gs->label_size - 10 ;i<gs->label_size - 1; i++) {
+    printf("%lld ", gs->left_node[i]);
+  }
+  printf("\n");
   
   // Save the vocabulary
   // Save the vocabulary hash table
