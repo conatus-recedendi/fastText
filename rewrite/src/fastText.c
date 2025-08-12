@@ -422,13 +422,21 @@ void *train_thread(thread_args *args) {
         clock_t now = clock();
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC, &end_time);
-        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/thread/sec: %.fk, loss: %f, Lines: %lld, setnence length: %lld, offset: %lld",
+        // ETA ->  (gs->total_lines - gs->total_learned_lines) * (1 / lines/second)
+        float lines_sec = gs->total_learned_lines / ((float)(end_time.tv_sec - gs->start.tv_sec + 1));
+        long long remain_lines = gs->total_lines * gs->iter - gs->total_learned_lines;
+        long long eta_seconds = remain_lines / lines_sec;
+        long long eta_hours = eta_seconds / 3600;
+        long long eta_minutes = (eta_seconds % 3600) / 60;
+
+        
+        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds",
               13, gs->learning_rate_decay,
               gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
               (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
-              (gs->total_learned_lines / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)),
-               gs->loss / gs->total_learned_lines, gs->total_learned_lines, sentence_length, offset
-            );
+              (lines_sec / (double)1000),
+               gs->loss / gs->total_learned_lines, gs->total_learned_lines, 
+               eta_hours, eta_minutes, eta_seconds % 60);
 
         fflush(stdout);
       }
