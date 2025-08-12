@@ -304,7 +304,7 @@ void load_model(char *load_model_file, global_setting *gs) {
   }
   printf("\n");
   printf("gs->left_node %lld ~ %lld \n", gs->label_size, gs->label_size + 10);
-    for (int i =gs->label_size -100 ;i< gs->label_size + 100 ; i++) {
+    for (int i =gs->label_size -100;i< gs->label_size + 100 ; i++) {
     printf("%lld ", gs->left_node[i]);
   }
   printf("\n");
@@ -315,7 +315,7 @@ void load_model(char *load_model_file, global_setting *gs) {
   printf("\n");
 
   printf("gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
-    for (int i =2 * gs->label_size - 100 ;i<2*gs->label_size - 1; i++) {
+    for (int i =2 * gs->label_size - 1000 ;i<2*gs->label_size - 1; i++) {
     printf("%lld ", gs->left_node[i]);
   }
   printf("\n");
