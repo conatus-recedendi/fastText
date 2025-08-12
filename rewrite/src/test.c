@@ -358,7 +358,7 @@ void test_thread(global_setting *gs) {
   long long sentence_end = 0;
   
 
-  printf("[INFO] test_thread started testing...\n");
+  printf("[INFO] test_thread started testing... %s\n", gs->test_file);
   
 
   FILE *fi = fopen(gs->test_file, "r");
