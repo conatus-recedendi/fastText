@@ -135,6 +135,8 @@ void save_vector(char *output_file, global_setting *gs) {
 
 void save_model(char *output_file, global_setting *gs) {
   // Implement the logic to save the model
+  long long offset = 0;
+  long long predicted_offset = 0;
   FILE *fo = fopen(output_file, "wb");
   if (fo == NULL) {
     printf("Error opening file %s for writing\n", output_file);
@@ -144,15 +146,28 @@ void save_model(char *output_file, global_setting *gs) {
 
   // gs를 binary 형태로 전부 저장. 언제든지 불러올 수 있는 형태로.
   printf("[INFO] Saving model to %s\n", output_file);
-  fwrite(gs, sizeof(global_setting), 1, fo);
+  offset += fwrite(gs, sizeof(global_setting), 1, fo) * sizeof(global_setting);
+  predicted_offset = sizeof(global_setting);
+  printf("[DEBUG] 1. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   printf("[INFO] ngram %lld\n",  gs->ngram);
   printf("[INFO] Global settings saved to %s\n", output_file);
   // Save the layer1, layer2, and output weights
-  fwrite(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fo);
+  offset += fwrite(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fo) * sizeof(int);
+  predicted_offset += sizeof(int) * gs->vocab_hash_size;
+  printf("[DEBUG] 2. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  
   printf("[INFO] Vocabulary hash table saved to %s %lld, %lld\n", output_file, gs->vocab_size, sizeof(vocab_word));
-  fwrite(gs->label_hash, sizeof(int), gs->label_hash_size, fo);
-  fwrite(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fo);
-  fwrite(gs->labels, sizeof(vocab_word), gs->label_max_size, fo);
+  offset += fwrite(gs->label_hash, sizeof(int), gs->label_hash_size, fo) * sizeof(int);
+  predicted_offset += sizeof(int) * gs->label_hash_size;
+  printf("[DEBUG] 3. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fwrite(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fo) * sizeof(vocab_word);
+  predicted_offset += sizeof(vocab_word) * gs->vocab_max_size;
+  printf("[DEBUG] 4. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  // for (int i=0;i< 10
+  offset += fwrite(gs->labels, sizeof(vocab_word), gs->label_max_size, fo) * sizeof(vocab_word);
+  predicted_offset += sizeof(vocab_word) * gs->label_max_size;
+  printf("[DEBUG] 5. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  // for (int i=0;i< 10
   // fwrite(gs->labels, sizeof(vocab_word), gs->label_size, fo);
   for (int i=0;i< 10; i++)  {
     // printf vocab
@@ -161,27 +176,48 @@ void save_model(char *output_file, global_setting *gs) {
   }
 
   printf("[INFO] Vocabulary and labels saved to %s\n", output_file);
-  fwrite(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fo);
+  offset += fwrite(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fo) * sizeof(float);
+  predicted_offset += sizeof(float) * gs->vocab_size * gs->layer1_size;
+  printf("[DEBUG] 6. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   // for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
   //   printf("[INFO] Layer1[%lld]: %f\n", i, gs->layer1[i]);
   // }
   printf("[INFO] Layer1 weights saved to %s\n", output_file);
-  fwrite(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fo);
+  offset += fwrite(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fo) * sizeof(float);
+  predicted_offset += sizeof(float) * gs->layer1_size * gs->label_size;
+  printf("[DEBUG] 7. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   // for (long long i = 0; i < gs->layer1_size * gs->label_size; i++) {
   //   printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
   // }
   printf("[INFO] Layer2 weights saved to %s\n", output_file);
-  fwrite(gs->output, sizeof(float), gs->label_size, fo);
+  offset += fwrite(gs->output, sizeof(float), gs->label_size, fo) * sizeof(float);
+  predicted_offset += sizeof(float) * gs->label_size;
+  printf("[DEBUG] 8. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  // for (long long i = 0; i
   printf("[INFO] Layer weights saved to %s\n", output_file);
-  fwrite(gs->start_offsets, sizeof(long long), gs->num_threads+1, fo);
-  fwrite(gs->end_offsets, sizeof(long long), gs->num_threads +1, fo);
-  printf("[INFO] Thread offsets saved to %s\n", output_file);
-  fwrite(gs->start_line_by_thread, sizeof(long long), gs->num_threads +1 , fo);
-  fwrite(gs->total_line_by_thread, sizeof(long long), gs->num_threads+1, fo);
+  offset += fwrite(gs->start_offsets, sizeof(long long), gs->num_threads+1, fo) * sizeof(long long);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] 9. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fwrite(gs->end_offsets, sizeof(long long), gs->num_threads +1, fo) * sizeof(long long);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] 10. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+
+  offset += fwrite(gs->start_line_by_thread, sizeof(long long), gs->num_threads +1 , fo) * sizeof(long long);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] 11. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fwrite(gs->total_line_by_thread, sizeof(long long), gs->num_threads+1, fo) * sizeof(long long);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] 12. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  // printf("[INFO] Thread offsets saved to %s
   printf("[INFO] Thread offsets saved to %s\n", output_file);
 
-  fwrite(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fo);
-  fwrite(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fo);
+  offset += fwrite(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fo) * sizeof(long long);
+  predicted_offset += sizeof(long long) * (gs->label_size * 2 - 1);
+  printf("[DEBUG] 13. Predicted offset: %lld, Actual offset : %lld\n", predicted_offset, offset);
+  offset += fwrite(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fo) * sizeof(long long);
+  predicted_offset += sizeof(long long) * (gs->label_size * 2 - 1);
+  printf("[DEBUG] 14. Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  printf("[INFO] Binary tree nodes saved to %s\n", output_file);
 
 
   printf("gs->left_node\n");
@@ -201,7 +237,7 @@ void save_model(char *output_file, global_setting *gs) {
   printf("\n");
 
   printf("gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
-    for (int i =2 * gs->label_size - 10 ;i<gs->label_size - 1; i++) {
+    for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
     printf("%lld ", gs->left_node[i]);
   }
   printf("\n");
@@ -447,6 +483,7 @@ void *train_thread(thread_args *args) {
               float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
               if (g > 6) g = 6;
               if (g < -6) g = -6;
+              // block thread
               for (long long j = 0; j < M; j++) {
                 neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
                 gs->layer2[point * M + j] += g * neu1[j]; // update layer2
