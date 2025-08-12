@@ -672,7 +672,7 @@ void test_thread(global_setting *gs) {
         fflush(stdout);
         dfs(gs->top_k, 2 * gs->label_size - 2, 0.0f, heap, &heap_size, gs, neu1);
         printf("[DEBUG] DFS completed. Heap size: %lld\n", heap_size);
-        fflush();
+        fflush(stdout);
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
         int out_flag = 0;
         for (long long j = 0; j < heap_size; j++) {
