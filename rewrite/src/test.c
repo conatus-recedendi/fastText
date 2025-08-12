@@ -26,7 +26,7 @@ void dfs(int k, long long node, float score,
          global_setting *gs, float *hidden) {
 
 
-    // printf("[DEBUG] Cutoff: %lld, %f, %f\n", node, score, heap[0].score);          // 컷오프: score가 너무 작고 이미 heap이 꽉 찼을 때
+    printf("[DEBUG] Cutoff: %lld, %f, %f\n", node, score, heap[0].score);          // 컷오프: score가 너무 작고 이미 heap이 꽉 찼을 때
     // for (int i = 0; i < gs->label_size * 2 - 1; i++) {
     //     printf("%lld ", gs->left_node[i]);
     // }
