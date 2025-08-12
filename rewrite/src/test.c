@@ -270,10 +270,10 @@ void load_model(char *load_model_file, global_setting *gs) {
   //   printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
   // }
   fread(gs->output, sizeof(float), gs->label_size, fi);
-  gs->start_offsets= malloc(sizeof(long long) * gs->num_threads);
-  gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
-  gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
-  gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
+  gs->start_offsets= malloc(sizeof(long long) * (gs->num_threads + 1));
+  gs->end_offsets = malloc(sizeof(long long) * (gs->num_threads + 1));
+  gs->start_line_by_thread = malloc(sizeof(long long) * (gs->num_threads + 1));
+  gs->total_line_by_thread = malloc(sizeof(long long) * (gs->num_threads + 1));
 
   fread(gs->start_offsets, sizeof(long long), gs->num_threads + 1, fi);
 
