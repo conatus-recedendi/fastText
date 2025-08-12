@@ -409,13 +409,19 @@ void test_thread(global_setting *gs) {
 
   float *neu1 = (float *)malloc(gs->layer1_size * sizeof(float));
   float *neu2 = (float *)malloc(gs->label_size * sizeof(float));
+  if (neu1 == NULL || neu2 == NULL) {
+    fprintf(stderr, "[ERROR] Memory allocation failed for neu1 or neu2\n");
+    exit(1);
+  }
   long long avg_ngram =0;
   long long avg_failure_ngram = 0;
   long long avg_word =0;
   
+  printf("[INFO] Starting test loop...\n");
   fseek(fi, 0, SEEK_SET);
 
   while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
+    printf("[DEBUG] Processing line %lld: %s", line, sen);
     line++;
     if (line % 1000 == 0) {
       // printf("%c[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld, total: %lld/%lld\n", 13,avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000, line, (gs->train_words / gs->iter));
