@@ -444,13 +444,14 @@ void test_thread(global_setting *gs) {
     long long sentence_length = 0;
     long long ngram_sentences_length = 0;
     long long label_length = 0;
+    printf("[DEBUG] Tokenizing sentence: %s\n", sen);
     memset(labels, -1, gs->label_size * sizeof(long long)); // Initialize labels to 0
+    printf("[DEBUG] Initializing labels and words...\n");
     memset(words, -1, MAX_WORDS_PER_SENTENCE * sizeof(long long)); // Initialize words to -1 (unknown word)
+    printf("[DEBUG] Initializing ngram_words...\n");
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-    if (token == NULL) {
-      printf("[WARN] Empty line at line %lld\n", line);
-      continue; // Skip empty lines
-    }
+    printf("[DEBUG] Initializing prev_word and concat_word...\n");
+    
 
     while (token != NULL) {
       printf("[DEBUG] Token: %s\n", token);
