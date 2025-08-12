@@ -447,8 +447,13 @@ void test_thread(global_setting *gs) {
     memset(labels, -1, gs->label_size * sizeof(long long)); // Initialize labels to 0
     memset(words, -1, MAX_WORDS_PER_SENTENCE * sizeof(long long)); // Initialize words to -1 (unknown word)
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+    if (token == NULL) {
+      printf("[WARN] Empty line at line %lld\n", line);
+      continue; // Skip empty lines
+    }
 
     while (token != NULL) {
+      printf("[DEBUG] Token: %s\n", token);
       if (strlen(token) > MAX_STRING) {
         token = strtok(NULL, " ");
         continue; // Skip tokens that are too long
