@@ -310,10 +310,12 @@ void load_model(char *load_model_file, global_setting *gs) {
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   offset += fread(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fi) * sizeof(long long);
   predicted_offset += sizeof(long long) * (gs->num_threads + 1);
-  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset) * sizeof(long long);
-  offset += fread(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
-  predicted_offset += sizeof(long long) * (gs->num_threads + 1); 
-  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset) * sizeof(long long);
+
+  // No OJ
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fread(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fi) * sizeof(long long);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
 
 
   offset += fread(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fi) * sizeof(long long);
