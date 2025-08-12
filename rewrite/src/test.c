@@ -177,7 +177,7 @@ void load_model(char *load_model_file, global_setting *gs) {
     exit(1);  
   }
   printf("[INFO] Loading model from file: %s\n", load_model_file);
-  offset += fread(gs, sizeof(global_setting), 1, fi);
+  offset += fread(gs, sizeof(global_setting), 1, fi) * sizeof(global_setting);
   predicted_offset = sizeof(global_setting);
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   printf("gs->ngrma_size: %lld\n", gs->ngram);
@@ -218,16 +218,16 @@ void load_model(char *load_model_file, global_setting *gs) {
   }
 // 
   // posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
-  offset += fread(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fi);
+  offset += fread(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fi) * sizeof(int);
   predicted_offset += sizeof(int) * gs->vocab_hash_size;
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
-  offset += fread(gs->label_hash, sizeof(int), gs->label_hash_size, fi);
+  offset += fread(gs->label_hash, sizeof(int), gs->label_hash_size, fi) * sizeof(int);
   predicted_offset += sizeof(int) * gs->label_hash_size;
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
-  offset += fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi);
+  offset += fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi) * sizeof(vocab_word);
   predicted_offset += sizeof(vocab_word) * gs->vocab_max_size;
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
-  offset += fread(gs->labels, sizeof(vocab_word), gs->label_max_size, fi);
+  offset += fread(gs->labels, sizeof(vocab_word), gs->label_max_size, fi) * sizeof(vocab_word);
   predicted_offset += sizeof(vocab_word) * gs->label_max_size;
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   for (int i=0;i< 10; i++)  {
@@ -277,7 +277,7 @@ void load_model(char *load_model_file, global_setting *gs) {
 
 
   // fread(gs->labels, sizeof(vocab_word), gs->label_size, fi);
-  offset += fread(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fi);
+  offset += fread(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fi) * sizeof(float);
   predicted_offset += sizeof(float) * gs->vocab_size * gs->layer1_size;
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   // printf("[INFO] Layer1 weights loaded from %s, read %zu elements\n", load_model_file, read);
@@ -286,13 +286,13 @@ void load_model(char *load_model_file, global_setting *gs) {
   //   printf("[INFO] Layer1[%lld]: %f\n", i, gs->layer1[i]);
   // }
 
-  offset += fread(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fi);
+  offset += fread(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fi) * sizeof(float);
   predicted_offset += sizeof(float) * gs->layer1_size * gs->label_size;
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   // for (long long i = 0; i < gs->layer1_size * gs->label_size; i++) {
   //   printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
   // }
-  offset += fread(gs->output, sizeof(float), gs->label_size, fi);
+  offset += fread(gs->output, sizeof(float), gs->label_size, fi) * sizeof(float);
   predicted_offset  += sizeof(float) * gs->label_size;
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   gs->start_offsets= malloc(sizeof(long long) * (gs->num_threads + 1));
@@ -300,27 +300,27 @@ void load_model(char *load_model_file, global_setting *gs) {
   gs->start_line_by_thread = malloc(sizeof(long long) * (gs->num_threads + 1));
   gs->total_line_by_thread = malloc(sizeof (long long) * (gs->num_threads + 1));
 
-  offset += fread(gs->start_offsets, sizeof(long long), gs->num_threads + 1, fi);
+  offset += fread(gs->start_offsets, sizeof(long long), gs->num_threads + 1, fi) * sizeof(long long);
   predicted_offset += sizeof(long long) * (gs->num_threads + 1);
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
 
   printf("[INFO] Layer weights loaded from %s\n", load_model_file);
-  offset += fread(gs->end_offsets, sizeof(long long), gs->num_threads + 1, fi);
+  offset += fread(gs->end_offsets, sizeof(long long), gs->num_threads + 1, fi) * sizeof(long long);
   predicted_offset += sizeof(long long) * (gs->num_threads + 1);
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
-  offset += fread(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
+  offset += fread(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fi) * sizeof(long long);
   predicted_offset += sizeof(long long) * (gs->num_threads + 1);
-  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset) * sizeof(long long);
   offset += fread(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
-  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
-  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1); 
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset) * sizeof(long long);
 
 
-  offset += fread(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fi);
+  offset += fread(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fi) * sizeof(long long);
   predicted_offset += sizeof(long long) * (gs->label_size * 2 - 1);
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   // printf("[INFO] Left node loaded from %s\n", load
-  offset +=fread(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fi);
+  offset +=fread(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fi) * sizeof(long long);
   predicted_offset += sizeof(long long) * (gs->label_size * 2 - 1);
   printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
 
