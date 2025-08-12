@@ -553,6 +553,7 @@ void test_thread(global_setting *gs) {
     // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     if (label_length==0 || sentence_length == 0) wrong_cnt++;
 
+    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     if (sentence_length > 0 && label_length > 0) {
       // for (long long j = 0; j < ngram_sentences_length; j++) {
       //   // printf("ngram_words[%lld]: %lld ", j, ngram_words[j]);
@@ -583,7 +584,7 @@ void test_thread(global_setting *gs) {
       float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
-      // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+      printf("[DEBUG] Calculating neu2...\n");
       if (gs->hs == 2)  {
          // MEMO: hierarchical softmax는 prec 값만 구함.
          // precision 외의 값을 구하기 위해서는 전체 label의 등장확률을 구해야하고 - softmax 보다 느림.
@@ -648,6 +649,7 @@ void test_thread(global_setting *gs) {
         fp_cnt += local_fp_cnt;
         total_cnt += gold_length; // Total number of true labels
       } else if (gs->hs == 1) {
+        printf("[DEBUG] Using hierarchical softmax with top-k: %lld\n", gs->top_k);
         long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
         Prediction heap[5];
         long long heap_size = 0;
@@ -666,9 +668,11 @@ void test_thread(global_setting *gs) {
           heap[j].score = -1e10; // Initialize heap with a very low score
           heap[j].word = -1;
         }
-
+        printf("[DEBUG] Starting DFS for hierarchical softmax...\n");
+        fflush(stdout);
         dfs(gs->top_k, 2 * gs->label_size - 2, 0.0f, heap, &heap_size, gs, neu1);
-
+        printf("[DEBUG] DFS completed. Heap size: %lld\n", heap_size);
+        fflush();
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
         int out_flag = 0;
         for (long long j = 0; j < heap_size; j++) {
