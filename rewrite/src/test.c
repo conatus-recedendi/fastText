@@ -26,7 +26,7 @@ void dfs(int k, long long node, float score,
          global_setting *gs, float *hidden) {
 
 
-    printf("[DEBUG] Cutoff: %lld, %f, %f\n", node, score, heap[0].score);          // 컷오프: score가 너무 작고 이미 heap이 꽉 찼을 때
+    // printf("[DEBUG] Cutoff: %lld, %f, %f\n", node, score, heap[0].score);          // 컷오프: score가 너무 작고 이미 heap이 꽉 찼을 때
     // for (int i = 0; i < gs->label_size * 2 - 1; i++) {
     //     printf("%lld ", gs->left_node[i]);
     // }
@@ -68,7 +68,7 @@ void dfs(int k, long long node, float score,
     }
     float prob = sigmoidf(dot);
 
-    printf("[DEBUG] out_idx: %lld, M: %lld, dot: %f, gs->left_node[node]: %lld, gs->right_node[node]: %lld, Node: %lld, Score: %f, Prob: %f\n", out_idx, M, dot, gs->left_node[node], gs->right_node[node], node, score, prob);
+    // printf("[DEBUG] out_idx: %lld, M: %lld, dot: %f, gs->left_node[node]: %lld, gs->right_node[node]: %lld, Node: %lld, Score: %f, Prob: %f\n", out_idx, M, dot, gs->left_node[node], gs->right_node[node], node, score, prob);
 
     // for (int i = 0; i < 2 * gs->label_size - 1; i++) {
     //     printf("%lld ", gs->left_node[i]);
@@ -167,6 +167,8 @@ void save_model(char *output_file, global_setting *gs) {
 void load_model(char *load_model_file, global_setting *gs) {
   // Implement the logic to load the model
   FILE *fi = fopen(load_model_file, "rb");
+  long long offset = 0;
+  long long predicted_offset = 0;
   char read_vec_file[MAX_STRING];
   strncpy(read_vec_file, gs->read_vec_file, MAX_STRING);
 
@@ -175,7 +177,9 @@ void load_model(char *load_model_file, global_setting *gs) {
     exit(1);  
   }
   printf("[INFO] Loading model from file: %s\n", load_model_file);
-  fread(gs, sizeof(global_setting), 1, fi);
+  offset += fread(gs, sizeof(global_setting), 1, fi);
+  predicted_offset = sizeof(global_setting);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   printf("gs->ngrma_size: %lld\n", gs->ngram);
 
   printf("[INFO] Vocabhash table size: %lld\n", gs->vocab_hash_size);
@@ -214,10 +218,18 @@ void load_model(char *load_model_file, global_setting *gs) {
   }
 // 
   // posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
-  fread(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fi);
-  fread(gs->label_hash, sizeof(int), gs->label_hash_size, fi);
-  fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi);
-  fread(gs->labels, sizeof(vocab_word), gs->label_max_size, fi);
+  offset += fread(gs->vocab_hash, sizeof(int), gs->vocab_hash_size, fi);
+  predicted_offset += sizeof(int) * gs->vocab_hash_size;
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fread(gs->label_hash, sizeof(int), gs->label_hash_size, fi);
+  predicted_offset += sizeof(int) * gs->label_hash_size;
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fread(gs->vocab, sizeof(vocab_word), gs->vocab_max_size, fi);
+  predicted_offset += sizeof(vocab_word) * gs->vocab_max_size;
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fread(gs->labels, sizeof(vocab_word), gs->label_max_size, fi);
+  predicted_offset += sizeof(vocab_word) * gs->label_max_size;
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   for (int i=0;i< 10; i++)  {
     // printf vocab
     printf("[DEBUG] labels[%d]: , word: %s, cn: %lld, codelen: %d\n", i, gs->labels[i].word, gs->labels[i].cn ,gs->labels[i].codelen);
@@ -265,33 +277,53 @@ void load_model(char *load_model_file, global_setting *gs) {
 
 
   // fread(gs->labels, sizeof(vocab_word), gs->label_size, fi);
-  fread(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fi);
+  offset += fread(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fi);
+  predicted_offset += sizeof(float) * gs->vocab_size * gs->layer1_size;
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   // printf("[INFO] Layer1 weights loaded from %s, read %zu elements\n", load_model_file, read);
 
   // for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
   //   printf("[INFO] Layer1[%lld]: %f\n", i, gs->layer1[i]);
   // }
 
-  fread(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fi);
+  offset += fread(gs->layer2, sizeof(float), gs->layer1_size * gs->label_size, fi);
+  predicted_offset += sizeof(float) * gs->layer1_size * gs->label_size;
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   // for (long long i = 0; i < gs->layer1_size * gs->label_size; i++) {
   //   printf("[INFO] Layer2[%lld]: %f\n", i, gs->layer2[i]);
   // }
-  fread(gs->output, sizeof(float), gs->label_size, fi);
+  offset += fread(gs->output, sizeof(float), gs->label_size, fi);
+  predicted_offset  += sizeof(float) * gs->label_size;
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
   gs->start_offsets= malloc(sizeof(long long) * (gs->num_threads + 1));
   gs->end_offsets = malloc(sizeof(long long) * (gs->num_threads + 1));
   gs->start_line_by_thread = malloc(sizeof(long long) * (gs->num_threads + 1));
   gs->total_line_by_thread = malloc(sizeof (long long) * (gs->num_threads + 1));
 
-  fread(gs->start_offsets, sizeof(long long), gs->num_threads + 1, fi);
+  offset += fread(gs->start_offsets, sizeof(long long), gs->num_threads + 1, fi);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
 
   printf("[INFO] Layer weights loaded from %s\n", load_model_file);
-  fread(gs->end_offsets, sizeof(long long), gs->num_threads + 1, fi);
-  fread(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
-  fread(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
+  offset += fread(gs->end_offsets, sizeof(long long), gs->num_threads + 1, fi);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fread(gs->start_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  offset += fread(gs->total_line_by_thread, sizeof(long long), gs->num_threads + 1, fi);
+  predicted_offset += sizeof(long long) * (gs->num_threads + 1);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
 
 
-  fread(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fi);
-  fread(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fi);
+  offset += fread(gs->left_node, sizeof(long long), gs->label_size * 2 - 1, fi);
+  predicted_offset += sizeof(long long) * (gs->label_size * 2 - 1);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+  // printf("[INFO] Left node loaded from %s\n", load
+  offset +=fread(gs->right_node, sizeof(long long), gs->label_size * 2 - 1, fi);
+  predicted_offset += sizeof(long long) * (gs->label_size * 2 - 1);
+  printf("[DEBUG] Predicted offset: %lld, Actual offset: %lld\n", predicted_offset, offset);
+
 
   // printf("gs->left_node\n");
   // for (int i = 0 ; i< 10; i++) {
@@ -431,7 +463,7 @@ void test_thread(global_setting *gs) {
   // }
   long long line = 0;
   long long max_line = count_lines(fi);
-  printf("[INFO] Total lines in test file: %lld\n", max_line);
+  // printf("[INFO] Total lines in test file: %lld\n", max_line);
 
   long long correct_cnt = 0;
   long long total_cnt = 0;
@@ -455,11 +487,11 @@ void test_thread(global_setting *gs) {
   long long avg_failure_ngram = 0;
   long long avg_word =0;
   
-  printf("[INFO] Starting test loop...\n");
+  // printf("[INFO] Starting test loop...\n");
   fseek(fi, 0, SEEK_SET);
 
   while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
-    printf("[DEBUG] Processing line %lld: %s", line, sen);
+    // printf("[DEBUG] Processing line %lld: %s", line, sen);
     line++;
     if (line % 1000 == 0) {
       // printf("%c[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld, total: %lld/%lld\n", 13,avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000, line, (gs->train_words / gs->iter));
@@ -482,17 +514,17 @@ void test_thread(global_setting *gs) {
     long long sentence_length = 0;
     long long ngram_sentences_length = 0;
     long long label_length = 0;
-    printf("[DEBUG] Tokenizing sentence: %s\n", sen);
+    // printf("[DEBUG] Tokenizing sentence: %s\n", sen);
     memset(labels, -1, gs->label_size * sizeof(long long)); // Initialize labels to 0
-    printf("[DEBUG] Initializing labels and words...\n");
+    // printf("[DEBUG] Initializing labels and words...\n");
     memset(words, -1, MAX_WORDS_PER_SENTENCE * sizeof(long long)); // Initialize words to -1 (unknown word)
-    printf("[DEBUG] Initializing ngram_words...\n");
+    // printf("[DEBUG] Initializing ngram_words...\n");
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-    printf("[DEBUG] Initializing prev_word and concat_word...\n");
+    // printf("[DEBUG] Initializing prev_word and concat_word...\n");
     
 
     while (token != NULL) {
-      printf("[DEBUG] Token: %s\n", token);
+      // printf("[DEBUG] Token: %s\n", token);
       if (strlen(token) > MAX_STRING) {
         token = strtok(NULL, " ");
         continue; // Skip tokens that are too long
@@ -552,7 +584,7 @@ void test_thread(global_setting *gs) {
       token = strtok(NULL, " ");
     }
 
-    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     memcpy(prev_word, "", 1); // Reset previous word for next sentence
     // exit(1);
@@ -591,7 +623,7 @@ void test_thread(global_setting *gs) {
     // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     if (label_length==0 || sentence_length == 0) wrong_cnt++;
 
-    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     if (sentence_length > 0 && label_length > 0) {
       // for (long long j = 0; j < ngram_sentences_length; j++) {
       //   // printf("ngram_words[%lld]: %lld ", j, ngram_words[j]);
@@ -622,7 +654,7 @@ void test_thread(global_setting *gs) {
       float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
-      printf("[DEBUG] Calculating neu2...\n");
+      // printf("[DEBUG] Calculating neu2...\n");
       if (gs->hs == 2)  {
          // MEMO: hierarchical softmax는 prec 값만 구함.
          // precision 외의 값을 구하기 위해서는 전체 label의 등장확률을 구해야하고 - softmax 보다 느림.
@@ -687,13 +719,14 @@ void test_thread(global_setting *gs) {
         fp_cnt += local_fp_cnt;
         total_cnt += gold_length; // Total number of true labels
       } else if (gs->hs == 1) {
-        printf("[DEBUG] Using hierarchical softmax with top-k: %lld\n", gs->top_k);
+        // printf("[DEBUG] Using hierarchical softmax with top-k: %lld\n", gs->top_k);
         long long *gold = (long long *)malloc(gs->label_size * sizeof(long long));
         Prediction heap[5];
         long long heap_size = 0;
 
         long long local_tp_cnt = 0;
         long long local_fp_cnt = 0;
+        long long local_fn_cnt = 0;
   
         long long gold_length = 0;
         for (long long j = 0; j < gs->label_size; j++) {
@@ -706,11 +739,11 @@ void test_thread(global_setting *gs) {
           heap[j].score = -1e10; // Initialize heap with a very low score
           heap[j].word = -1;
         }
-        printf("[DEBUG] Starting DFS for hierarchical softmax...\n");
-        fflush(stdout);
+        // printf("[DEBUG] Starting DFS for hierarchical softmax...\n");
+        // fflush(stdout);
         dfs(gs->top_k, 2 * gs->label_size - 2, 0.0f, heap, &heap_size, gs, neu1);
-        printf("[DEBUG] DFS completed. Heap size: %lld\n", heap_size);
-        fflush(stdout);
+        // printf("[DEBUG] DFS completed. Heap size: %lld\n", heap_size);
+        // fflush(stdout);
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
         int out_flag = 0;
         for (long long j = 0; j < heap_size; j++) {
@@ -732,10 +765,12 @@ void test_thread(global_setting *gs) {
         if (out_flag) {
           local_tp_cnt++;
         } else {
-          local_fp_cnt++;
+          if (heap_size < 1) local_fn_cnt++;
+          else local_fp_cnt++;
         }
         tp_cnt += local_tp_cnt;
         fp_cnt += local_fp_cnt;
+        fn_cnt += local_fn_cnt;
         total_cnt += gold_length; // Total number of true labels
       } else {
 
