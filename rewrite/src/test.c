@@ -373,7 +373,7 @@ void test_thread(global_setting *gs) {
   // Read the file line by line
   fseek(fi, 0, SEEK_SET);
   
-
+  printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->test_file);
   // char word[MAX_SENTENCE_LENGTH];
   char sen[MAX_SENTENCE_LENGTH];
       char word[MAX_STRING];
@@ -393,6 +393,7 @@ void test_thread(global_setting *gs) {
   // }
   long long line = 0;
   long long max_line = count_lines(fi);
+  printf("[INFO] Total lines in test file: %lld\n", max_line);
 
   long long correct_cnt = 0;
   long long total_cnt = 0;
@@ -412,6 +413,7 @@ void test_thread(global_setting *gs) {
   long long avg_failure_ngram = 0;
   long long avg_word =0;
   
+  fseek(fi, 0, SEEK_SET);
 
   while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
     line++;
