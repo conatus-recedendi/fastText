@@ -68,6 +68,13 @@ void dfs(int k, long long node, float score,
     }
     float prob = sigmoidf(dot);
 
+    printf("[DEBUG] out_idx: %lld, M: %lld, dot: %f, gs->left_node[node]: %lld, gs->right_node[node]: %lld, Node: %lld, Score: %f, Prob: %f\n", out_idx, M, dot, gs->left_node[node], gs->right_node[node], node, score, prob);
+
+    for (int i = 0; i < 2 * gs->label_size - 1; i++) {
+        printf("%lld ", gs->left_node[i]);
+    }
+    printf("\n");
+
     // printf("[DEBUG] Node: %lld, Score: %f, Prob: %f\n", node, score, prob);
     // 왼쪽 자식: binary=0 → prob 사용
     dfs(k, gs->left_node[node], score + logf(prob), heap, heap_size, gs, hidden);
