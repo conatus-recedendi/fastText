@@ -79,7 +79,7 @@ void initialize_network(global_setting *gs) {
 
   for (int b = 0; b<gs->label_size - 1; b++)  {
     for (int j = 0; j < gs->labels[b].codelen; j++) {
-      printf("%lld ", gs->code[b].point[j]);
+      printf("%lld ", gs->labels[b].point[j]);
     }
     printf("\n");
   }
