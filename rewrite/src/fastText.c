@@ -687,7 +687,7 @@ void train_model(global_setting *gs) {
 
   printf("14. gs->left_node %lld ~ %lld, pionter: %p\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1, gs->left_node);
     for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
-      printf("%lld ", gs->left_node[i])
+      printf("%lld ", gs->left_node[i]);
     }
   printf("\n");
   // gs->start = clock();
