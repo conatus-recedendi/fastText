@@ -77,10 +77,11 @@ void initialize_network(global_setting *gs) {
   // create_binary_tree(gs->vocab, gs->left_node, gs->right_node, gs->vocab_size);
   create_binary_tree(gs->labels, gs->left_node, gs->right_node, gs->label_size);
 
-  // for (int i = 0; i < gs->label_size * 2 - 1; i++) {
-  //   printf("%lld ", gs->left_node[i]);
-  // }
-  // printf("\n");
+  printf("gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
+    for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
+    printf("%lld ", gs->left_node[i]);
+  }
+  printf("\n");
   // for (int i = 0; i< gs->label_size * 2 - 1; i++) {
   //   printf("%lld ", gs->right_node[i]);
   // }
