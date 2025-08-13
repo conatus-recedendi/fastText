@@ -390,8 +390,14 @@ void create_vocab_from_train_file(global_setting *gs) {
     temp_vocab_index = search_vocab(concat_word, gs);
     
     if (temp_vocab_index == -1) {
+      if (train_words < 100) {
+        wprintf(L"[DEBUG] Adding new word: %ls\n", concat_word);
+      }
       temp_vocab_index = add_word_to_vocab(concat_word, gs);
       gs->vocab[temp_vocab_index].cn = 1; // Initialize count to 1
+      if (train_words < 100) {
+        wprintf(L"[DEBUG] New word added: %ls at index %lld, new: %ls\n", concat_word, temp_vocab_index, gs->vocab[temp_vocab_index].word);
+      }
       if (gs->sisg > 0 ) {
         create_subword(concat_word, gs); // Create subwords for the new word
       }
