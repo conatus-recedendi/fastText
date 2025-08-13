@@ -158,7 +158,7 @@ void *train_thread(thread_args *args) {
     sentence_position = 0;
     // Read the file line by line
     // fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
-    fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
+    fseeko(fi, gs->start_offsets[thread_id], SEEK_SET);
     // printf("[INFO] Thread %lld seeking to offset %lld\n", thread_id, gs->start_offsets[thread_id]);
     
 
@@ -446,7 +446,7 @@ void train_model(global_setting *gs) {
       return ;
   }
 
-  gs->total_lines = count_lines(fp);
+  gs->total_lines = count_lines_subword(fp);
   // lines을 thread 개수만큼 분리
   // 각 데이터의 start offset, end offset 저장. 각 thread에서 실행할 라인 수 계산
   // 스레드에서는 start offset으로 fseek하고, 각 thread에서 실행할 데이터만큼 학습
@@ -457,7 +457,7 @@ void train_model(global_setting *gs) {
   gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
 
-  compute_thread_offsets(fp, gs);
+  compute_thread_offsets_subword(fp, gs);
 
 
   wprintf(L"[INFO] read vocabulary...\n");

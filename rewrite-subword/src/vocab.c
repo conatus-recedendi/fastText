@@ -7,6 +7,93 @@
 #include "vocab.h"
 // Reads a single word from a file, assuming space + tab + EOL to be word boundaries
 
+void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
+    const int T = gs->num_threads;
+    if (T <= 0) { fprintf(stderr, "num_threads must be > 0\n"); exit(1); }
+
+    long long total_lines = gs->total_lines;
+    long long *start_offsets        = gs->start_offsets;
+    long long *end_offsets          = gs->end_offsets;
+    long long *start_line_by_thread = gs->start_line_by_thread;
+    long long *total_line_by_thread = gs->total_line_by_thread;
+
+    // 라인 분할 경계(라인 번호) 계산
+    // target_line[0]=0, target_line[T]=total_lines
+    long long *target_line = (long long *)malloc((T + 1) * sizeof(long long));
+    if (!target_line) { perror("malloc target_line"); exit(1); }
+    for (int i = 0; i <= T; i++) {
+        target_line[i] = (total_lines * i) / T;
+    }
+    for (int i = 0; i < T; i++) {
+        start_line_by_thread[i]   = target_line[i];
+        total_line_by_thread[i]   = target_line[i + 1] - target_line[i];
+    }
+
+    // 파일 처음으로
+    if (fseeko(fp, 0, SEEK_SET) != 0) { perror("fseeko"); exit(1); }
+
+    // 스레드 0은 파일 처음에서 시작
+    start_offsets[0] = 0;
+
+    // 라인 단위로 순회하며 “해당 라인의 시작 바이트 오프셋”을 잡는다.
+    // getline은 호출 시점의 파일 위치(=해당 라인 시작)에서 읽기 시작하므로,
+    // "라인 시작 오프셋"은 호출 직전의 ftello(fp) 값.
+    char *line = NULL;
+    size_t cap = 0;
+    long long curr_line = 0;       // 1-based 증가용 카운터
+    int next_thread = 1;           // 1..T-1 까지 채울 예정
+
+    while (1) {
+        off_t pos_before = ftello(fp);              // 이 라인 시작 바이트 오프셋
+        ssize_t nread = getline(&line, &cap, fp);   // 한 줄 읽기 (POSIX)
+        if (nread < 0) break;                       // EOF
+
+        curr_line++;
+
+        // target_line[next_thread] 번째 라인의 "시작 위치"를 다음 스레드의 시작으로 삼음
+        // curr_line 은 1-based, target_line[...]은 0-based 라인번호이므로
+        // "현재 읽은 라인 번호(1-based)가 (target_line[next_thread]+1)"일 때가 그 라인의 시작.
+        while (next_thread < T && curr_line == target_line[next_thread] + 1) {
+            // 스레드 next_thread 의 시작 오프셋은 pos_before (이번 라인 시작)
+            start_offsets[next_thread] = (long long)pos_before;
+            // 이전 스레드의 끝 오프셋은 pos_before (반개구간 [start, end) 표준화)
+            end_offsets[next_thread - 1] = (long long)pos_before;
+            next_thread++;
+        }
+    }
+
+    // 마지막 스레드의 끝 오프셋 = 파일 끝
+    off_t file_end = ftello(fp);
+    end_offsets[T - 1] = (long long)file_end;
+
+    free(line);
+    free(target_line);
+
+    // (선택) 디버그 프린트
+    /*
+    for (int i = 0; i < T; i++) {
+        fprintf(stderr, "[offsets] thr=%d lines=[%lld..%lld) cnt=%lld  bytes=[%lld..%lld)\n",
+            i,
+            start_line_by_thread[i],
+            start_line_by_thread[i] + total_line_by_thread[i],
+            total_line_by_thread[i],
+            start_offsets[i],
+            end_offsets[i]);
+    }
+    */
+}
+
+long count_lines_subword(FILE *fp) {
+    long lines = 0;
+    wint_t c;
+    while ((c = fgetwc(fp)) != WEOF) {
+        if (c == L'\n') lines++;
+    }
+    rewind(fp);
+    return lines;
+}
+
+
 // wchar_t 단어 읽기
 long long read_word(wchar_t *word, FILE *f_in) {
   wint_t wc;
@@ -365,7 +452,7 @@ void read_vocab(global_setting *gs) {
     wprintf(L"ERROR: training data file not found!\n");
     exit(1);
   }
-  fseek(fin, 0, SEEK_END);
+  fseeko(fin, 0, SEEK_END);
   gs->file_size = ftell(fin);
   fclose(fin);
 }
