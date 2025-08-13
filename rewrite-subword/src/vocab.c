@@ -28,13 +28,14 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
         start_line_by_thread[i]   = target_line[i];
         total_line_by_thread[i]   = target_line[i + 1] - target_line[i];
     }
+    
 
     // 파일 처음으로
     if (fseeko(fp, 0, SEEK_SET) != 0) { perror("fseeko"); exit(1); }
 
+
     // 스레드 0은 파일 처음에서 시작
     start_offsets[0] = 0;
-
     // 라인 단위로 순회하며 “해당 라인의 시작 바이트 오프셋”을 잡는다.
     // getline은 호출 시점의 파일 위치(=해당 라인 시작)에서 읽기 시작하므로,
     // "라인 시작 오프셋"은 호출 직전의 ftello(fp) 값.
@@ -47,8 +48,6 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
       off_t pos_before = ftello(fp);              // 이 라인 시작 바이트 오프셋
       ssize_t nread = getline(&line, &cap, fp);   // 한 줄 읽기 (POSIX)
 
-      fprintf(stderr, "[offsets] thr=%d read line %lld at pos %lld, nread=%lld, curr_line=%lld, target_line=%lld\n",
-      0, curr_line + 1, (long long)pos_before, (long long)nread, curr_line, target_line[next_thread]);
       if (nread < 0) break;                       // EOF
 
       curr_line++;
@@ -74,15 +73,15 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
 
     // (선택) 디버그 프린트
 
-    // for (int i = 0; i < T; i++) {
-    //     fprintf(stderr, "[offsets] thr=%d lines=[%lld..%lld) cnt=%lld  bytes=[%lld..%lld)\n",
-    //         i,
-    //         start_line_by_thread[i],
-    //         start_line_by_thread[i] + total_line_by_thread[i],
-    //         total_line_by_thread[i],
-    //         start_offsets[i],
-    //         end_offsets[i]);
-    // }
+    for (int i = 0; i < T; i++) {
+        fprintf(stderr, "[offsets] thr=%d lines=[%lld..%lld) cnt=%lld  bytes=[%lld..%lld)\n",
+            i,
+            start_line_by_thread[i],
+            start_line_by_thread[i] + total_line_by_thread[i],
+            total_line_by_thread[i],
+            start_offsets[i],
+            end_offsets[i]);
+    }
 }
 
 long count_lines_subword(FILE *fp) {

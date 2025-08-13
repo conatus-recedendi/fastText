@@ -451,6 +451,7 @@ void train_model(global_setting *gs) {
   }
 
   gs->total_lines = count_lines_subword(fp);
+  fclose(fp);
   // lines을 thread 개수만큼 분리
   // 각 데이터의 start offset, end offset 저장. 각 thread에서 실행할 라인 수 계산
   // 스레드에서는 start offset으로 fseek하고, 각 thread에서 실행할 데이터만큼 학습
@@ -461,7 +462,9 @@ void train_model(global_setting *gs) {
   gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
 
+  fp = fopen(gs->train_file, "r");
   compute_thread_offsets_subword(fp, gs);
+  fclose(fp);
 
 
   wprintf(L"[INFO] read vocabulary...\n");
