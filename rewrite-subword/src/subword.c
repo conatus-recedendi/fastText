@@ -232,6 +232,16 @@ void *train_thread(thread_args *args) {
         // printf("[DEBUG] Token: %s, word_index: %lld\n", token, word_index);
 
         if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+            if (gs->sample > 0) {
+            float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
+            double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
+
+            if (ran < random_value) {
+              // printf("[DEBUG] Skipping word: %s, ran: %f, random_value: %f\n", token, ran, random_value);
+              token = strtok(NULL, " ");
+              continue; // Skip this word
+            }
+          }
           // 순서 주의! sisg 먼저 확인
           if (gs->sisg > 0) {
             long long *subword_array = NULL;
@@ -358,7 +368,7 @@ void *train_thread(thread_args *args) {
               f += neu1[k] * gs->layer2[k + l2];
             }
             float g = 0;
-            
+
             if (f > 6) {
               f = 6;
               f = 1.0f / (1.0f + expf(-f)); // sigmoid function
@@ -639,7 +649,7 @@ int main(int argc, char **argv) {
     .iter = 5, // Default number of iterations
     .learning_rate = 0.05, // Default learning rate
     .learning_rate_decay = 0.05, // Default learning rate decay
-    .sample = 1e-3, // Default subsampling rate
+    .sample = 0.0001, // Default subsampling rate
     .train_file = "", // Default training file
     .output_file = "", // Default output file
     .save_vocab_file = "", // Default vocabulary save file
@@ -667,7 +677,7 @@ int main(int argc, char **argv) {
     .start_line_by_thread = NULL, // Actual offset for each thread\
     .ngram = 1,
     .bucket_size = 0,
-    .min_count_vocab = 1,
+    .min_count_vocab = 5,
     .minx = 2,
     .maxx = 6,
     .sisg = 1,
