@@ -702,6 +702,11 @@ void train_model(global_setting *gs) {
   for (int i = 0; i < gs->num_threads; i++) {
     // Wait for threads to finish
     pthread_join(pt[i], NULL);
+    printf("16. gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
+      for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
+      printf("%lld ", gs->left_node[i]);
+    }
+  printf("\n");
     printf("[INFO] Waiting for thread %d to finish : %lld...\n", i, gs->total_learned_lines);
   }
   printf("[INFO] All training threads finished.\n");
