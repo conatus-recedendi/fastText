@@ -387,6 +387,9 @@ void create_vocab_from_train_file(global_setting *gs) {
       accum_add_word_to_vocab_time = 0;
       fflush(stdout);
     }
+    if (wcslen(word) > MAX_STRING - 3 - 1) {
+      continue;   // 스킵
+    }
     swprintf(concat_word, MAX_STRING, L"<%ls>", word);
     temp_vocab_index = search_vocab(concat_word, gs);
     
