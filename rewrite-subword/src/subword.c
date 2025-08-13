@@ -360,11 +360,11 @@ void *train_thread(thread_args *args) {
             float g = 0;
             
             if (f > 6) {
-              f = 1.0f / (1.0f + expf(-f)); // sigmoid function
+              f = 6;
               g = (label - 1) * gs->learning_rate_decay;
             }
             else if (f < -6) {
-              f = 1.0f / (1.0f + expf(-f)); // sigmoid function
+              f = -6;
               g = (label - 0) * gs->learning_rate_decay;
             }
             else {
