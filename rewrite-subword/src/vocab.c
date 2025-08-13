@@ -440,6 +440,9 @@ void read_vocab(global_setting *gs) {
   while (1) {
     read_word(word, fin);
     if (feof(fin)) break;
+    if (i < 100) {
+      wprintf(L"[DEBUG] Read word: %s\n", word);
+    }
     a = add_word_to_vocab(word, gs);
     fscanf(fin, "%lld%c", &(gs->vocab[a].cn), &c);
     i++;
