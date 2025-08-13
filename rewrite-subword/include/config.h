@@ -1,4 +1,5 @@
 #include "vocab_word.h"
+#include <wchar.h>
 #include <time.h>
 #ifndef CONFIG_H
 #define CONFIG_H

@@ -1,77 +1,60 @@
 // 주어진 데이터로부터 vocab만들기
-
+#include <wchar.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>   
 #include "config.h"
 #include "vocab.h"
-void push_word(char *prev_word, const char *new_word) {
-    if (strlen(prev_word) > 0) {
-        strcat(prev_word, " ");  // Add space before new word
-    }
-    strcat(prev_word, new_word);
+// Reads a single word from a file, assuming space + tab + EOL to be word boundaries
+
+// wchar_t 단어 읽기
+long long read_word(wchar_t *word, FILE *f_in) {
+  wint_t wc;
+  size_t i = 0;
+
+  // 1) 선행 공백 스킵
+  while ((wc = fgetwc(f_in)) != WEOF) {
+      if (!iswspace(wc)) break;
+  }
+  if (wc == WEOF) return 0;
+
+  // 2) 첫 글자
+  word[i++] = (wchar_t)wc;
+
+  // 3) 공백 전까지 읽기
+  while ((wc = fgetwc(f_in)) != WEOF) {
+      if (iswspace(wc)) break;
+      if (i < MAX_STRING - 1) {
+          word[i++] = (wchar_t)wc;
+      }
+  }
+
+  word[i] = L'\0';
+  return 1;
 }
 
-void pop_first_word(char *prev_word) {
-    char *space = strchr(prev_word, ' ');
-    if (space != NULL) {
-        // Shift everything after first space (including space) to beginning
-        memmove(prev_word, space + 1, strlen(space + 1) + 1);
-    } else {
-        // Only one word in prev_word
-        prev_word[0] = '\0';
-    }
-}
 
-
-
-int get_word_hash(char *word, global_setting *gs) {
+int get_word_hash(wchar_t *word, global_setting *gs) {
   unsigned long long vocab_hash_size = gs->vocab_hash_size;
   vocab_word *vocab = gs->vocab;
   int *vocab_hash = gs->vocab_hash;
   unsigned long long hash = 0;
-  for (unsigned long long a = 0; a < strlen(word); a++) hash = hash * 257 + word[a];
+  for (unsigned long long a = 0; a < wcslen(word); a++) hash = hash * 257 + word[a];
   hash = hash % vocab_hash_size;
   return hash;
 }
 
-int get_subword_hash(char *word, global_setting *gs) {
+int get_subword_hash(wchar_t *word, global_setting *gs) {
   unsigned long long subword_hash_size = gs->subword_hash_size;
   vocab_word *subword_vocab = gs->subword_vocab;
   int *subword_hash = gs->subword_hash;
   unsigned long long hash = 0;
-  for (unsigned long long a = 0; a < strlen(word); a++) hash = hash * 257 + word[a];
+  for (unsigned long long a = 0; a < wcslen(word); a++) hash = hash * 257 + word[a];
   hash = hash % subword_hash_size;
   return hash;
 }
 
-// Reads a single word from a file, assuming space + tab + EOL to be word boundaries
-long long read_word(char *word, FILE *fin) {
-  long long a = 0, ch;
-  while (!feof(fin)) { 
-    ch = fgetc(fin);
-    if (ch == 13) continue; // Skip carriage return
-    if ((ch == ' ') || (ch == '\t') || (ch == '\n')) {
-      if (a > 0) {
-        if (ch == '\n') ungetc(ch, fin);
-        break;
-      }
-      continue ;
-      if (ch == '\n') {
-        strcpy(word, (char *)"</s>");
-        return ftell(fin);
-      } else continue;
-    }
-    word[a] = ch;
-    a++;
-    if (a >= MAX_STRING - 1) a--;   // Truncate too long words
-  }
-  word[a] = 0;
-  return ftell(fin);
-}
-
-
-long long create_subword(char *word, global_setting *gs) {
+long long create_subword(wchar_t *word, global_setting *gs) {
     // word는 "<abcde>" 와 같이 전체 문장이 옴!
   // serach_subword는 min_elngth~amx_length 길이로 단어를 분리하여 반환한다
   // minx = 2, maxx = 5  이면
@@ -87,19 +70,19 @@ long long create_subword(char *word, global_setting *gs) {
   long long min_length  = gs->minx; // default: 2 , min 2
   long long max_length = gs->maxx; // default: 5, max 6
 
-  if (strlen(word) < min_length) {
+  if (wcslen(word) < min_length) {
     return -1; // Return -1 if the word length is not within the specified range
   }
   long long subword_count = 0;
-  long long word_length = strlen(word);
+  long long word_length = wcslen(word);
   long long subword_size = (word_length - min_length + 1) * (max_length - min_length + 1);
   long long temp_subword_index = -1;
 
   for (long long length = min_length; length <= max_length; length++) {
     for (long long start = 0; start <= word_length - length; start++) {
-      char subword[MAX_STRING];
-      strncpy(subword, word + start, length);
-      subword[length] = '\0'; // Null-terminate the subword
+      wchar_t subword[MAX_STRING];
+      wcsncpy(subword, word + start, length);
+      subword[length] = L'\0'; // Null-terminate the subword
       long long subword_index = search_vocab(subword, gs);
       if (subword_index == -1) {
         temp_subword_index = add_word_to_vocab(subword, gs);
@@ -113,7 +96,7 @@ long long create_subword(char *word, global_setting *gs) {
   return 0; // Return the number of subwords found
 }
 
-long long search_subword(char *word, global_setting *gs, long long **subword_array) {
+long long search_subword(wchar_t *word, global_setting *gs, long long **subword_array) {
   // word는 "<abcde>" 와 같이 전체 문장이 옴!
   // serach_subword는 min_elngth~amx_length 길이로 단어를 분리하여 반환한다
   // minx = 2, maxx = 5  이면
@@ -132,11 +115,11 @@ long long search_subword(char *word, global_setting *gs, long long **subword_arr
   if (*subword_array != NULL) {
     free(*subword_array); // Free previously allocated memory if any
   }
-  if (strlen(word) < min_length) {
+  if (wcslen(word) < min_length) {
     return -1; // Return -1 if the word length is not within the specified range
   }
   long long subword_count = 0;
-  long long word_length = strlen(word);
+  long long word_length = wcslen(word);
   long long subword_size = (word_length - min_length + 1) * (max_length - min_length + 1);
   *subword_array = (long long *)malloc(subword_size * sizeof(long long));
   if (*subword_array == NULL) {
@@ -145,8 +128,8 @@ long long search_subword(char *word, global_setting *gs, long long **subword_arr
   }
   for (long long length = min_length; length <= max_length; length++) {
     for (long long start = 0; start <= word_length - length; start++) {
-      char subword[MAX_STRING];
-      strncpy(subword, word + start, length);
+      wchar_t subword[MAX_STRING];
+      wcsncpy(subword, word + start, length);
       subword[length] = '\0'; // Null-terminate the subword
       long long subword_index = search_vocab(subword, gs);
       // printf("[DEBUG] Searching subword: %s, result: %lld\n", subword, subword_index);
@@ -165,62 +148,37 @@ long long search_subword(char *word, global_setting *gs, long long **subword_arr
   return subword_count; // Return the number of subwords found
 }
 
-int search_vocab(char *word, global_setting *gs) {
-  // printf("[INFO] Searching for word: %s\n", word);
+int search_vocab(wchar_t *word, global_setting *gs) {
   unsigned int hash = get_word_hash(word, gs);
-  // printf("[INFO] Hash for word '%s': %u\n", word, hash);
   vocab_word *vocab = gs->vocab;
   int *vocab_hash = gs->vocab_hash;
   long long vocab_hash_size = gs->vocab_hash_size;
-  // printf("[INFO] Searching in vocab hash table... vocab_hash_size: %lld\n", vocab_hash_size);
-  // printf("[INFO] Starting search in vocab hash table... \n");
   long long too_long = 0;
   while (1) {
     too_long++;
-    // printf("[INFO] Checking hash index %u: %d\n", hash, vocab_hash[hash]);
-    // printf("[INFO] Current word: %lld\n", vocab[vocab_hash[hash]].cn);
     if (vocab_hash[hash] == -1) return -1;
-    // printf("[INFO] Found hash index %u: %d \"%s\"\n", hash, vocab_hash[hash], vocab[vocab_hash[hash]].word);
     if (!strcmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];
-    // if (too_long > 10) {
-    //   printf("[INFO] Hash for word '%s' vs '%s': %u %lld\n", vocab[vocab_hash[hash]].word, word, hash, vocab_hash_size);
-    // }
     hash = (hash + 1) % vocab_hash_size;
   }
   return -1;
 }
 
-int read_word_index(FILE *fin, global_setting *gs) {
-  char word[MAX_STRING];
-  read_word(word, fin);
-  if (feof(fin)) return -1;
-  return search_vocab(word, gs);
-}
-
-int add_word_to_vocab(char *word, global_setting *gs) {
-  unsigned int hash, length = strlen(word) + 1;
+int add_word_to_vocab(wchar_t *word, global_setting *gs) {
+  unsigned int hash, length = wcslen(word) + 1;
   vocab_word *vocab = gs->vocab;
   long long *vocab_size = &gs->vocab_size;
   long long *vocab_max_size = &gs->vocab_max_size;
   int *vocab_hash = gs->vocab_hash;
   long long vocab_hash_size = gs->vocab_hash_size;
 
-  // printf("[INFO] Adding word: %s\n", word);
+
   if (length > MAX_STRING) length = MAX_STRING;
-  // printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
-  // vocab[*vocab_size]->word = (char *)calloc(length, sizeof(char));
-  // vocab[*vocab_size] = (vocab_word *)malloc(sizeof(vocab_word));
 
-  // vocab[*vocab_size].word = (char *)calloc(length, sizeof(char));
-
-
-
-  strcpy(vocab[*vocab_size].word, word);
+  wcscpy(vocab[*vocab_size].word, word);
   vocab[*vocab_size].cn = 0; // Initialize count to zero
   (*vocab_size)++;
   
-  // printf("[INFO] Current vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
-  // Hashing logic here
+
   if (*vocab_size + 2 >= *vocab_max_size) {
     printf("debug: vocab size: %lld, max size: %lld\n", *vocab_size, *vocab_max_size);
     *vocab_max_size += 1000;
@@ -298,9 +256,9 @@ void reduce_vocab(global_setting *gs, long long min_reduce) {
 
 
 void create_vocab_from_train_file(global_setting *gs) {
-  char word[MAX_STRING];
-  char prev_word[MAX_STRING]; // only support for ngram=2
-  char concat_word[MAX_STRING];
+  wchar_t word[MAX_STRING];
+  wchar_t prev_word[MAX_STRING]; // only support for ngram=2
+  wchar_t concat_word[MAX_STRING];
   long long temp_vocab, temp_vocab_index;
   long long debug_mode = gs->debug_mode;
   long long train_words = gs->train_words;
@@ -340,7 +298,7 @@ void create_vocab_from_train_file(global_setting *gs) {
       accum_add_word_to_vocab_time = 0;
       fflush(stdout);
     }
-    snprintf(concat_word, sizeof(concat_word), "<%s>", word);
+    swprintf(concat_word, sizeof(concat_word), L"<%s>", word);
     temp_vocab_index = search_vocab(concat_word, gs);
     
     if (temp_vocab_index == -1) {

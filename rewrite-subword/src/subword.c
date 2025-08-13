@@ -1,3 +1,5 @@
+#include <wchar.h>
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,7 +95,6 @@ void save_model(char *output_file, global_setting *gs) {
     printf("Error opening file %s for writing\n", output_file);
     exit(1);
   }
-  // fwrite(gs, sizeof(global_setting), 1, fo);
 
   // gs를 binary 형태로 전부 저장. 언제든지 불러올 수 있는 형태로.
   printf("[INFO] Saving model to %s\n", output_file);
@@ -107,10 +108,7 @@ void save_model(char *output_file, global_setting *gs) {
 
   printf("[INFO] Vocabulary and labels saved to %s\n", output_file);
   fwrite(gs->layer1, sizeof(float), gs->vocab_size * gs->layer1_size, fo);
-  // for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
-  //   printf("[INFO] Layer1[%lld]: %f\n", i, gs->layer1[i]);
 
-  // }
   printf("[INFO] Layer weights saved to %s\n", output_file);
   fwrite(gs->start_offsets, sizeof(long long), gs->num_threads+1, fo);
   fwrite(gs->end_offsets, sizeof(long long), gs->num_threads +1, fo);
@@ -119,9 +117,7 @@ void save_model(char *output_file, global_setting *gs) {
   fwrite(gs->total_line_by_thread, sizeof(long long), gs->num_threads+1, fo);
   printf("[INFO] Thread offsets saved to %s\n", output_file);
 
-  
-  // Save the vocabulary
-  // Save the vocabulary hash table
+
 
   fclose(fo);
 }
@@ -165,10 +161,10 @@ void *train_thread(thread_args *args) {
     // printf("[INFO] Thread %lld seeking to offset %lld\n", thread_id, gs->start_offsets[thread_id]);
     
 
-    char word[MAX_STRING];
-    char prev_word[MAX_STRING]; // only support for ngram=2
-    char sen[MAX_SENTENCE_LENGTH];
-    char concat_word[MAX_STRING];
+    wchar_t word[MAX_STRING];
+    wchar_t prev_word[MAX_STRING]; // only support for ngram=2
+    wchar_t sen[MAX_SENTENCE_LENGTH];
+    wchar_t concat_word[MAX_STRING];
     long long offset = 0;
 
 
@@ -201,17 +197,21 @@ void *train_thread(thread_args *args) {
         exit(1);
     }
   
-    while ( fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
+    const wchar_t *delim = L" "; // 공백 기준
+    while ( fgetws(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
 
       memset(neu1, 0, gs->layer1_size * sizeof(float));
    
       line++;
       gs->total_learned_lines++;
 
-      sen[strcspn(sen, "\n")] = 0;
+      size_t len = wcslen(sen);
+      if (len > 0 && sen[len - 1] == L'\n') {
+          sen[len - 1] = L'\0';
+      }
 
       // 단어 분리
-      char *token = strtok(sen, " ");
+      wchar_t *token = wcstok(sen, delim, NULL  );
 
       long long sentence_length = 0;
       long long ngram_sentences_length = 0;
@@ -219,65 +219,34 @@ void *train_thread(thread_args *args) {
       memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
 
       while (token != NULL) {
-        if (strlen(token) >= MAX_STRING) {
-          token = strtok(NULL, " ");
+        if (wcslen(token) >= MAX_STRING) {
+          token = wcstok(NULL, delim, NULL);
           continue; // Skip tokens that are too long
         }
-        
 
-        // TODO: TOKEN appending '<' '>' and search
-        snprintf(concat_word, sizeof(concat_word), "<%s>", token);
-
+        swprintf(concat_word, sizeof(concat_word), L"<%s>", token);
         long long word_index = search_vocab(concat_word, gs);
-        // printf("[DEBUG] Token: %s, word_index: %lld\n", token, word_index);
-
         if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
             if (gs->sample > 0) {
             float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
             double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
 
             if (ran < random_value) {
-              // printf("[DEBUG] Skipping word: %s, ran: %f, random_value: %f\n", token, ran, random_value);
-              token = strtok(NULL, " ");
+              token = wcstok(NULL, delim, NULL);
               continue; // Skip this word
             }
           }
-          // 순서 주의! sisg 먼저 확인
           if (gs->sisg > 0) {
             long long *subword_array = NULL;
             long long subword_array_length = search_subword(concat_word, gs, &subword_array); // Get subword for the word
-            // printf("[DEBUG] Subword array for %s: %p, length: %lld\n", concat_word, subword_array, subword_array_length);
-            // for (long z = 0; z < subword_array_length; z++) {
-            //   printf("%lld ", subword_array[z]);
-            // }
-            // printf("\n");
-            // printf("%s %p\n", concat_word, subword_array);
             subwords[sentence_length] = subword_array; // Set the first subword index
           }
           words[sentence_length++] = word_index;
-
-
-        } else if (word_index == -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
-          // TODO:  sisg+일 경우, subword를 사용해서 조합.
-          // if (gs->sisg == 2)  {
-            // subword= get_subword(token, gs);
-          // }
-
-          // test에서만! 학습에서는 사용하지 안흥ㅁ.
-        }
-    
-        token = strtok(NULL, " ");
+        } 
+        token = wcstok(NULL, delim, NULL);
       }
 
       // skip-gram
-      // printf("[DEBUG] window: %lld, sentence_length: %lld\n", gs->window, sentence_length);
-
-      // for (int i = 0; i < sentence_length; i++) {
-      //   if (words[i] == -1) continue; // skip unknown word
-      //   printf("%lld ", words[i]);
-      // }
-      // printf("\n");
-
       double loss = 0.0;
       for (int i = gs->window - 1; i < sentence_length - gs->window + 1; i++) {
         // i is center
@@ -335,32 +304,8 @@ void *train_thread(thread_args *args) {
               label = 0;
             }
 
-            // printf("[DEBUG] Target word: %lld, Label: %lld\n", target, label);
-            // subword로 변경
+
             long long l2 = target * gs->layer1_size;
-
-            // target copy
-            // for (long long k = 0; k < gs->layer1_size; k++) {
-            //   neu1[k] += gs->layer2[k + l2]; // to neu1
-            // }
-
-            // subowrd가 있다면, neu1에 누적.
-            // target's subword copy only if center word
-            // printf("[DEBUG] Copying subwords for target word: %lld, j: %lld\n", target, j);
-            // TODO: subword를 Negative Sampleㅔ 대해서도 적용하나?일단은 적용 안하고 오직 target word에 대해서만
-            // if (d == 0) {
-            //   long long *subwords_array = subwords[i];
-            //   long long l = 0;
-            //   while (1) {
-            //     // printf("[DEBUG] Subword index: %p, %lld\n", subwords_array, l);
-            //     if (subwords_array[l] == -1) break; // end of subword array
-            //     long long ngram_index = subwords_array[l] * gs->layer1_size;
-            //     for (long long m = 0; m < gs->layer1_size; m++) {
-            //       neu1[m] += gs->layer2[m + ngram_index]; // to neu1
-            //     }
-            //     l++;
-              
-            // }
 
 
             float f = 0.0f;
@@ -391,30 +336,6 @@ void *train_thread(thread_args *args) {
               gs->layer2[l2 + k] += g * neu1[k]; // to layer2
             }
 
-
-
-            // for (long long k = 0; k < gs->layer1_size; k++) {
-            //   neu1err[k] += g * neu1[k]; // to neu1
-            //   // gs->layer2[l2 + k] += g * gs->layer1[k];
-            //   if (d == 0) {
-            //     gs->layer2[l2 + k] += g * neu1[k] / (1 + sentence_length); // update layer2
-            //     long long *subwords_array = subwords[i];
-            //     long long l = 0;
-            //     while (1) {
-            //       // printf("[DEBUG] Subword index: %p, %lld\n", subwords_array, l);
-            //       if (subwords_array[l] == -1) break; // end of subword array
-            //       long long ngram_index = subwords_array[l] * gs->layer1_size;
-            //       for (long long m = 0; m < gs->layer1_size; m++) {
-            //         // neu1[m] += gs->layer2[m + ngram_index]; // to neu1
-            //         gs->layer2[ngram_index + m] += g * neu1[m]; // update layer2 for subword
-            //       }
-            //       l++;
-
-            //     } 
-            //   } else {
-            //       gs->layer2[l2 + k] += g * neu1[k]; // update layer2 for negative sample
-            //   }
-            // }
             if (label == 1)  {
 
               loss += -logf(f + 1e-10f); // log loss
@@ -456,16 +377,13 @@ void *train_thread(thread_args *args) {
 
       }
       
-      // printf("[DEBUG] Loss for line %lld: %f\n", line, loss);
+    
       if (sentence_length > 0) {
         gs->loss += loss / ((gs->window * 2 - 1) * sentence_length); // average loss per word
       }
 
       gs->train_words += sentence_length; 
       gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
-      // printf("[DEBUG] Thread %lld: Iteration %d, Loss: %f, Total Learned Lines: %lld, Sentence Length: %lld, Offset: %lld\n",
-      //        thread_id, iter, loss / ((gs->window * 2 - 1)), gs->total_learned_lines, sentence_length, offset);
-
       if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
         temp = 0;
         clock_t now = clock();
