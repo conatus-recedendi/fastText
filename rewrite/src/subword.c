@@ -32,8 +32,31 @@ void initialize_network(global_setting *gs) {
     gs->layer1[i] = ((float)rand() / RAND_MAX * 2 - 1) / size; // Initialize with random values between -1 and 1
   }
 
+  gs->random_table = (long long *)malloc(sizeof(long long) * gs->table_size);
+  if (gs->random_table == NULL) {
+    fprintf(stderr, "Memory allocation failed for random_table\n");
+    exit(1);
+  }
 
- 
+  // initUnigramTable(gs);
+  double train_words_pow = 0.0;
+  double d1, power = 0.75;
+  for (long long i = 0; i < gs->vocab_size; i++) {
+    train_words_pow += pow(gs->vocab[i].cn, power);
+  }
+  long long a = 0;
+  d1=pow(gs->vocab[a].cn, power) / train_words_pow;
+  for (long long i = 0; i < gs->table_size; i++) {
+    gs->random_table[i] = a;
+    if (i / (double)gs->table_size > d1) {
+      a++;
+      d1 += pow(gs->vocab[a].cn, power) / train_words_pow;
+      if (a >= gs->vocab_size) {
+        a = gs->vocab_size - 1; // Prevent going out of bounds
+      }
+    }
+  }
+
   return ;
 }
 
@@ -142,6 +165,7 @@ void *train_thread(thread_args *args) {
 
     long long words[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
     long long ngram_words[MAX_WORDS_PER_SENTENCE];
+    long long *subwords[MAX_WORDS_PER_SENTENCE]; // [0, 1, 2, 3, 4 ...]
 
 
 
@@ -247,10 +271,42 @@ void *train_thread(thread_args *args) {
                 target = center_word;
                 label = 1;
               } else {
-                target = get_negative_sample(gs, thread_id);
+                // gs->vocab 에서 무작위로
+                target = gs->random_table[rand() % gs->table_size]; // Randomly select a target word
+                if (target == 0) target = rand() % (gs->vocab_size - 1) + 1; // Ensure target is not 0
+                if (target == center_word) {
+                  // If target is the same as center word, skip it
+                  continue;
+                }
+                // target = get_negative_sample(gs, thread_id);
                 label = 0;
               }
+
+              // subword로 변경
               long long l2 = target * gs->layer1_size;
+
+              // target copy
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                neu1[k] += gs->layer2[k + l1]; // to neu1
+              }
+
+              // target's subwrod copy
+
+              for (long long k = 0; k < sentence_length; k++) {
+                if (words[k] == -1) continue; // skip unknown word
+                long long *subword_array = subwords[k];
+                if (subword_array == NULL) continue; // skip unknown subword
+                long long l = 0;
+                while (1) {
+                  if (subword_array[l] == -1) break; // end of subword array
+                  long long ngram_index = subword_array[l] * gs->layer1_size;
+                  for (long long m = 0; m < gs->layer1_size; m++) {
+                    neu1[m] += gs->layer2[m + ngram_index]; // to neu1
+                  }
+                  l++;
+                }
+              }
+
 
               // TODO: sisg이면 각 subword도 f에 추가. negative sample도 똑같음.
               float f = 0.0f;
@@ -264,7 +320,20 @@ void *train_thread(thread_args *args) {
               if (g < -6) g = -6;
               for (long long k = 0; k < gs->layer1_size; k++) {
                 neu1err[k] += g * gs->layer2[l2 + k]; // to neu1
-                gs->layer2[l2 + k] += g * neu1[k + l1]; // update layer2
+                // gs->layer2[l2 + k] += g * gs->layer1[k + l1]; // update layer2
+                gs->layer2[l2 + k] += g * neu1[k] / (1 + sentence_length); // update layer2
+                for (long long m = 0; m < sentence_length; m++) {
+                  if (words[m] == -1) continue; // skip unknown word
+                  long long *subword_array = subwords[m];
+                  if (subword_array == NULL) continue; // skip unknown subword
+                  long long l = 0;
+                  while (1) {
+                    if (subword_array[l] == -1) break; // end of subword array
+                    long long ngram_index = subword_array[l] * gs->layer1_size;
+                    gs->layer2[ngram_index + k] += g * neu1[k] / (1 + sentence_length); // update layer2
+                    l++;
+                  }
+                }
               }
             }
           }
@@ -303,25 +372,6 @@ void *train_thread(thread_args *args) {
         fflush(stdout);
       }
 
-      long long golden_label = 0;
-        
-      if (sentence_length > 0) {
-        for (long long j = 0; j <  sentence_length; j++) {
-          if (words[j] != -1) {
-            for (long long k = 0; k < gs->layer1_size; k++) {
-              neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
-            }
-          }
-        }
-        
-
-        for (long long j = 0; j < gs->layer1_size; j++) {
-          //neu1: 1 x h
-          neu1[j] /= sentence_length; // 평균을 구함
-        }
-=
-      }
-      
       sentence_length = 0;
       sentence_position = 0;
       sentence_start = 0;
@@ -514,6 +564,9 @@ int main(int argc, char **argv) {
     .min_count_vocab = 1,
     .minx = 2,
     .maxx = 6,
+    .sisg = 1,
+
+    .table_size = 1e8, // Default size for unigram table
     
 
   };

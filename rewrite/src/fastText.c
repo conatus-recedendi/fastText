@@ -277,6 +277,12 @@ void *train_thread(thread_args *args) {
   
   // printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
   for (int iter = 0; iter < gs->iter; iter++) {
+
+    printf("1515. gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
+      for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
+      printf("%lld ", gs->left_node[i]);
+    }
+    printf("\n");
     
     
     // Reset sentence length and position for each iteration
@@ -711,6 +717,12 @@ void train_model(global_setting *gs) {
   // TODO: output 쓰기.
   // 1. embedding 논문
   // 2. classification 논문
+
+  printf("11. gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
+    for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
+    printf("%lld ", gs->left_node[i]);
+  }
+  printf("\n");
 
   printf("[INFO] Saving model...\n");
 
