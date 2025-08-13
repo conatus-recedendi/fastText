@@ -1,3 +1,4 @@
+#include <locale.h>
 #include <wchar.h>
 
 
@@ -551,6 +552,7 @@ void train_model(global_setting *gs) {
 }
 
 int main(int argc, char **argv) {
+  setlocale(LC_ALL, ""); // Set locale to support UTF-8
   int i;
 
   global_setting gs = {
