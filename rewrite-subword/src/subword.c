@@ -77,13 +77,16 @@ void save_vector(char *output_file, global_setting *gs) {
   printf("[INFO] Saving vector representations to %s\n", output_file);
   FILE *fo = fopen(output_file, "w");
   printf("[INFO] Writing vector representations to %s\n", output_file);
-  fprintf(fo, "%lld %lld\n", gs->vocab_size, gs->layer1_size);
+  // fprintf(fo, "%lld %lld\n", gs->vocab_size, gs->layer1_size);
+  fwprintf(fo, L"%lld %lld\n", gs->vocab_size, gs->layer1_size);
   for (long long i = 0; i < gs->vocab_size; i++) {
-    fprintf(fo, "%s ", gs->vocab[i].word);
+    // fprintf(fo, "%s ", gs->vocab[i].word);
+    fwprintf(fo, L"%ls ", gs->vocab[i].word);
     for (long long j = 0; j < gs->layer1_size; j++) {
-      fprintf(fo, "%f ", gs->layer1[i * gs->layer1_size + j]);
+      // fprintf(fo, "%f ", gs->layer1[i * gs->layer1_size + j]);
+      fwprintf(fo, L"%f ", gs->layer1[i * gs->layer1_size + j]);
     }
-    fprintf(fo, "\n");
+    fwprintf(fo, L"\n");
   }
   printf("[INFO] Vector representations saved to %s\n", output_file);
   fclose(fo);
