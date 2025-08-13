@@ -395,7 +395,7 @@ void *train_thread(thread_args *args) {
         long long eta_seconds = remain_lines / lines_sec;
         long long eta_hours = eta_seconds / 3600;
         long long eta_minutes = (eta_seconds % 3600) / 60;
-        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/thread/sec: %.3fk, loss: %f, LossA: %f, Lines: %lld,  ETA: %lldH:%lldm:%llds",
+        wprintf(L"%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/thread/sec: %.3fk, loss: %f, LossA: %f, Lines: %lld,  ETA: %lldH:%lldm:%llds",
                13, gs->learning_rate_decay,
               gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
               (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
@@ -429,7 +429,7 @@ void *train_thread(thread_args *args) {
 
 void train_model(global_setting *gs) {
   // Placeholder for training model logic
-  printf("[INFO] Training model with layer size: %lld\n", gs->layer1_size);
+  wprintf(L"[INFO] Training model with layer size: %lld\n", gs->layer1_size);
   // Implement the training logic here
   char *read_vocab_file = gs->read_vocab_file;
   char *save_vocab_file = gs->save_vocab_file;
@@ -460,7 +460,7 @@ void train_model(global_setting *gs) {
   compute_thread_offsets(fp, gs);
 
 
-  printf("[INFO] read vocabulary...\n");
+  wprintf(L"[INFO] read vocabulary...\n");
 
   if (read_vocab_file[0] != 0) {
     // Read vocabulary from file
@@ -470,7 +470,7 @@ void train_model(global_setting *gs) {
     create_vocab_from_train_file(gs);
   }
 
-  printf("[INFO] save vocabulary...\n");
+  wprintf(L"[INFO] save vocabulary...\n");
 
   if (save_vocab_file[0] != 0) {
     // Save vocabulary to file
@@ -479,11 +479,11 @@ void train_model(global_setting *gs) {
 
 
   if (output_file[0] == 0) {
-    printf("No output file specified. Exiting.\n");
+    wprintf(L"No output file specified. Exiting.\n");
     return;
   }
 
-  printf("[INFO] Initializing network...\n");
+  wprintf(L"[INFO] Initializing network...\n");
 
 
   gs->pure_vocab_size = gs->vocab_size;
@@ -491,7 +491,7 @@ void train_model(global_setting *gs) {
   initialize_network(gs);
 
   for (int i = 0; i < gs->num_threads; i++) {
-    printf("[INFO] Thread %d: Start Offset: %lld, End Offset: %lld, Start Line: %lld, Total Lines: %lld\n",
+    wprintf(L"[INFO] Thread %d: Start Offset: %lld, End Offset: %lld, Start Line: %lld, Total Lines: %lld\n",
            i, gs->start_offsets[i], gs->end_offsets[i], gs->start_line_by_thread[i], gs->total_line_by_thread[i]);
   }
 
@@ -516,14 +516,14 @@ void train_model(global_setting *gs) {
   for (int i = 0; i < gs->num_threads; i++) {
     // Wait for threads to finish
     pthread_join(pt[i], NULL);
-    printf("[INFO] Waiting for thread %d to finish : %lld...\n", i, gs->total_learned_lines);
+    wprintf(L"[INFO] Waiting for thread %d to finish : %lld...\n", i, gs->total_learned_lines);
   }
-  printf("[INFO] All training threads finished.\n");
+  wprintf(L"[INFO] All training threads finished.\n");
       struct timespec end_time;
     clock_gettime(CLOCK_MONOTONIC, &end_time);
   free(pt);
 
-  printf("[INFO] Total time taken for training: %.2f seconds\n",
+  wprintf(L"[INFO] Total time taken for training: %.2f seconds\n",
          (end_time.tv_sec - gs->start.tv_sec) +
          (end_time.tv_nsec - gs->start.tv_nsec) / 1e9);
 
@@ -532,12 +532,12 @@ void train_model(global_setting *gs) {
   // 1. embedding 논문
   // 2. classification 논문
 
-  printf("[INFO] Saving model...\n");
+  wprintf(L"[INFO] Saving model...\n");
 
   save_model(output_file, gs);
-  printf("[INFO] Model saved to %s\n", output_file);
+  wprintf(L"[INFO] Model saved to %s\n", output_file);
   save_vector(save_vocab_file , gs);
-  printf("[INFO] Vector Saved to %s\n", save_vocab_file);
+  wprintf(L"[INFO] Vector Saved to %s\n", save_vocab_file);
   // foramt
   // __label1__ __label2__ ... input
   // 2-1. input infeernece 

@@ -293,7 +293,7 @@ void create_vocab_from_train_file(global_setting *gs) {
     train_words++;
     // wprintf(L"\n[DEBUG] Read word: %ls\n", word);
     if ((debug_mode > 1) && (train_words % 1000 == 0)) {
-      printf("%lldK, search_vocab_time: %lld, add_word_to_vocab_time: %lld, vocab_length :%lld%c", train_words / 1000, accum_search_vocab_time, accum_add_word_to_vocab_time, gs->vocab_size, 13);
+      wprintf(L"%lldK, search_vocab_time: %lld, add_word_to_vocab_time: %lld, vocab_length :%lld%c", train_words / 1000, accum_search_vocab_time, accum_add_word_to_vocab_time, gs->vocab_size, 13);
       accum_search_vocab_time = 0;
       accum_add_word_to_vocab_time = 0;
       fflush(stdout);
@@ -314,9 +314,9 @@ void create_vocab_from_train_file(global_setting *gs) {
     
 
     if (gs->vocab_size >= vocab_hash_size * 0.7) {
-      printf("[INFO] Vocabulary reduced. Current size: %lld\n", gs->vocab_size);
+      wprintf(L"[INFO] Vocabulary reduced. Current size: %lld\n", gs->vocab_size);
       reduce_vocab(gs, gs->min_count_vocab);
-      printf("[INFO] Vocabulary size after reduction: %lld\n", gs->vocab_size);
+      wprintf(L"[INFO] Vocabulary size after reduction: %lld\n", gs->vocab_size);
     }
 
   }
@@ -357,12 +357,12 @@ void read_vocab(global_setting *gs) {
   }
   sort_vocab(gs);
   if (gs->debug_mode > 0) {
-    printf("Vocab size: %lld\n", gs->vocab_size);
-    printf("Words in train file: %lld\n", gs->train_words);
+    wprintf(L"Vocab size: %lld\n", gs->vocab_size);
+    wprintf(L"Words in train file: %lld\n", gs->train_words);
   }
   fin = fopen(gs->train_file, "rb");
   if (fin == NULL) {
-    printf("ERROR: training data file not found!\n");
+    wprintf(L"ERROR: training data file not found!\n");
     exit(1);
   }
   fseek(fin, 0, SEEK_END);
@@ -376,7 +376,7 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
   char code[VOCAB_MAX_CODE_LENGTH];
   long long vocab_size = size;
   vocab_word *vocab = _vocab;
-  printf("[INFO] Allocate memory space for temporar values...\n");
+  wprintf(L"[INFO] Allocate memory space for temporar values...\n");
   long long *count = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
   long long *binary = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
   long long *parent_node = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
@@ -390,7 +390,7 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     right_node[a] = -1;
   }
 
-  printf("[INFO] Creating binary tree for vocabulary...\n");
+  wprintf(L"[INFO] Creating binary tree for vocabulary...\n");
   // Following algorithm constructs the Huffman tree by adding one node at a time
   for (a = 0; a < vocab_size - 1; a++) {
     // First, find two smallest nodes 'min1, min2'
@@ -426,7 +426,7 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     left_node[vocab_size + a] = min1i;
     right_node[vocab_size + a] = min2i;
   }
-  printf("[INFO] Finished creating binary tree for vocabulary.\n");
+  wprintf(L"[INFO] Finished creating binary tree for vocabulary.\n");
   // Now assign binary code to each vocabulary word
   for (a = 0; a < vocab_size; a++) {
     b = a;
@@ -445,7 +445,7 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
       vocab[a].point[i - b] = point[b] - vocab_size;
     }
   }
-  printf("[INFO] Binary tree created with %lld nodes.\n", vocab_size * 2 - 1);
+  wprintf(L"[INFO] Binary tree created with %lld nodes.\n", vocab_size * 2 - 1);
   free(count);
   free(binary);
   free(parent_node);
