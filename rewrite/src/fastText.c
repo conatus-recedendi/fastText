@@ -490,7 +490,7 @@ void *train_thread(thread_args *args) {
               // neu1err: 1 * hidden
               // like neu2
               long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
-              long long M = gs->layer1_size - 1; // hidden size
+              long long M = gs->layer1_size; // hidden size
               for (long long j = 0; j < M; j++) {
                 f += neu1[j] * gs->layer2[point * M + j];
               }
