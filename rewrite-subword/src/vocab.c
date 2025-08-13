@@ -41,7 +41,7 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
     char *line = NULL;
     size_t cap = 0;
     long long curr_line = 0;       // 1-based 증가용 카운터
-    int next_thread = 1;           // 1..T-1 까지 채울 예정
+    int next_thread = 0;           // 1..T-1 까지 채울 예정
 
     while (1) {
       off_t pos_before = ftello(fp);              // 이 라인 시작 바이트 오프셋
