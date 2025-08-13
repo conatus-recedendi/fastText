@@ -290,7 +290,7 @@ void *train_thread(thread_args *args) {
             if (subwords_array[l] == -1) break; // end of subword array
             long long ngram_index = subwords_array[l] * gs->layer1_size;
             for (long long m = 0; m < gs->layer1_size; m++) {
-              neu1[m] += gs->layer2[m + ngram_index]; // to neu1
+              neu1[m] += gs->layer1[m + ngram_index]; // to neu1
             }
             l++;
           }
