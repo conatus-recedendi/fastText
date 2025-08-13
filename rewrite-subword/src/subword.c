@@ -406,7 +406,7 @@ void *train_thread(thread_args *args) {
             //   }
             // }
             loss += -logf(f + 1e-10f); // log loss
-            if (isnan(loss)) {
+            if (isnan(loss) || isinf(loss)) {
               fprintf(stderr, "[ERROR] Loss is NaN at line %lld, word %lld, f: %f\n", line, i, f);
               exit(1);
             }
@@ -459,12 +459,12 @@ void *train_thread(thread_args *args) {
         long long eta_seconds = remain_lines / lines_sec;
         long long eta_hours = eta_seconds / 3600;
         long long eta_minutes = (eta_seconds % 3600) / 60;
-        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/thread/sec: %.3fk, loss: %f, Lines: %lld,  ETA: %lldH:%lldm:%llds",
+        printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/thread/sec: %.3fk, loss: %f, LossA: %f, Lines: %lld,  ETA: %lldH:%lldm:%llds",
               13, gs->learning_rate_decay,
               gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
               (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
               (gs->total_learned_lines / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)),
-               gs->loss / gs->total_learned_lines, gs->total_learned_lines,
+               gs->loss / gs->total_learned_lines, gs->loss, gs->total_learned_lines,
                eta_hours, eta_minutes, eta_seconds % 60)
             ;
 
