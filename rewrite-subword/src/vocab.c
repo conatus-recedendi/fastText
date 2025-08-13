@@ -278,20 +278,21 @@ void create_vocab_from_train_file(global_setting *gs) {
     exit(1);
   }
 
-  // printf("[INFO] Reading words from training file...\n");
+  printf("[INFO] Reading words from training file...\n");
 
   clock_t search_vocab_time;
   clock_t accum_search_vocab_time = 0;
   clock_t add_word_to_vocab_time;
   clock_t accum_add_word_to_vocab_time = 0;
   long long create_ngram = 0;
-  // char prev_word[MAX_STRING];
   long long prev_word_hash = -1; // for ngram
   while(1) {
+    printf("[DEBUG] Reading word from file...\n");
     read_word(word, f_in);
     if (feof(f_in)) break;
 
     train_words++;
+    printf("[DEBUG] Read word: %ls\n", word);
     if ((debug_mode > 1) && (train_words % 1000 == 0)) {
       printf("%lldK, search_vocab_time: %lld, add_word_to_vocab_time: %lld, vocab_length :%lld%c", train_words / 1000, accum_search_vocab_time, accum_add_word_to_vocab_time, gs->vocab_size, 13);
       accum_search_vocab_time = 0;
