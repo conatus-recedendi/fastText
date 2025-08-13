@@ -405,7 +405,12 @@ void *train_thread(thread_args *args) {
             //       gs->layer2[l2 + k] += g * neu1[k]; // update layer2 for negative sample
             //   }
             // }
-            loss += -logf(f + 1e-10f); // log loss
+            if (label == 1)  {
+
+              loss += -logf(f + 1e-10f); // log loss
+            } else {
+              loss += -logf(1 - f + 1e-10f); // log loss
+            }
             if (isnan(loss) || isinf(loss)) {
               fprintf(stderr, "[ERROR] Loss is NaN at line %lld, word %lld, f: %f\n\n\n", line, i, f);
               exit(1);
