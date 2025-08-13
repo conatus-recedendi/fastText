@@ -201,6 +201,7 @@ void *train_thread(thread_args *args) {
     }
   
     const wchar_t *delim = L" "; // 공백 기준
+    wchar_t *save = NULL;
     wprintf(L"[INFO] Thread %lld started training with max line: %lld\n", thread_id, max_line);
     while ( fgetws(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
 
@@ -215,7 +216,7 @@ void *train_thread(thread_args *args) {
       }
 
       // 단어 분리
-      wchar_t *token = wcstok(sen, delim, NULL  );
+      wchar_t *token = wcstok(sen, delim, &save );
 
       long long sentence_length = 0;
       long long ngram_sentences_length = 0;
@@ -224,11 +225,11 @@ void *train_thread(thread_args *args) {
 
       while (token != NULL) {
         if (wcslen(token) >= MAX_STRING) {
-          token = wcstok(NULL, delim, NULL);
+          token = wcstok(NULL, delim, &save);
           continue; // Skip tokens that are too long
         }
 
-        swprintf(concat_word, sizeof(concat_word), L"<%s>", token);
+        swprintf(concat_word, sizeof(concat_word), L"<%ls>", token);
         long long word_index = search_vocab(concat_word, gs);
         if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
             if (gs->sample > 0) {
@@ -236,7 +237,7 @@ void *train_thread(thread_args *args) {
             double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
 
             if (ran < random_value) {
-              token = wcstok(NULL, delim, NULL);
+              token = wcstok(NULL, delim, &save);
               continue; // Skip this word
             }
           }
@@ -247,7 +248,7 @@ void *train_thread(thread_args *args) {
           }
           words[sentence_length++] = word_index;
         } 
-        token = wcstok(NULL, delim, NULL);
+        token = wcstok(NULL, delim, &save);
       }
 
       // skip-gram

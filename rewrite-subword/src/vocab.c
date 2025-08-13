@@ -59,7 +59,6 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
             // 이전 스레드의 끝 오프셋은 pos_before (반개구간 [start, end) 표준화)
             end_offsets[next_thread - 1] = (long long)pos_before;
             next_thread++;
-            wprintf(L"[INFO] Thread %d: start offset = %lld, end offset = %lld\n", next_thread - 1, start_offsets[next_thread - 1], end_offsets[next_thread - 1]);
         }
     }
 
@@ -71,7 +70,7 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
     free(target_line);
 
     // (선택) 디버그 프린트
-    /*
+
     for (int i = 0; i < T; i++) {
         fprintf(stderr, "[offsets] thr=%d lines=[%lld..%lld) cnt=%lld  bytes=[%lld..%lld)\n",
             i,
@@ -81,7 +80,6 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
             start_offsets[i],
             end_offsets[i]);
     }
-    */
 }
 
 long count_lines_subword(FILE *fp) {
