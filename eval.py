@@ -54,7 +54,10 @@ fin = open(args.modelPath, "rb")
 for _, line in enumerate(fin):
     try:
         tab = compat_splitting(line)
+        if tab is None or len(tab) < 2:
+            continue
         vec = np.array(tab[1:], dtype=float)
+
         word = tab[0]
         word = word.lstrip("<").rstrip(">")
         if np.linalg.norm(vec) == 0:
