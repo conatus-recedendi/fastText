@@ -111,7 +111,7 @@ long long read_word(wchar_t *word, FILE *f_in) {
 
   // 3) 공백 전까지 읽기
   while ((wc = fgetwc(f_in)) != WEOF) {
-      if (iswspace(wc)) break;
+      if (iswspace(wc) || i == MAX_STRING) break;
       if (i < MAX_STRING - 1) {
           word[i++] = (wchar_t)wc;
       }
@@ -375,6 +375,7 @@ void create_vocab_from_train_file(global_setting *gs) {
   long long create_ngram = 0;
   long long prev_word_hash = -1; // for ngram
   while(1) {
+    
     read_word(word, f_in);
     if (feof(f_in)) break;
 
