@@ -44,8 +44,11 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
     int next_thread = 1;           // 1..T-1 까지 채울 예정
 
     while (1) {
-        off_t pos_before = ftello(fp);              // 이 라인 시작 바이트 오프셋
-        ssize_t nread = getline(&line, &cap, fp);   // 한 줄 읽기 (POSIX)
+      off_t pos_before = ftello(fp);              // 이 라인 시작 바이트 오프셋
+      ssize_t nread = getline(&line, &cap, fp);   // 한 줄 읽기 (POSIX)
+      
+      fprintf(stderr, "[offsets] thr=%d read line %lld at pos %lld\n",
+      0, curr_line + 1, (long long)pos_before);
         if (nread < 0) break;                       // EOF
 
         curr_line++;

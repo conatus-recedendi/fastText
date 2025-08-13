@@ -229,7 +229,7 @@ void *train_thread(thread_args *args) {
           continue; // Skip tokens that are too long
         }
 
-        swprintf(concat_word, sizeof(concat_word), L"<%ls>", token);
+        swprintf(concat_word, MAX_STRING, L"<%ls>", token);
         long long word_index = search_vocab(concat_word, gs);
         if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
             if (gs->sample > 0) {
