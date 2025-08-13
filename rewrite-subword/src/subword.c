@@ -158,6 +158,8 @@ void *train_thread(thread_args *args) {
     sentence_position = 0;
     // Read the file line by line
     // fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
+    wprintf(L"[INFO] Thread %lld seeking to offset %lld\n", thread_id, gs->start_offsets[thread_id]);
+
     fseeko(fi, gs->start_offsets[thread_id], SEEK_SET);
     // printf("[INFO] Thread %lld seeking to offset %lld\n", thread_id, gs->start_offsets[thread_id]);
     
@@ -199,6 +201,7 @@ void *train_thread(thread_args *args) {
     }
   
     const wchar_t *delim = L" "; // 공백 기준
+    wprintf(L"[INFO] Thread %lld started training with max line: %lld\n", thread_id, max_line);
     while ( fgetws(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
 
       memset(neu1, 0, gs->layer1_size * sizeof(float));
