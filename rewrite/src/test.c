@@ -60,7 +60,13 @@ void dfs(int k, long long node, float score,
 
     // 현재 노드에서 sigmoid 계산
     long long out_idx = node - gs->label_size;
-    long long M = gs->layer1_size - 1; // hidden size
+    if (out_idx < 0 || out_idx >= gs->label_size) {
+        fprintf(stderr, "[ERROR] Invalid out_idx: %lld for node: %lld\n", out_idx, node);
+        return;
+    } else if ( out_idx == gs->label_size - 1) {
+      printf("[DEBUG] out_idx: %lld, node: %lld, score: %f\n", out_idx, node, score);
+    }
+    long long M = gs->layer1_size; // hidden size
     float dot = 0.0f;
 
     for (int i = 0; i < gs->layer1_size; i++) {
@@ -107,7 +113,7 @@ void initialize_network(global_setting *gs) {
   }
 
 
-  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
+  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->label_size * gs->layer1_size * sizeof(float));
   posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->label_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
