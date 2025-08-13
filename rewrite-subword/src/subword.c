@@ -233,7 +233,7 @@ void *train_thread(thread_args *args) {
         long long word_index = search_vocab(concat_word, gs);
         if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
             if (gs->sample > 0) {
-              float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->total_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
+              float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->total_words)) + 1) * (gs->sample * gs->total_words) / gs->vocab[word_index].cn;
               double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
 
               if (ran < random_value) {
