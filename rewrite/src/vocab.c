@@ -517,20 +517,6 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     
   }
 
-  for (a = 0; a < vocab_size * 2 - 1; a++) {
-    if (parent_node[a] > vocab_size * 2 - 2) {
-      fprintf(stderr, "ERROR: parent_node[%lld] = %lld > %lld\n", a, parent_node[a], vocab_size * 2 - 2);
-      exit(1);
-    }
-    for (b = 0; b < vocab[a].codelen; b++) {
-      if (vocab[a].point[b] > vocab_size * 2 - 2) {
-        fprintf(stderr, "ERROR: vocab[%lld].point[%lld] = %lld > %lld\n", a, b, vocab[a].point[b], vocab_size * 2 - 2);
-        exit(1);
-      }
-    }
-  }
-
-
 
   printf("[INFO] Binary tree created with %lld nodes.\n", vocab_size * 2 - 1);
   free(count);
