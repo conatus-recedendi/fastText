@@ -130,7 +130,7 @@ long long search_subword(wchar_t *word, global_setting *gs, long long **subword_
     for (long long start = 0; start <= word_length - length; start++) {
       wchar_t subword[MAX_STRING];
       wcsncpy(subword, word + start, length);
-      subword[length] = '\0'; // Null-terminate the subword
+      subword[length] = L'\0'; // Null-terminate the subword
       long long subword_index = search_vocab(subword, gs);
       // printf("[DEBUG] Searching subword: %s, result: %lld\n", subword, subword_index);
       if (subword_index != -1) {
@@ -157,7 +157,7 @@ int search_vocab(wchar_t *word, global_setting *gs) {
   while (1) {
     too_long++;
     if (vocab_hash[hash] == -1) return -1;
-    if (!strcmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];
+    if (!wcscmp(word, vocab[vocab_hash[hash]].word)) return vocab_hash[hash];
     hash = (hash + 1) % vocab_hash_size;
   }
   return -1;
@@ -299,7 +299,7 @@ void create_vocab_from_train_file(global_setting *gs) {
       accum_add_word_to_vocab_time = 0;
       fflush(stdout);
     }
-    swprintf(concat_word, sizeof(concat_word), L"<%s>", word);
+    swprintf(concat_word, MAX_STRING, L"<%s>", word);
     temp_vocab_index = search_vocab(concat_word, gs);
     
     if (temp_vocab_index == -1) {
@@ -310,7 +310,7 @@ void create_vocab_from_train_file(global_setting *gs) {
       }
 
     } else {
-      vocab[temp_vocab_index].cn++; // Increment count for existing word
+      gs->vocab[temp_vocab_index].cn++; // Increment count for existing word
     }
     
 
