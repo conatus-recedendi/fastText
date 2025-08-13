@@ -386,7 +386,7 @@ void create_vocab_from_train_file(global_setting *gs) {
       accum_add_word_to_vocab_time = 0;
       fflush(stdout);
     }
-    swprintf(concat_word, MAX_STRING, L"<%s>", word);
+    swprintf(concat_word, MAX_STRING, L"<%ls>", word);
     temp_vocab_index = search_vocab(concat_word, gs);
     
     if (temp_vocab_index == -1) {
@@ -447,7 +447,7 @@ void read_vocab(global_setting *gs) {
     read_word(word, fin);
     if (feof(fin)) break;
     if (i < 100) {
-      wprintf(L"[DEBUG] Read word: %s\n", word);
+      wprintf(L"[DEBUG] Read word: %ls\n", word);
     }
     a = add_word_to_vocab(word, gs);
     fscanf(fin, "%lld%c", &(gs->vocab[a].cn), &c);
