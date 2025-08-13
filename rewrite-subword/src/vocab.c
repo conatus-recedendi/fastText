@@ -407,7 +407,7 @@ void create_vocab_from_train_file(global_setting *gs) {
     }
     
 
-    if (gs->vocab_size >= vocab_hash_size * 0.99) {
+    if (gs->vocab_size >= vocab_hash_size * 0.9) {
       wprintf(L"[INFO] Vocabulary reduced. Current size: %lld\n", gs->vocab_size);
       reduce_vocab(gs, gs->min_count_vocab);
       wprintf(L"[INFO] Vocabulary size after reduction: %lld\n", gs->vocab_size);
