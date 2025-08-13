@@ -495,8 +495,12 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     right_node[vocab_size + a] = min2i;
   }
 
-  
-  printf("[INFO] Finished creating binary tree for vocabulary.\n");
+  for (int i = vocab_size; i< vocab_size * 2 - 1; i++) {
+    printf("%lld ", point[i]);
+  }
+  printf("\n");
+
+  printf("[INFO] Finished creating binary tree for vocabulary. %lld\n", vocab_size * 2 - 1);
   // Now assign binary code to each vocabulary word
   for (a = 0; a < vocab_size; a++) {
     b = a;
