@@ -407,7 +407,7 @@ void *train_thread(thread_args *args) {
             // }
             loss += -logf(f + 1e-10f); // log loss
             if (isnan(loss) || isinf(loss)) {
-              fprintf(stderr, "[ERROR] Loss is NaN at line %lld, word %lld, f: %f\n", line, i, f);
+              fprintf(stderr, "[ERROR] Loss is NaN at line %lld, word %lld, f: %f\n\n\n", line, i, f);
               exit(1);
             }
           }
@@ -442,14 +442,16 @@ void *train_thread(thread_args *args) {
       }
       
       // printf("[DEBUG] Loss for line %lld: %f\n", line, loss);
-      gs->loss += loss / ((gs->window * 2 - 1) * sentence_length); // average loss per word
+      if (sentence_length > 0) {
+        gs->loss += loss / ((gs->window * 2 - 1) * sentence_length); // average loss per word
+      }
 
       gs->train_words += sentence_length; 
       gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
       // printf("[DEBUG] Thread %lld: Iteration %d, Loss: %f, Total Learned Lines: %lld, Sentence Length: %lld, Offset: %lld\n",
       //        thread_id, iter, loss / ((gs->window * 2 - 1)), gs->total_learned_lines, sentence_length, offset);
 
-      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1) == thread_id * 1) {
+      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
         temp = 0;
         clock_t now = clock();
         struct timespec end_time;
@@ -460,7 +462,7 @@ void *train_thread(thread_args *args) {
         long long eta_hours = eta_seconds / 3600;
         long long eta_minutes = (eta_seconds % 3600) / 60;
         printf("%clr: %f  Progress: %.2f%%  Words/thread/sec: %.2fk, Lines/thread/sec: %.3fk, loss: %f, LossA: %f, Lines: %lld,  ETA: %lldH:%lldm:%llds",
-              13, gs->learning_rate_decay,
+               13, gs->learning_rate_decay,
               gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
               (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
               (gs->total_learned_lines / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)),
