@@ -553,6 +553,7 @@ void train_model(global_setting *gs) {
 
 int main(int argc, char **argv) {
   setlocale(LC_ALL, ""); // Set locale to support UTF-8
+  fwide(stdout, 1); 
   int i;
 
   global_setting gs = {
