@@ -41,7 +41,7 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
     char *line = NULL;
     size_t cap = 0;
     long long curr_line = 0;       // 1-based 증가용 카운터
-    int next_thread = 0;           // 1..T-1 까지 채울 예정
+    int next_thread = 1;           // 1..T-1 까지 채울 예정
 
     while (1) {
       off_t pos_before = ftello(fp);              // 이 라인 시작 바이트 오프셋
@@ -49,20 +49,20 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
 
       fprintf(stderr, "[offsets] thr=%d read line %lld at pos %lld, nread=%lld, curr_line=%lld, target_line=%lld\n",
       0, curr_line + 1, (long long)pos_before, (long long)nread, curr_line, target_line[next_thread]);
-        if (nread < 0) break;                       // EOF
+      if (nread < 0) break;                       // EOF
 
-        curr_line++;
+      curr_line++;
 
-        // target_line[next_thread] 번째 라인의 "시작 위치"를 다음 스레드의 시작으로 삼음
-        // curr_line 은 1-based, target_line[...]은 0-based 라인번호이므로
-        // "현재 읽은 라인 번호(1-based)가 (target_line[next_thread]+1)"일 때가 그 라인의 시작.
-        while (next_thread < T && curr_line == target_line[next_thread] + 1) {
-            // 스레드 next_thread 의 시작 오프셋은 pos_before (이번 라인 시작)
-            start_offsets[next_thread] = (long long)pos_before;
-            // 이전 스레드의 끝 오프셋은 pos_before (반개구간 [start, end) 표준화)
-            end_offsets[next_thread - 1] = (long long)pos_before;
-            next_thread++;
-        }
+      // target_line[next_thread] 번째 라인의 "시작 위치"를 다음 스레드의 시작으로 삼음
+      // curr_line 은 1-based, target_line[...]은 0-based 라인번호이므로
+      // "현재 읽은 라인 번호(1-based)가 (target_line[next_thread]+1)"일 때가 그 라인의 시작.
+      while (next_thread < T && curr_line == target_line[next_thread] + 1) {
+          // 스레드 next_thread 의 시작 오프셋은 pos_before (이번 라인 시작)
+          start_offsets[next_thread] = (long long)pos_before;
+          // 이전 스레드의 끝 오프셋은 pos_before (반개구간 [start, end) 표준화)
+          end_offsets[next_thread - 1] = (long long)pos_before;
+          next_thread++;
+      }
     }
 
     // 마지막 스레드의 끝 오프셋 = 파일 끝
@@ -74,15 +74,15 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
 
     // (선택) 디버그 프린트
 
-    for (int i = 0; i < T; i++) {
-        fprintf(stderr, "[offsets] thr=%d lines=[%lld..%lld) cnt=%lld  bytes=[%lld..%lld)\n",
-            i,
-            start_line_by_thread[i],
-            start_line_by_thread[i] + total_line_by_thread[i],
-            total_line_by_thread[i],
-            start_offsets[i],
-            end_offsets[i]);
-    }
+    // for (int i = 0; i < T; i++) {
+    //     fprintf(stderr, "[offsets] thr=%d lines=[%lld..%lld) cnt=%lld  bytes=[%lld..%lld)\n",
+    //         i,
+    //         start_line_by_thread[i],
+    //         start_line_by_thread[i] + total_line_by_thread[i],
+    //         total_line_by_thread[i],
+    //         start_offsets[i],
+    //         end_offsets[i]);
+    // }
 }
 
 long count_lines_subword(FILE *fp) {
