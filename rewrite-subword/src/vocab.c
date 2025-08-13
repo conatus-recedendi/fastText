@@ -59,6 +59,7 @@ void compute_thread_offsets_subword(FILE *fp, global_setting *gs) {
             // 이전 스레드의 끝 오프셋은 pos_before (반개구간 [start, end) 표준화)
             end_offsets[next_thread - 1] = (long long)pos_before;
             next_thread++;
+            printf(pos_before)
         }
     }
 
