@@ -410,6 +410,7 @@ void create_vocab_from_train_file(global_setting *gs) {
   }
   reduce_vocab(gs, gs->min_count_vocab);
   sort_vocab(gs);
+  gs->total_words = train_words;
   gs->file_size = ftell(f_in);
   fclose(f_in);
 }

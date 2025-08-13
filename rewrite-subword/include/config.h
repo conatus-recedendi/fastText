@@ -36,6 +36,7 @@ typedef struct {
   float sample;
   long long word_count_actual;
   long long file_size;
+  long long total_words;
   long long train_words; // total number of words in the training file
   long long update_word_count;
   float loss;
