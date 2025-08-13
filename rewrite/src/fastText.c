@@ -35,7 +35,7 @@ void initialize_network(global_setting *gs) {
   }
 
 
-  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
+  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->label_size * gs->layer1_size * sizeof(float));
   posix_memalign((void **)&(gs->layer2), 64, gs->layer1_size * gs->label_size * sizeof(float));
   if (gs->layer2 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
@@ -76,6 +76,13 @@ void initialize_network(global_setting *gs) {
   // TODO: if classifation, gs->labels should be passed
   // create_binary_tree(gs->vocab, gs->left_node, gs->right_node, gs->vocab_size);
   create_binary_tree(gs->labels, gs->left_node, gs->right_node, gs->label_size);
+
+  for (int b = 0; b<gs->label_size - 1; b++)  {
+    for (int j = 0; j < gs->labels[b].codelen; j++) {
+      printf("%lld ", gs->code[b].point[j]);
+    }
+    printf("\n");
+  }
 
   printf("gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
     for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
@@ -389,6 +396,16 @@ void *train_thread(thread_args *args) {
             long long word_index = search_vocab(token, gs);
 
             if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+              if (gs->sample > 0) {
+                float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
+                double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
+
+                if (ran < random_value) {
+                  // printf("[DEBUG] Skipping word: %s, ran: %f, random_value: %f\n", token, ran, random_value);
+                  token = strtok(NULL, " ");
+                  continue; // Skip this word
+                }
+              }
               words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
               avg_word++;
               if (gs->ngram > 1) {
@@ -773,7 +790,7 @@ int main(int argc, char **argv) {
     .iter = 5, // Default number of iterations
     .learning_rate = 0.05, // Default learning rate
     .learning_rate_decay = 0.05, // Default learning rate decay
-    .sample = 1e-3, // Default subsampling rate
+    .sample = 1e-4, // Default subsampling rate
     .train_file = "", // Default training file
     .output_file = "", // Default output file
     .save_vocab_file = "", // Default vocabulary save file
