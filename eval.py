@@ -56,6 +56,7 @@ for _, line in enumerate(fin):
         tab = compat_splitting(line)
         vec = np.array(tab[1:], dtype=float)
         word = tab[0]
+        word = word.lstrip("<").rstrip(">")
         if np.linalg.norm(vec) == 0:
             continue
         if not word in vectors:
