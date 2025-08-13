@@ -358,10 +358,10 @@ void *train_thread(thread_args *args) {
               f += neu1[k] * gs->layer2[k + l2];
             }
             float g = 0;
+            f = 1.0f / (1.0f + expf(-f)); // sigmoid function
             if (f > 6) g = (label - 1) * gs->learning_rate_decay;
             else if (f < -6) g = (label - 0) * gs->learning_rate_decay;
             else {
-              f = 1.0f / (1.0f + expf(-f)); // sigmoid function
               g = gs->learning_rate_decay * (label - f);
             }
 
