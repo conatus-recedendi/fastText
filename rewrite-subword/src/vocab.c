@@ -291,7 +291,7 @@ void create_vocab_from_train_file(global_setting *gs) {
     if (feof(f_in)) break;
 
     train_words++;
-    wprintf(L"[DEBUG] Read word: %ls\n", word);
+    wprintf(L"\n[DEBUG] Read word: %ls\n", word);
     if ((debug_mode > 1) && (train_words % 1000 == 0)) {
       printf("%lldK, search_vocab_time: %lld, add_word_to_vocab_time: %lld, vocab_length :%lld%c", train_words / 1000, accum_search_vocab_time, accum_add_word_to_vocab_time, gs->vocab_size, 13);
       accum_search_vocab_time = 0;
