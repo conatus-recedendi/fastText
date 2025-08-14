@@ -636,6 +636,8 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-iter", argc, argv)) > 0) gs.iter = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-min-count", argc, argv)) > 0) gs.min_count = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-classes", argc, argv)) > 0) gs.classes = atoi(argv[i + 1]);
+  if ((i = get_arg_pos((char *)"-minx", argc, argv)) > 0) gs.minx = atoi(argv[i + 1]);
+  if ((i = get_arg_pos((char *)"-maxx", argc, argv)) > 0) gs.maxx = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-bucket", argc, argv)) > 0) {
     gs.vocab_hash_size = atoi(argv[i + 1]);
     gs.vocab_max_size = gs.vocab_hash_size; // Set max size to double the hash size
