@@ -96,7 +96,7 @@ for _, line in enumerate(fin):
         vec = np.array(tab[1:], dtype=float)
 
         word = tab[0]
-        word = word.lstrip("<").rstrip(">")
+        # word = word.lstrip("<").rstrip(">")
         if np.linalg.norm(vec) == 0:
             continue
         if not word in vectors:
@@ -116,20 +116,27 @@ fin = open(args.dataPath, "rb")
 for line in fin:
     tline = compat_splitting_by_comma(line)
     # show tline infor
-    print("Processing:", tline)
+    # print("Processing:", tline)
     word1 = tline[0].lower()
+    word1 = "<" + word1 + ">"  # Add < and > to the word
     word2 = tline[1].lower()
+    word2 = "<" + word2 + ">"  # Add < and > to
     nwords = nwords + 1.0
 
     if (word1 in vectors) and (word2 in vectors):
-        v1 = vectors[word1]
+        # v1 = vectors[word1]
         v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
-        v2 = vectors[word2]
+        v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
         d = similarity(v1, v2)
         mysim.append(d)
         gold.append(float(tline[2]))
     else:
         drop = drop + 1.0
+    print(
+        "Processed {0:20s} and {1:20s} with similarity {2:.4f}".format(
+            word1, word2, d if (word1 in vectors and word2 in vectors) else 0.0
+        )
+    )
 fin.close()
 
 corr = stats.spearmanr(mysim, gold)
