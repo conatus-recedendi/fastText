@@ -418,9 +418,9 @@ void create_vocab_from_train_file(global_setting *gs) {
     }
 
   }
-  wprintf(L"[INFO] Finished reading words from training file. Total words read: %lld\n", train_words);
-  reduce_vocab(gs, gs->min_count_vocab);
-  wprintf(L"[INFO] Vocabulary size after reduction: %lld\n", gs->vocab_size);
+  // wprintf(L"[INFO] Finished reading words from training file. Total words read: %lld\n", train_words);
+  // reduce_vocab(gs, gs->min_count_vocab);
+  // wprintf(L"[INFO] Vocabulary size after reduction: %lld\n", gs->vocab_size);
   sort_vocab(gs);
   gs->total_words = train_words;
   gs->file_size = ftell(f_in);
