@@ -19,6 +19,22 @@ import math
 import argparse
 
 
+def get_subword_average(word, vectors, minn, maxn):
+    """
+    Get the average vector of subwords for a given word.
+    """
+    subword_vectors = []
+    subword_vectors.append(vectors[word])  # Include the word itself
+    for i in range(minn, maxn + 1):
+        for j in range(len(word) - i + 1):
+            subword = word[j : j + i]
+            if subword in vectors:
+                subword_vectors.append(vectors[subword])
+    if not subword_vectors:
+        return np.zeros_like(next(iter(vectors.values())))
+    return np.mean(subword_vectors, axis=0)
+
+
 def compat_splitting(line):
     # split by ,
     return line.decode("utf8").split()
@@ -44,6 +60,27 @@ parser.add_argument(
     required=True,
     help="path to model",
 )
+
+parser.add_argument(
+    "--minn",
+    "-mn",
+    dest="minn",
+    action="store",
+    type=int,
+    default=3,
+    help="minimum length of subword",
+)
+
+parser.add_argument(
+    "--maxn",
+    "-mx",
+    dest="maxn",
+    action="store",
+    type=int,
+    default=6,
+    help="maximum length of subword",
+)
+
 parser.add_argument(
     "--data", "-d", dest="dataPath", action="store", required=True, help="path to data"
 )
@@ -86,6 +123,7 @@ for line in fin:
 
     if (word1 in vectors) and (word2 in vectors):
         v1 = vectors[word1]
+        v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
         v2 = vectors[word2]
         d = similarity(v1, v2)
         mysim.append(d)
