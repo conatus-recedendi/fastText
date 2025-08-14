@@ -683,9 +683,6 @@ void train_model(global_setting *gs) {
 
   printf("[INFO] Initializing network...\n");
 
-
-  gs->pure_vocab_size = gs->vocab_size;
-  gs->vocab_size += gs->bucket_size;
   initialize_network(gs);
   for (int i=0;i< 10; i++)  {
     // printf vocab
