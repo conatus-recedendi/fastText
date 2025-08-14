@@ -15,15 +15,17 @@
 
 void initialize_network(global_setting *gs) {
   // printf("[INFO] Initializing network... %lld %lld \n", gs->vocab_size, gs->layer1_size);
-  posix_memalign((void **)&(gs->layer1), 64, (long long)gs->vocab_size * gs->layer1_size * sizeof(float));
+  gs->total_size = gs->vocab_size + gs->subword_size;
+
+  posix_memalign((void **)&(gs->layer1), 64, (long long)gs->total_size * gs->layer1_size * sizeof(float));
   if (gs->layer1 == NULL) {
     fprintf(stderr, "Memory allocation failed for layer1\n");
     exit(1);
   }
   //xavier
 
-  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->vocab_size * gs->layer1_size * sizeof(float));
-  long long size = gs->vocab_size * gs->layer1_size;
+  printf("[INFO] Allocated memory for layer1 with size: %lld\n", gs->total_size * gs->layer1_size * sizeof(float));
+  long long size = gs->total_size * gs->layer1_size;
   for (long long i = 0; i < size; i++) {
     // Initialize layer1 with random values between -1 and 1
     // Using a uniform distribution for initialization
@@ -40,7 +42,7 @@ void initialize_network(global_setting *gs) {
     fprintf(stderr, "Memory allocation failed for layer2\n");
     exit(1);
   }
-  for (long long i = 0; i < size; i++) {
+  for (long long i = 0; i < gs->vocab_size * gs->layer1_size; i++) {
     gs->layer2[i] = ((float)rand() / RAND_MAX * 2 - 1) / size; // Initialize with random values between -1 and 1
   }    
 
@@ -84,6 +86,18 @@ void save_vector(char *output_file, global_setting *gs) {
     fwprintf(fo, L"%ls ", gs->vocab[i].word);
     for (long long j = 0; j < gs->layer1_size; j++) {
       // fprintf(fo, "%f ", gs->layer1[i * gs->layer1_size + j]);
+      // average from subword
+      fwprintf(fo, L"%f ", gs->layer1[i * gs->layer1_size + j]);
+    }
+    fwprintf(fo, L"\n");
+  }
+
+  for (long long i = 0; i <gs->subword_size; i++) {
+    // fprintf(fo, "%s ", gs->subwords[i].word);
+    fwprintf(fo, L"%ls ", gs->subword_vocab[i].word);
+    for (long long j = 0; j < gs->layer1_size; j++) {
+      // fprintf(fo, "%f ", gs->layer1[i * gs->layer1_size + j]);
+      // average from subword
       fwprintf(fo, L"%f ", gs->layer1[i * gs->layer1_size + j]);
     }
     fwprintf(fo, L"\n");
@@ -246,7 +260,7 @@ void *train_thread(thread_args *args) {
             }
           if (gs->sisg > 0) {
             long long *subword_array = NULL;
-            long long subword_array_length = search_subword(concat_word, gs, &subword_array); // Get subword for the word
+            long long subword_array_length = search_subwords(concat_word, gs, &subword_array); // Get subword for the word
             subwords[sentence_length] = subword_array; // Set the first subword index
           }
           words[sentence_length++] = word_index;
@@ -271,11 +285,12 @@ void *train_thread(thread_args *args) {
         }
         if (gs->sisg) {
           long long *subwords_array = subwords[i];
+
           long long l = 0;
+
           while (1) {
-            // printf("[DEBUG] Subword index: %p, %lld\n", subwords_array, l);
             if (subwords_array[l] == -1) break; // end of subword array
-            long long ngram_index = subwords_array[l] * gs->layer1_size;
+            long long ngram_index = (subwords_array[l] + gs->vocab_size) * gs->layer1_size;
             for (long long m = 0; m < gs->layer1_size; m++) {
               neu1[m] += gs->layer1[m + ngram_index]; // to neu1
             }
@@ -283,8 +298,7 @@ void *train_thread(thread_args *args) {
           }
         }
 
-        // 중심 단어로부터 맥락 단어 고름
-        // printf("[DEBUG] Center word: %lld\n", center_word);
+      
 
         for (int j = i - gs->window + 1; j < i + gs->window; j++) {
           // j is word!
@@ -363,7 +377,7 @@ void *train_thread(thread_args *args) {
             while (1) {
               // printf("[DEBUG] Subword index: %p, %lld\n", subwords_array, l);
               if (subwords_array[l] == -1) break; // end of subword array
-              long long ngram_index = subwords_array[l] * gs->layer1_size;
+              long long ngram_index = (subwords_array[l] + gs->vocab_size) * gs->layer1_size;
               for (long long m = 0; m < gs->layer1_size; m++) {
                 // neu1[m] += gs->layer2[m + ngram_index]; // to neu1
                 gs->layer1[ngram_index + m] += neu1err[m] / ( 1 + subword_array_length); // update layer2 for subword
@@ -496,8 +510,8 @@ void train_model(global_setting *gs) {
   wprintf(L"[INFO] Initializing network...\n");
 
 
-  gs->pure_vocab_size = gs->vocab_size;
-  gs->vocab_size += gs->bucket_size;
+  // gs->pure_vocab_size = gs->vocab_size;
+  // gs->vocab_size += gs->bucket_size;
   initialize_network(gs);
 
   for (int i = 0; i < gs->num_threads; i++) {
@@ -573,6 +587,7 @@ int main(int argc, char **argv) {
     .cbow = 0, // Default CBOW model
     .window = 5, // Default window size
     .min_count = 5, // Default minimum count for words  
+    .min_count_subword = 1,
     .num_threads = 20, // Default number of threads
     .min_reduce = 1, // Default minimum reduce count
     .hs = 0, // Default hierarchical softmax
@@ -586,6 +601,7 @@ int main(int argc, char **argv) {
     .save_vocab_file = "", // Default vocabulary save file
     .read_vocab_file = "", // Default vocabulary read file
     .vocab_hash_size = 10000000, // Default vocabulary hash size
+    .subword_hash_size = 2000000,
 
 
     .vocab_size = 0, // Default vocabulary size
@@ -640,7 +656,9 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-maxx", argc, argv)) > 0) gs.maxx = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-bucket", argc, argv)) > 0) {
     gs.vocab_hash_size = atoi(argv[i + 1]);
+    gs.subword_hash_size = atoi(argv[i+1]);
     gs.vocab_max_size = gs.vocab_hash_size; // Set max size to double the hash size
+    gs.subword_max_size = gs.subword_hash_size;
   }
   if ((i = get_arg_pos((char *)"-hs", argc, argv)) > 0) gs.hs = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-ngram", argc, argv)) > 0) gs.ngram = atoi(argv[i + 1]);
@@ -666,6 +684,20 @@ int main(int argc, char **argv) {
     gs.vocab_hash[j] = -1; // Initialize the vocabulary hash table
   }
 
+  gs.subword_vocab = (vocab_word *)calloc(gs.vocab_max_size, sizeof(vocab_word));
+  if (gs.subword_vocab == NULL) {
+    fprintf(stderr, "[ERROR] Memory allocation failed for subword vocabulary\n");
+    exit(1);
+  }
+  gs.subword_hash = (int *)calloc(gs.subword_hash_size, sizeof(int));
+  if (gs.subword_hash == NULL) {
+    fprintf(stderr, "[ERROR] Memory allocation failed for subword hash table\n");
+    exit(1);
+  }
+
+  for (int j = 0; j < gs.vocab_hash_size; j++) {
+    gs.subword_hash[j] = -1; // Initialize the vocabulary hash table
+  }
 
   // printf("%lld\n", gs.vocab_hash[886005]);
   train_model(&gs);

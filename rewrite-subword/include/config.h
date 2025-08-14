@@ -61,6 +61,9 @@ typedef struct {
   long long subword_max_size; // maximum subword size
 
 
+  long long total_size;
+
+
   // for learning
   float *layer1; // word embedding weights. vocab size * layer1_size
   float *layer2; // hidden weights. vocab_size * layer1_size for Negative SAmpling
@@ -82,6 +85,7 @@ typedef struct {
   char read_vec_file[MAX_STRING]; // vector file path for inference
   long long min_count_label; // minimum count for labels
   long long min_count_vocab; // minimum count for vocabulary
+  long long min_count_subword;
 
   long long *left_node; // left node for binary tree
   long long *right_node; // right node for binary tree

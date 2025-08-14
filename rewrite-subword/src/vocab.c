@@ -169,11 +169,12 @@ long long create_subword(wchar_t *word, global_setting *gs) {
   for (long long length = min_length; length <= max_length; length++) {
     for (long long start = 0; start <= word_length - length; start++) {
       wchar_t subword[MAX_STRING];
+
       wcsncpy(subword, word + start, length);
       subword[length] = L'\0'; // Null-terminate the subword
-      long long subword_index = search_vocab(subword, gs);
+      long long subword_index = search_subword(subword, gs);
       if (subword_index == -1) {
-        temp_subword_index = add_word_to_vocab(subword, gs);
+        temp_subword_index = add_subword(subword, gs);
         gs->vocab[temp_subword_index].cn = 1;
       } else {
         gs->vocab[subword_index].cn++;
@@ -184,7 +185,7 @@ long long create_subword(wchar_t *word, global_setting *gs) {
   return 0; // Return the number of subwords found
 }
 
-long long search_subword(wchar_t *word, global_setting *gs, long long **subword_array) {
+long long search_subwords(wchar_t *word, global_setting *gs, long long **subword_array) {
   // word는 "<abcde>" 와 같이 전체 문장이 옴!
   // serach_subword는 min_elngth~amx_length 길이로 단어를 분리하여 반환한다
   // minx = 2, maxx = 5  이면
@@ -219,7 +220,7 @@ long long search_subword(wchar_t *word, global_setting *gs, long long **subword_
       wchar_t subword[MAX_STRING];
       wcsncpy(subword, word + start, length);
       subword[length] = L'\0'; // Null-terminate the subword
-      long long subword_index = search_vocab(subword, gs);
+      long long subword_index = search_subword(subword, gs);
       // printf("[DEBUG] Searching subword: %s, result: %lld\n", subword, subword_index);
       if (subword_index != -1) {
         (*subword_array)[subword_count++] = subword_index;
@@ -249,6 +250,57 @@ int search_vocab(wchar_t *word, global_setting *gs) {
     hash = (hash + 1) % vocab_hash_size;
   }
   return -1;
+}
+
+int search_subword(wchar_t *word, global_setting *gs) {
+  unsigned int hash = get_subword_hash(word, gs);
+  vocab_word *subword_vocab = gs->subword_vocab;
+  int *subword_hash = gs->subword_hash;
+  long long subword_hash_size = gs->subword_hash_size;
+  long long too_long = 0;
+
+  while (1) {
+    too_long++;
+    if (subword_hash[hash] == -1) return -1;
+    if (!wcscmp(word, subword_vocab[subword_hash[hash]].word)) return subword_hash[hash];
+    hash = (hash + 1) % subword_hash_size;
+  }
+  return -1;
+}
+
+int add_subword(wchar_t *word, global_setting *gs) {
+  unsigned int hash, length = wcslen(word) + 1;
+  vocab_word *subword_vocab = gs->subword_vocab;
+  long long *subword_size = &gs->subword_size;
+  long long *subword_max_size = &gs->subword_max_size;
+  int *subword_hash = gs->subword_hash;
+  long long subword_hash_size = gs->subword_hash_size;
+
+  if (length > MAX_STRING) length = MAX_STRING;
+
+  wcscpy(subword_vocab[*subword_size].word, word);
+  subword_vocab[*subword_size].cn = 0; // Initialize count to zero
+  (*subword_size)++;
+
+  if (*subword_size + 2 >= *subword_max_size) {
+    *subword_max_size += 1000;
+    subword_vocab = (vocab_word *)realloc(subword_vocab, *subword_max_size * sizeof(vocab_word));
+    if (subword_vocab == NULL) {
+      fprintf(stderr, "Memory allocation failed for subwords\n");
+      exit(1);
+    }
+    gs->subword_vocab = subword_vocab; // Update global setting
+  }
+
+  hash = get_subword_hash(word, gs);
+
+  while (subword_hash[hash] != -1) {
+    hash = (hash + 1) % subword_hash_size;
+  }
+
+  subword_hash[hash] = *subword_size - 1; // Store the index
+
+  return *subword_size - 1; // Return the index of the new subword
 }
 
 int add_word_to_vocab(wchar_t *word, global_setting *gs) {
@@ -291,6 +343,27 @@ int compare_vocab(const void *a, const void *b) {
   return ((vocab_word *)b)->cn - ((vocab_word *)a)->cn; // Sort by count in descending order
 }
 
+void sort_subword(global_setting *gs) {
+  vocab_word *subword_vocab = gs->subword_vocab;
+  long long subword_size = gs->subword_size;
+  int *subword_hash = gs->subword_hash;
+  long long subword_hash_size = gs->subword_hash_size;
+
+  qsort(subword_vocab, subword_size, sizeof(vocab_word), compare_vocab);
+  
+  // Rebuild the hash table
+  for (int i = 0; i < subword_hash_size; i++) {
+    subword_hash[i] = -1;
+  }
+  for (int i = 0; i < subword_size; i++) {
+    unsigned int hash = get_subword_hash(subword_vocab[i].word, gs);
+    while (subword_hash[hash] != -1) {
+      hash = (hash + 1) % subword_hash_size; // Linear probing
+    }
+    subword_hash[hash] = i;
+  }
+}
+
 void sort_vocab(global_setting *gs) {
   vocab_word *vocab = gs->vocab;
   long long vocab_size = gs->vocab_size;
@@ -310,6 +383,35 @@ void sort_vocab(global_setting *gs) {
     }
     vocab_hash[hash] = i;
   }
+}
+
+void reduce_subword(global_setting *gs, long long min_reduce) {
+  int a, b = 0;
+  unsigned int hash;
+  vocab_word *subword_vocab = gs->subword_vocab;
+  long long *subword_size = &gs->subword_size;
+  int *subword_hash = gs->subword_hash;
+  long long subword_hash_size = gs->subword_hash_size;
+
+  for (a = 0; a < *subword_size; a++) if (subword_vocab[a].cn >= min_reduce) {
+    subword_vocab[b].cn = subword_vocab[a].cn;
+    for (int c = 0; c < MAX_STRING; c++) {
+      subword_vocab[b].word[c] = subword_vocab[a].word[c]; // Copy the word
+    }
+    b++;
+  } //else free(subword_vocab[a].word);
+  
+  *subword_size = b;
+  
+  for (a = 0; a < subword_hash_size; a++) subword_hash[a] = -1;
+  
+  for (a = 0; a < *subword_size; a++) {
+    // Hash will be re-computed, as it is not actual
+    hash = get_subword_hash(subword_vocab[a].word, gs);
+    while (subword_hash[hash] != -1) hash = (hash + 1) % subword_hash_size;
+    subword_hash[hash] = a;
+  }
+  gs->min_count_subword++;
 }
 
 void reduce_vocab(global_setting *gs, long long min_reduce) {
@@ -411,10 +513,16 @@ void create_vocab_from_train_file(global_setting *gs) {
     }
     
 
-    if (gs->vocab_size >= vocab_hash_size * 0.9) {
+    if (gs->vocab_size >= vocab_hash_size * 0.8) {
       wprintf(L"[INFO] Vocabulary reduced. Current size: %lld\n", gs->vocab_size);
       reduce_vocab(gs, gs->min_count_vocab);
       wprintf(L"[INFO] Vocabulary size after reduction: %lld\n", gs->vocab_size);
+    }
+
+    if (gs->subword_size >= gs->subword_hash_size * 0.8) {
+      wprintf(L"[INFO] Subword vocabulary reduced. Current size: %lld\n", gs->subword_size);
+      reduce_subword(gs, gs->min_count_subword);
+      wprintf(L"[INFO] Subword vocabulary size after reduction: %lld\n", gs->subword_size);
     }
 
   }
