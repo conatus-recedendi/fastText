@@ -347,21 +347,11 @@ void *train_thread(thread_args *args) {
       line++;
       temp++;
       gs->total_learned_lines++;
-      if (line % 1000 == 0) {
-        // printf("[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld\n", avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000);
-        avg_ngram = 0;
-        avg_failure_ngram = 0;
-        avg_word = 0;
-      }
 
-      // if (line % 1000 == 0) {
-      //   printf("[INFO] Thread %lld, line %lld, total learned lines: %lld\n", thread_id, line, gs->total_learned_lines);
-      // }
-      // word를 label, words로 분리.
-      // 줄 끝 개행 문자 제거
+
       sen[strcspn(sen, "\n")] = 0;
 
-      // 단어 분리
+
       char *token = strtok(sen, " ");
 
       long long sentence_length = 0;
@@ -414,7 +404,12 @@ void *train_thread(thread_args *args) {
                   
                 } else {
                   memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
-                  snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+                  // snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+                  strncat(concat_word, prev_word, strlen(prev_word));
+                  strncat(concat_word, "-", 1);
+                  strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
+                  // printf("[DEBUG] concat_word: %s\n", concat_word);
+                  // Check if the ngram word exists in the vocabulary
 
                   long long index = search_vocab(concat_word, gs);
                   if (index == -1) {
