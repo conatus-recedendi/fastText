@@ -363,9 +363,9 @@ void *train_thread(thread_args *args) {
 
         line++;
         gs->total_learned_lines++;
+        temp++;
         sen[strcspn(sen, "\n")] = 0;
         sentence_length = 0;
-        temp = 0;
         ngram_sentences_length = 0;
         label_length = 0;
         memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
