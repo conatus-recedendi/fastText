@@ -354,6 +354,9 @@ void *train_thread(thread_args *args) {
               labels[label_length++] = label_index; 
           }
       } else if (strncmp(token, "</s>", 4) == 0) {
+        memcpy(prev_word, "", 1); // Reset previous word for next sentence
+        gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
+        gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
         
         // running training
 
