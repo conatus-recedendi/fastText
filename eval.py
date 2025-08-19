@@ -25,11 +25,11 @@ def get_subword_average(word, vectors, minn, maxn):
     """
     subword_vectors = []
     subword_vectors.append(vectors[word])  # Include the word itself
-    for i in range(minn, maxn + 1):
-        for j in range(len(word) - i + 1):
-            subword = word[j : j + i]
-            if subword in vectors:
-                subword_vectors.append(vectors[subword])
+    # for i in range(minn, maxn + 1):
+    #     for j in range(len(word) - i + 1):
+    #         subword = word[j : j + i]
+    #         if subword in vectors:
+    #             subword_vectors.append(vectors[subword])
     if not subword_vectors:
         return np.zeros_like(next(iter(vectors.values())))
     return np.mean(subword_vectors, axis=0)
@@ -96,7 +96,7 @@ for _, line in enumerate(fin):
         vec = np.array(tab[1:], dtype=float)
 
         word = tab[0]
-        word = word.lstrip("<").rstrip(">")
+        # word = word.lstrip("<").rstrip(">")
         if np.linalg.norm(vec) == 0:
             continue
         if not word in vectors:
