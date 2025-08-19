@@ -96,7 +96,7 @@ for _, line in enumerate(fin):
         vec = np.array(tab[1:], dtype=float)
 
         word = tab[0]
-        # word = word.lstrip("<").rstrip(">")
+        word = word.lstrip("<").rstrip(">")
         if np.linalg.norm(vec) == 0:
             continue
         if not word in vectors:
@@ -132,11 +132,11 @@ for line in fin:
         gold.append(float(tline[2]))
     else:
         drop = drop + 1.0
-    print(
-        "Processed {0:20s} and {1:20s} with similarity {2:.4f}".format(
-            word1, word2, d if (word1 in vectors and word2 in vectors) else 0.0
-        )
-    )
+    # print(
+    #     "Processed {0:20s} and {1:20s} with similarity {2:.4f}".format(
+    #         word1, word2, d if (word1 in vectors and word2 in vectors) else 0.0
+    #     )
+    # )
 fin.close()
 
 corr = stats.spearmanr(mysim, gold)
