@@ -367,9 +367,11 @@ void *train_thread(thread_args *args) {
 
 
         line++;
+
         gs->total_learned_lines++;
         sen[strcspn(sen, "\n")] = 0;
         sentence_length = 0;
+        temp = 0;
         ngram_sentences_length = 0;
         label_length = 0;
         memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
@@ -414,6 +416,30 @@ void *train_thread(thread_args *args) {
         memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
         strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
         prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+      }
+
+      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
+        temp = 0;
+        clock_t now = clock();
+        struct timespec end_time;
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+        // ETA ->  (gs->total_lines - gs->total_learned_lines) * (1 / lines/second)
+        float lines_sec = gs->total_learned_lines / ((float)(end_time.tv_sec - gs->start.tv_sec + 1));
+        long long remain_lines = gs->total_lines * gs->iter - gs->total_learned_lines;
+        long long eta_seconds = remain_lines / lines_sec;
+        long long eta_hours = eta_seconds / 3600;
+        long long eta_minutes = (eta_seconds % 3600) / 60;
+
+        
+        printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds",
+              13, gs->learning_rate_decay,
+              gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
+              (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
+              (lines_sec / (double)1000),
+               gs->loss / gs->total_learned_lines, gs->total_learned_lines, 
+               eta_hours, eta_minutes, eta_seconds % 60);
+
+        fflush(stdout);
       }
     }
   
