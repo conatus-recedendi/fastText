@@ -342,276 +342,355 @@ void *train_thread(thread_args *args) {
         fprintf(stderr, "[ERROR] Memory allocation failed for neu1, neu2, neu1err, or neu2err\n");
         exit(1);
     }
-  
-    while ( fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
-      line++;
-      temp++;
-      gs->total_learned_lines++;
 
-
-      sen[strcspn(sen, "\n")] = 0;
-
-
-      char *token = strtok(sen, " ");
-
-      long long sentence_length = 0;
-      long long ngram_sentences_length = 0;
-      long long label_length = 0;
-      memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
-      memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
-      memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-
-      struct timespec token_st;
-      clock_gettime(CLOCK_MONOTONIC, &token_st);
-      while (token != NULL) {
-        if (strlen(token) >= MAX_STRING) {
-          token = strtok(NULL, " ");
-          continue; // Skip tokens that are too long
-        }
-        if (strncmp(token, "__label__", 9) == 0) {
-          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-          // 라벨인 경우 __label_1__
+    char token[MAX_STRING];
+    long long sentence_length = 0;
+    long long ngram_sentences_length = 0;
+    long long label_length = 0;
+    struct timespec token_st;
+    while (read_word(token, fi)) {
+      if (line >= max_line) {
+        break; // Stop reading if we reach the maximum line for this thread
+      }
+      if (strncmp(token, "__label__", 9) == 0) {
+          memset(prev_word, 0, sizeof(prev_word));
           long long label_index = search_label(token, gs);
           if (label_index != -1) {
-              labels[label_length++] = label_index;  // Set the label index to 1
-          } else {
-            // labels[label_length++] = -1; // unknown label
+              labels[label_length++] = label_index; 
           }
+      } else if (strncmp(token, "</s>", 4) == 0) {
+        
+        // running training
 
-        } else {
-          // printf("[DEBUG] xToken: %s\n", token); 
-            // 일반 단어인 경우
+
+        // intitlaize
+
+
+        line++;
+        gs->total_learned_lines++;
+        sen[strcspn(sen, "\n")] = 0;
+        sentence_length = 0;
+        ngram_sentences_length = 0;
+        label_length = 0;
+        memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+        memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
+        memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+        clock_gettime(CLOCK_MONOTONIC, &token_st);
+      } else {
+        long long word_index = search_vocab(token, gs);
+
+        if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+          if (gs->sample > 0) {
+            float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
+            double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
+
+            if (ran < random_value) {
+              // token = strtok(NULL, " ");
+              continue; // Skip this word
+            }
+          }
+          words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
+          avg_word++;
+          if (gs->ngram > 1) {
+            if (prev_word[0] == 0) {
+              strncpy(prev_word, token, sizeof(prev_word) - 1);
+              
+            } else {
+              memset(concat_word, 0, sizeof(concat_word));
+              strncat(concat_word, prev_word, strlen(prev_word));
+              strncat(concat_word, "-", 1);
+              strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
+
+              long long index = search_vocab(concat_word, gs);
+              if (index == -1) {
+                avg_failure_ngram++;
+              } else {
+                avg_ngram++;
+                words[sentence_length++] = index; // ngram word
+              }
+            }
+          }
+        }
+        memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+        strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+        prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+      }
+    }
+  
+    // while ( fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
+    //   line++;
+    //   temp++;
+    //   gs->total_learned_lines++;
+
+
+
+    //   sen[strcspn(sen, "\n")] = 0;
+
+
+    //   char *token = strtok(sen, " ");
+
+    //   long long sentence_length = 0;
+    //   long long ngram_sentences_length = 0;
+    //   long long label_length = 0;
+    //   memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+    //   memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
+    //   memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+
+    //   struct timespec token_st;
+    //   clock_gettime(CLOCK_MONOTONIC, &token_st);
+    //   while (token != NULL) {
+    //     if (strlen(token) >= MAX_STRING) {
+    //       token = strtok(NULL, " ");
+    //       continue; // Skip tokens that are too long
+    //     }
+    //     if (strncmp(token, "__label__", 9) == 0) {
+    //       memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+    //       // 라벨인 경우 __label_1__
+    //       long long label_index = search_label(token, gs);
+    //       if (label_index != -1) {
+    //           labels[label_length++] = label_index;  // Set the label index to 1
+    //       } else {
+    //         // labels[label_length++] = -1; // unknown label
+    //       }
+
+    //     } else {
+    //       // printf("[DEBUG] xToken: %s\n", token); 
+    //         // 일반 단어인 경우
             
 
-            long long word_index = search_vocab(token, gs);
+    //         long long word_index = search_vocab(token, gs);
 
-            if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
-              if (gs->sample > 0) {
-                float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
-                double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
+    //         if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+    //           if (gs->sample > 0) {
+    //             float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
+    //             double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
 
-                if (ran < random_value) {
-                  // printf("[DEBUG] Skipping word: %s, ran: %f, random_value: %f\n", token, ran, random_value);
-                  token = strtok(NULL, " ");
-                  continue; // Skip this word
-                }
-              }
-              words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
-              avg_word++;
-              if (gs->ngram > 1) {
-                if (prev_word[0] == 0) {
-                  strncpy(prev_word, token, sizeof(prev_word) - 1);
+    //             if (ran < random_value) {
+    //               // printf("[DEBUG] Skipping word: %s, ran: %f, random_value: %f\n", token, ran, random_value);
+    //               token = strtok(NULL, " ");
+    //               continue; // Skip this word
+    //             }
+    //           }
+    //           words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
+    //           avg_word++;
+    //           if (gs->ngram > 1) {
+    //             if (prev_word[0] == 0) {
+    //               strncpy(prev_word, token, sizeof(prev_word) - 1);
                   
-                } else {
-                  memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
-                  // snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
-                  strncat(concat_word, prev_word, strlen(prev_word));
-                  strncat(concat_word, "-", 1);
-                  strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
-                  // printf("[DEBUG] concat_word: %s\n", concat_word);
-                  // Check if the ngram word exists in the vocabulary
+    //             } else {
+    //               memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
+    //               // snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+    //               strncat(concat_word, prev_word, strlen(prev_word));
+    //               strncat(concat_word, "-", 1);
+    //               strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
+    //               // printf("[DEBUG] concat_word: %s\n", concat_word);
+    //               // Check if the ngram word exists in the vocabulary
 
-                  long long index = search_vocab(concat_word, gs);
-                  if (index == -1) {
-                    // skip
-                    // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
-                    avg_failure_ngram++;
-                    // getchar();
-                  } else {
-                    avg_ngram++;
-                    words[sentence_length++] = index; // ngram word
-                  }
-                }
-              }
-            }
-            memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-            strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
-            prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+    //               long long index = search_vocab(concat_word, gs);
+    //               if (index == -1) {
+    //                 // skip
+    //                 // printf("[DEBUG] current line: %lld, Ngram word not found: %s\n", line, concat_word);
+    //                 avg_failure_ngram++;
+    //                 // getchar();
+    //               } else {
+    //                 avg_ngram++;
+    //                 words[sentence_length++] = index; // ngram word
+    //               }
+    //             }
+    //           }
+    //         }
+    //         memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+    //         strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+    //         prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
 
-        }
-        token = strtok(NULL, " ");
-      }
+    //     }
+    //     token = strtok(NULL, " ");
+    //   }
 
-      memcpy(prev_word, "", 1); // Reset previous word for next sentence
-      gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
-      gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
+    //   memcpy(prev_word, "", 1); // Reset previous word for next sentence
+    //   gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
+    //   gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
 
-      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
-        temp = 0;
-        clock_t now = clock();
-        struct timespec end_time;
-        clock_gettime(CLOCK_MONOTONIC, &end_time);
-        // ETA ->  (gs->total_lines - gs->total_learned_lines) * (1 / lines/second)
-        float lines_sec = gs->total_learned_lines / ((float)(end_time.tv_sec - gs->start.tv_sec + 1));
-        long long remain_lines = gs->total_lines * gs->iter - gs->total_learned_lines;
-        long long eta_seconds = remain_lines / lines_sec;
-        long long eta_hours = eta_seconds / 3600;
-        long long eta_minutes = (eta_seconds % 3600) / 60;
+    //   if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
+    //     temp = 0;
+    //     clock_t now = clock();
+    //     struct timespec end_time;
+    //     clock_gettime(CLOCK_MONOTONIC, &end_time);
+    //     // ETA ->  (gs->total_lines - gs->total_learned_lines) * (1 / lines/second)
+    //     float lines_sec = gs->total_learned_lines / ((float)(end_time.tv_sec - gs->start.tv_sec + 1));
+    //     long long remain_lines = gs->total_lines * gs->iter - gs->total_learned_lines;
+    //     long long eta_seconds = remain_lines / lines_sec;
+    //     long long eta_hours = eta_seconds / 3600;
+    //     long long eta_minutes = (eta_seconds % 3600) / 60;
 
         
-        printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds",
-              13, gs->learning_rate_decay,
-              gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
-              (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
-              (lines_sec / (double)1000),
-               gs->loss / gs->total_learned_lines, gs->total_learned_lines, 
-               eta_hours, eta_minutes, eta_seconds % 60);
+    //     printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds",
+    //           13, gs->learning_rate_decay,
+    //           gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
+    //           (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
+    //           (lines_sec / (double)1000),
+    //            gs->loss / gs->total_learned_lines, gs->total_learned_lines, 
+    //            eta_hours, eta_minutes, eta_seconds % 60);
 
-        fflush(stdout);
-      }
+    //     fflush(stdout);
+    //   }
 
-      if (0) {
+    //   if (0) {
 
-        long long golden_label = 0;
+    //     long long golden_label = 0;
           
-        if (sentence_length > 0 && label_length > 0) {
+    //     if (sentence_length > 0 && label_length > 0) {
   
   
-          // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
-          memset(neu1, 0, gs->layer1_size * sizeof(float));
-          memset(neu2, 0, gs->label_size * sizeof(float));
-          memset(neu1err, 0, gs->layer1_size * sizeof(float));
-          for (long long j = 0; j <  sentence_length; j++) {
-            if (words[j] != -1) {
-              for (long long k = 0; k < gs->layer1_size; k++) {
-                neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
-              }
-            }
-          }
+    //       // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
+    //       memset(neu1, 0, gs->layer1_size * sizeof(float));
+    //       memset(neu2, 0, gs->label_size * sizeof(float));
+    //       memset(neu1err, 0, gs->layer1_size * sizeof(float));
+    //       for (long long j = 0; j <  sentence_length; j++) {
+    //         if (words[j] != -1) {
+    //           for (long long k = 0; k < gs->layer1_size; k++) {
+    //             neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
+    //           }
+    //         }
+    //       }
           
   
-          for (long long j = 0; j < gs->layer1_size; j++) {
-            //neu1: 1 x h
-            neu1[j] /= sentence_length; // 평균을 구함
-          }
+    //       for (long long j = 0; j < gs->layer1_size; j++) {
+    //         //neu1: 1 x h
+    //         neu1[j] /= sentence_length; // 평균을 구함
+    //       }
   
   
-          // implement Hiereical softmax
-          if (gs->hs) {
-            float loss = 0.0f;
-            for (int i = 0; i < label_length; i++) {
-              if (labels[i] >= 0) {
-                golden_label = labels[i];
-              } else {
-                continue ;
-              }
-              for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
+    //       // implement Hiereical softmax
+    //       if (gs->hs) {
+    //         float loss = 0.0f;
+    //         for (int i = 0; i < label_length; i++) {
+    //           if (labels[i] >= 0) {
+    //             golden_label = labels[i];
+    //           } else {
+    //             continue ;
+    //           }
+    //           for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
                 
-                float f = 0.0f;
-                // layer1: vocab * hidden
-                // layer2: hidden * label_size
-                // neu1: 1 * hidden
-                // neu1err: 1 * hidden
-                // like neu2
-                long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
-                long long M = gs->layer1_size; // hidden size
-                for (long long j = 0; j < gs->layer1_size; j++) {
-                  f += neu1[j] * gs->layer2[point * M + j];
-                }
-                f = 1.0f / (1.0f + expf(-f)); // sigmoid function
-                float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
-                if (g > 6) g = 6;
-                if (g < -6) g = -6;
-                // block thread
-                for (long long j = 0; j < M; j++) {
-                  neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
-                  gs->layer2[point * M + j] += g * neu1[j]; // update layer2
-                }
-                if (gs->labels[golden_label].code[d] == 0) {
-                  loss += -logf(f + 1e-10f); // log loss
-                } else {
-                  // if code is 0, then we are at the internal node
-                  loss += -logf(1 - f + 1e-10f); // log loss
+    //             float f = 0.0f;
+    //             // layer1: vocab * hidden
+    //             // layer2: hidden * label_size
+    //             // neu1: 1 * hidden
+    //             // neu1err: 1 * hidden
+    //             // like neu2
+    //             long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
+    //             long long M = gs->layer1_size; // hidden size
+    //             for (long long j = 0; j < gs->layer1_size; j++) {
+    //               f += neu1[j] * gs->layer2[point * M + j];
+    //             }
+    //             f = 1.0f / (1.0f + expf(-f)); // sigmoid function
+    //             float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
+    //             if (g > 6) g = 6;
+    //             if (g < -6) g = -6;
+    //             // block thread
+    //             for (long long j = 0; j < M; j++) {
+    //               neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
+    //               gs->layer2[point * M + j] += g * neu1[j]; // update layer2
+    //             }
+    //             if (gs->labels[golden_label].code[d] == 0) {
+    //               loss += -logf(f + 1e-10f); // log loss
+    //             } else {
+    //               // if code is 0, then we are at the internal node
+    //               loss += -logf(1 - f + 1e-10f); // log loss
   
-                }
-              }
-            }
-            for (long long j = 0; j < sentence_length; j++) {
-              if (words[j] != -1) {
-                for (long long k = 0; k < gs->layer1_size; k++) {
-                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
-                }
-              }
-            }
-            if (label_length > 0) {
-              loss /= label_length;
-              gs->loss += loss;
-            }
-          } else { // if hierarchical softmax is not used
+    //             }
+    //           }
+    //         }
+    //         for (long long j = 0; j < sentence_length; j++) {
+    //           if (words[j] != -1) {
+    //             for (long long k = 0; k < gs->layer1_size; k++) {
+    //               gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
+    //             }
+    //           }
+    //         }
+    //         if (label_length > 0) {
+    //           loss /= label_length;
+    //           gs->loss += loss;
+    //         }
+    //       } else { // if hierarchical softmax is not used
   
-            // neu1 dot layer2
-            for (long long j = 0; j < gs->label_size; j++) {
-              for (long long k = 0; k < gs->layer1_size; k++) {
-                neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
-              }
-            }
+    //         // neu1 dot layer2
+    //         for (long long j = 0; j < gs->label_size; j++) {
+    //           for (long long k = 0; k < gs->layer1_size; k++) {
+    //             neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
+    //           }
+    //         }
   
-            float max = neu2[0];
-            for (long long j = 1; j < gs->label_size; j++) {
-              if (neu2[j] > max) max = neu2[j];
-            }
+    //         float max = neu2[0];
+    //         for (long long j = 1; j < gs->label_size; j++) {
+    //           if (neu2[j] > max) max = neu2[j];
+    //         }
   
-            float sum = 0.0f;
-            for (long long j = 0; j < gs->label_size; j++) {
-                neu2[j] = expf(neu2[j] - max);
-                sum += neu2[j];
-            }
-            for (long long j = 0; j < gs->label_size; j++)
-                neu2[j] /= sum;
+    //         float sum = 0.0f;
+    //         for (long long j = 0; j < gs->label_size; j++) {
+    //             neu2[j] = expf(neu2[j] - max);
+    //             sum += neu2[j];
+    //         }
+    //         for (long long j = 0; j < gs->label_size; j++)
+    //             neu2[j] /= sum;
   
-            float loss = 0.0f;
+    //         float loss = 0.0f;
   
-            memset(neu1err, 0, gs->layer1_size * sizeof(float));
-            memset(neu2err, 0, gs->label_size * sizeof(float));
-            for (int i = 0; i < label_length; i++) {
-              if (labels[i] >= 0) {
-                golden_label = labels[i];
-              } else {
-                break ;
-              }
+    //         memset(neu1err, 0, gs->layer1_size * sizeof(float));
+    //         memset(neu2err, 0, gs->label_size * sizeof(float));
+    //         for (int i = 0; i < label_length; i++) {
+    //           if (labels[i] >= 0) {
+    //             golden_label = labels[i];
+    //           } else {
+    //             break ;
+    //           }
   
-              float g = 0.0f;
-              // multi answer 
-              for (long long j = 0; j < gs->label_size; j++) {
-                g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
-                if (g > 6) g = 6;
-                if (g < -6) g = -6;
-                for (long long k = 0; k < gs->layer1_size; k++) {
-                  neu1err[k] += g * gs->layer2[k * gs->label_size + j]; // to neu1
-                  gs->layer2[k * gs->label_size + j] += g * neu1[k]; // update layer2
-                } 
-              }
+    //           float g = 0.0f;
+    //           // multi answer 
+    //           for (long long j = 0; j < gs->label_size; j++) {
+    //             g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
+    //             if (g > 6) g = 6;
+    //             if (g < -6) g = -6;
+    //             for (long long k = 0; k < gs->layer1_size; k++) {
+    //               neu1err[k] += g * gs->layer2[k * gs->label_size + j]; // to neu1
+    //               gs->layer2[k * gs->label_size + j] += g * neu1[k]; // update layer2
+    //             } 
+    //           }
               
-              loss += -logf(neu2[golden_label] + 1e-10f);
-              // if (isnan(loss) || isinf(loss)) {
-              //   getchar();
-              // }
-            }
-            // Update neu1err
-            for (long long j = 0; j < sentence_length; j++) {
-              if (words[j] != -1) {
-                for (long long k = 0; k < gs->layer1_size; k++) {
-                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
-                }
-              }
-            }
+    //           loss += -logf(neu2[golden_label] + 1e-10f);
+    //           // if (isnan(loss) || isinf(loss)) {
+    //           //   getchar();
+    //           // }
+    //         }
+    //         // Update neu1err
+    //         for (long long j = 0; j < sentence_length; j++) {
+    //           if (words[j] != -1) {
+    //             for (long long k = 0; k < gs->layer1_size; k++) {
+    //               gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
+    //             }
+    //           }
+    //         }
   
-            if (label_length > 0) {
-              loss /= label_length;
-              gs->loss += loss;
-            }
-          }
-        }
+    //         if (label_length > 0) {
+    //           loss /= label_length;
+    //           gs->loss += loss;
+    //         }
+    //       }
+    //     }
   
-        sentence_length = 0;
-        sentence_position = 0;
-        sentence_start = 0;
-        sentence_end = 0;   
-        continue;
-      }
+    //     sentence_length = 0;
+    //     sentence_position = 0;
+    //     sentence_start = 0;
+    //     sentence_end = 0;   
+    //     continue;
+    //   }
         
-    }
+    // }
     free(labels);
+    free(neu1);
+    free(neu2);
+    free(neu1err);
+    free(neu2err);
   }
   fclose(fi);
   // Implement the saving output here
