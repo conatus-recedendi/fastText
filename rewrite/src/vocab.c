@@ -68,6 +68,17 @@ long long read_word(char *word, FILE *fin) {
   return ftell(fin);
 }
 
+long long read_word_buf(char *word, char *buf) {
+  long long a = 0;
+  while (buf[a] != ' ' && buf[a] != '\t' && buf[a] != '\n' && buf[a] != '\0') {
+    if (a >= MAX_STRING - 1) a--;   // Truncate too long words
+    word[a] = buf[a];
+    a++;
+  }
+  word[a] = 0;
+  return a; // Return the length of the word read
+}
+
 int search_label(char *word, global_setting *gs) {
   // printf("[INFO] Searching for label: %s\n", word);
   unsigned int hash = get_label_hash(word, gs);
