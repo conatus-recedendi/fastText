@@ -284,22 +284,9 @@ void *train_thread(thread_args *args) {
   
   // printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
   for (int iter = 0; iter < gs->iter; iter++) {
-
-    printf("1515. gs->left_node %lld ~ %lld\n", 2 * gs->label_size - 10, 2 * gs->label_size - 1);
-      for (int i =2 * gs->label_size - 10 ;i<2*gs->label_size - 1; i++) {
-      printf("%lld ", gs->left_node[i]);
-    }
-    printf("\n");
-    
-    
-    // Reset sentence length and position for each iteration
     sentence_length = 0;
     sentence_position = 0;
-    // Read the file line by line
-    // fseek(fi, file_size / (long long)num_threads * (long long)thread_id , SEEK_END);
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
-    // printf("[INFO] Thread %lld seeking to offset %lld\n", thread_id, gs->start_offsets[thread_id]);
-    
 
     char word[MAX_STRING];
     char prev_word[MAX_STRING]; // only support for ngram=2
@@ -319,11 +306,6 @@ void *train_thread(thread_args *args) {
 
 
     long long temp = 0;
-
-    // while (1) {
-    //   fgets(word, MAX_STRING, fi);
-      
-    // }
     long long line = 0;
     long long max_line = gs->total_line_by_thread[thread_id];
     
@@ -344,10 +326,23 @@ void *train_thread(thread_args *args) {
     }
 
     char token[MAX_STRING];
-    long long sentence_length = 0;
     long long ngram_sentences_length = 0;
     long long label_length = 0;
+
     struct timespec token_st;
+
+    //initialize
+    line++;
+    gs->total_learned_lines++;
+    sen[strcspn(sen, "\n")] = 0;
+    sentence_length = 0;
+    temp = 0;
+    ngram_sentences_length = 0;
+    label_length = 0;
+    memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+    memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
+    memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+    clock_gettime(CLOCK_MONOTONIC, &token_st);
     while (read_word(token, fi)) {
       if (line >= max_line) {
         break; // Stop reading if we reach the maximum line for this thread
@@ -367,7 +362,6 @@ void *train_thread(thread_args *args) {
 
 
         line++;
-
         gs->total_learned_lines++;
         sen[strcspn(sen, "\n")] = 0;
         sentence_length = 0;
