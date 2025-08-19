@@ -411,7 +411,6 @@ void *train_thread(thread_args *args) {
         strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
         prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
       }
-
       if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
         temp = 0;
         clock_t now = clock();
@@ -435,6 +434,7 @@ void *train_thread(thread_args *args) {
 
         fflush(stdout);
       }
+
     }
   
     // while ( fgets(sen, MAX_SENTENCE_LENGTH, fi) && line < max_line) {
