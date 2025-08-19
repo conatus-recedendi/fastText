@@ -343,7 +343,7 @@ void *train_thread(thread_args *args) {
     memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
     clock_gettime(CLOCK_MONOTONIC, &token_st);
-    while (read_word(token, fi)) {
+    while (read_word(token, fi) != -1) {
       if (line >= max_line) {
         break; // Stop reading if we reach the maximum line for this thread
       }
