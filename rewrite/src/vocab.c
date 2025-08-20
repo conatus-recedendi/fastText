@@ -314,7 +314,9 @@ void create_vocab_from_train_file(global_setting *gs) {
 
 
 
-  printf("[INFO] Creating vocabulary from training file...\n");
+  printf("[INFO] Creating vocabulary from training file...\n\n\n\n\n");
+  printf("[INFO] Creating vocabulary from training file...\n\n\n\n\n");
+  printf("[INFO] Creating vocabulary from training file...\n\n\n\n\n");
 
   
   FILE *f_in = fopen(train_file, "rb");
