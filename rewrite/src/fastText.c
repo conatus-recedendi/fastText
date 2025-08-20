@@ -563,9 +563,10 @@ void *train_thread(thread_args *args) {
               
             } else {
               memset(concat_word, 0, sizeof(concat_word));
-              strncat(concat_word, prev_word, strlen(prev_word));
-              strncat(concat_word, "-", 1);
-              strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
+              // strncat(concat_word, prev_word, strlen(prev_word));
+              // strncat(concat_word, "-", 1);
+              // strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
+              snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
 
               long long index = search_vocab(concat_word, gs);
               if (index == -1) {
