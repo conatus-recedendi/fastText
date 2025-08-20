@@ -112,17 +112,21 @@ void train_model(global_setting *gs) {
       return ;
   }
 
+  printf("[INFO] Counting total lines in training file...\n");
   gs->total_lines = count_lines(fp);
+  printf("[INFO] Total lines in training file: %lld\n", gs->total_lines);
   // lines을 thread 개수만큼 분리
   // 각 데이터의 start offset, end offset 저장. 각 thread에서 실행할 라인 수 계산
   // 스레드에서는 start offset으로 fseek하고, 각 thread에서 실행할 데이터만큼 학습
   
   // long long total_line;
+
   gs->start_offsets= malloc(sizeof(long long) * gs->num_threads);
   gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
   gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->label_size = 0;
+  printf("[INFO] Computing thread offsets...\n");
 
   compute_thread_offsets(fp, gs);
 
