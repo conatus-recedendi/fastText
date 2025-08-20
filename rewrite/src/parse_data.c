@@ -258,6 +258,11 @@ int main(int argc, char **argv) {
     gs.label_hash[j] = -1; // Initialize the label hash table
   }
 
+  printf("[DEBUG] label_hash_size: %d, pointer: %p\n", gs.label_hash_size, gs.label_hash);
+  printf("[DEBUG] vocab_hash_size: %d, pointer: %p\n", gs.vocab_hash_size, gs.vocab_hash);
+  printf("[DEBUG] vocab_max_size: %d, pointer: %p\n", gs.vocab_max_size, gs.vocab);
+  printf("[DEBUG] label_max_size: %d, pointer: %p\n", gs.label_max_size, gs.labels);
+
   // printf("%lld\n", gs.vocab_hash[886005]);
   train_model(&gs);
 
