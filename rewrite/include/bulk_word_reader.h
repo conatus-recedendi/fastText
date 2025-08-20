@@ -102,7 +102,6 @@ static inline long long br_read_word(char *word, BufReader *br) {
     for (;;) {
         ch = br_getc(br);
         if (ch == -1) break;           // EOF
-
         if (ch == 13) continue;        // skip CR
 
         if (ch == ' ' || ch == '\t' || ch == '\n') {
@@ -124,7 +123,6 @@ static inline long long br_read_word(char *word, BufReader *br) {
                 }
             }
         }
-
         if (a < MAX_STRING - 1) {
             word[a++] = (char)ch;
         } else {
