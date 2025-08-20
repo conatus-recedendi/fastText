@@ -503,7 +503,13 @@ void *train_thread(thread_args *args) {
         ngram_sentences_length = 0;
         label_length = 0;
         memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+        long long len_word = 0;
 
+        for (long i = 0;;i++) {
+          if (words[i] == -1)  {break;} 
+          len_word++;
+        }
+        debug_avg_len += len_word;
         memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
         memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
         clock_gettime(CLOCK_MONOTONIC, &token_st);
