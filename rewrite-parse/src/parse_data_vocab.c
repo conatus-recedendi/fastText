@@ -89,7 +89,6 @@ int search_label(char *word, global_setting *gs) {
   int *label_hash = gs->label_hash;
   long long label_hash_size = gs->label_hash_size;
   // printf("[INFO] Searching in label hash table... label_hash_size: %lld\n", label_hash_size);
-  printf("[DEBUG] label_hash_size: %d, pointer: %p\n", gs->label_hash_size, gs->label_hash);
   while (1) {
     // printf("[INFO] Checking label hash index %u: %d\n", hash, label_hash[hash]);
     // getchar();
