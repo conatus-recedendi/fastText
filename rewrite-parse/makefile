@@ -14,8 +14,7 @@ COMMON_SRCS := $(SRC_DIR)/utils.c $(SRC_DIR)/vocab.c
 COMMON_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(COMMON_SRCS))
 
 # 실행 파일 목록 (여기만 고치면 됨)
-TARGETS := fastText test
-SUBWORD_TARGETS := subword
+TARGETS := parse_data
 
 # main 파일 매핑 (타겟명 -> main 파일)
 define MAIN_SRC
