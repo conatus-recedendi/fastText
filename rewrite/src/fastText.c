@@ -503,22 +503,22 @@ void *train_thread(thread_args *args) {
         gs->total_learned_lines++;
         temp++;
 
+        long long len_word = 0;
+        long long len_labels = 0;
+        for (long i = 0;;i++) {
+          if (words[i] == -1)  {break;} 
+          len_word++;
+        }
+        for (int i = 0;;i++) {
+          if (labels[i] == -1)  {break;} 
+          len_labels++;
+        }
+        
+        debug_avg_len += len_word;
+        debug_avg_labels_len += len_labels;
         if (gs->debug_mode > 1 && temp % (gs->num_threads * 10000) == thread_id * 10000) {
           temp = 0;
-          long long len_word = 0;
-          long long len_labels = 0;
           
-          
-          for (long i = 0;;i++) {
-            if (words[i] == -1)  {break;} 
-            len_word++;
-          }
-          for (int i = 0;;i++) {
-            if (labels[i] == -1)  {break;} 
-            len_labels++;
-          }
-          debug_avg_len += len_word;
-          debug_avg_labels_len += len_labels;
           clock_t now = clock();
           struct timespec end_time;
           clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -530,7 +530,7 @@ void *train_thread(thread_args *args) {
           long long eta_minutes = (eta_seconds % 3600) / 60;
 
           
-          printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds, Len_word: %.2f, Len_labels: %.2f\n",
+          printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds, Len_word: %.2f, Len_labels: %.2f",
                 13, gs->learning_rate_decay,
                 gs->total_learned_lines / (double)(gs->iter * gs->total_lines + 1) * 100,
                 (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
