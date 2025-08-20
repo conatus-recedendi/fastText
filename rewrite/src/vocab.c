@@ -336,19 +336,25 @@ void create_vocab_from_train_file(global_setting *gs) {
   long long prev_word_hash = -1; // for ngram
   while(1) {
     read_word(word, f_in);
-    printf("[INFO] Read word: %s\n", word);
+    printf("[INFO] 1. Read word: %s\n", word);
     if (feof(f_in)) break;
+    printf("[INFO] 2. Read word: %s\n", word);
     if (strncmp(word, "__label__", 9) == 0) {
+      printf("[INFO] 3. Read word: %s\n", word);
       prev_word_hash = -1;
       temp_label_hash = search_label(word, gs);
+      printf("[INFO] 4. Read word: %s\n", word);
       if (temp_label_hash == -1) {
         temp_label = add_label_to_vocab(word, gs);
         gs->labels[temp_label].cn = 1; // Initialize count to 1
+        printf("[INFO] 5. Read word: %s\n", word);
       } else {
         gs->labels[temp_label_hash].cn++; 
       }
+      printf("[INFO] 6. Read word: %s\n", word);
       continue;
     }
+    
 
     train_words++;
     if ((debug_mode > 1) && (train_words % 100000 == 0)) {
