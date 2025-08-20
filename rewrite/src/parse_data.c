@@ -6,8 +6,8 @@
 #include <math.h>
 #include <ctype.h>
 #include "parse_data_config.h"
-#include "vocab.h"
-#include "utils.h"
+#include "parse_data_vocab.h"
+#include "parse_data_utils.h"
 
 void process_file(const char *input_path, const char *output_path, global_setting *gs) {
     FILE *input_file = fopen(input_path, "r");

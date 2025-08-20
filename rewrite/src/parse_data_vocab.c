@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>   
-#include "config.h"
-#include "vocab.h"
+#include "parse_data_config.h"
+#include "parse_data_vocab.h"
 void push_word(char *prev_word, const char *new_word) {
     if (strlen(prev_word) > 0) {
         strcat(prev_word, " ");  // Add space before new word
