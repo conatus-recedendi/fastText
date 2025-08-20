@@ -34,6 +34,7 @@ int get_label_hash(char *word, global_setting *gs) {
     hash = hash * 257 + word[a];
     printf("[DEBUG] 2. Hashing char '%c': %llu\n", word[a], hash);
   }
+  printf("[DEBUG] 3. Hash before modulo: %llu, label_hash_size: %llu\n", hash, label_hash_size);
   hash = hash % label_hash_size;
   printf("[DEBUG] 3. Final hash for word '%s': %llu\n", word, hash);
   return hash;
