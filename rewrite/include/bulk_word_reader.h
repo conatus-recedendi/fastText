@@ -4,9 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifndef MAX_STRING
-#define MAX_STRING 1024
-#endif
 
 typedef struct {
     FILE *f;

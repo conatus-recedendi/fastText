@@ -333,8 +333,6 @@ void *train_thread(thread_args *args) {
     struct timespec token_st;
 
     //initialize
-    line++;
-    gs->total_learned_lines++;
     sen[strcspn(sen, "\n")] = 0;
     sentence_length = 0;
     temp = 0;
@@ -567,10 +565,10 @@ void *train_thread(thread_args *args) {
         
         printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds",
               13, gs->learning_rate_decay,
-              gs->total_learned_lines / (double)(gs->iter * gs->total_lines) * 100,
+              gs->total_learned_lines / (double)(gs->iter * gs->total_lines + 1) * 100,
               (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
               (lines_sec / (double)1000),
-               gs->loss / gs->total_learned_lines, gs->total_learned_lines, 
+               gs->loss / (gs->total_learned_lines + 1), gs->total_learned_lines, 
                eta_hours, eta_minutes, eta_seconds % 60);
 
         fflush(stdout);
