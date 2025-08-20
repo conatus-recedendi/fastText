@@ -29,14 +29,10 @@ int get_label_hash(char *word, global_setting *gs) {
   vocab_word *labels = gs->labels;
   int *label_hash = gs->label_hash;
   unsigned long long hash = 0;
-  printf("[DEBUG] 1. Getting label hash for word: %s\n", word);
   for (unsigned long long a = 0; a < strlen(word); a++) {
     hash = hash * 257 + word[a];
-    printf("[DEBUG] 2. Hashing char '%c': %llu\n", word[a], hash);
   }
-  printf("[DEBUG] 3. Hash before modulo: %llu, label_hash_size: %llu\n", hash, label_hash_size);
   hash = hash % label_hash_size;
-  printf("[DEBUG] 3. Final hash for word '%s': %llu\n", word, hash);
   return hash;
 }
 

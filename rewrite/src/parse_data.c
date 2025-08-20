@@ -113,8 +113,10 @@ void train_model(global_setting *gs) {
   }
 
   printf("[INFO] Counting total lines in training file...\n");
+  printf("[DEBUG] label_hash_size: %d, pointer: %p\n", gs.label_hash_size, gs.label_hash);
   gs->total_lines = count_lines(fp);
   printf("[INFO] Total lines in training file: %lld\n", gs->total_lines);
+  printf("[DEBUG] label_hash_size: %d, pointer: %p\n", gs.label_hash_size, gs.label_hash);
   // lines을 thread 개수만큼 분리
   // 각 데이터의 start offset, end offset 저장. 각 thread에서 실행할 라인 수 계산
   // 스레드에서는 start offset으로 fseek하고, 각 thread에서 실행할 데이터만큼 학습
@@ -127,6 +129,7 @@ void train_model(global_setting *gs) {
   gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
   gs->label_size = 0;
   printf("[INFO] Computing thread offsets...\n");
+  printf("[DEBUG] label_hash_size: %d, pointer: %p\n", gs.label_hash_size, gs.label_hash);
 
   // compute_thread_offsets(fp, gs);
 
@@ -140,6 +143,7 @@ void train_model(global_setting *gs) {
     // Create vocabulary from training file
     create_vocab_from_train_file(gs);
   }
+  printf("[DEBUG] label_hash_size: %d, pointer: %p\n", gs.label_hash_size, gs.label_hash);
 
   printf("[INFO] save vocabulary...\n");
 
