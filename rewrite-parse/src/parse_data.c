@@ -1,4 +1,4 @@
-
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +9,7 @@
 #include "parse_data_vocab.h"
 #include "parse_data_utils.h"
 
-void process_file(const char *input_path, const char *output_path, global_setting *gs) {
+void process_file_filtered(const char *input_path, const char *output_path, global_setting *gs) {
     FILE *input_file = fopen(input_path, "r");
     if (!input_file) {
         perror("Error opening input file");
@@ -32,63 +32,134 @@ void process_file(const char *input_path, const char *output_path, global_settin
         line_cnt++;
         printf("%c progress: %.2f%", 13,  line_cnt / (double)gs->total_lines * 100);
         fflush(stdout);
-
-        char *line_copy = strdup(line); // 원본 라인 보존
-        if (!line_copy) {
-            perror("Memory allocation failed");
-            continue;
-        }
-
         char *token;
-        char *rest_of_line = line_copy;
-        int has_valid_label = 0;
-        int has_valid_description_word = 0;
+        char *rest_of_line = line;
+        bool has_valid_label = false;
+        bool has_valid_description_word = false;
 
-        // 1. 레이블 파싱 및 유효성 검사
+        // 임시 저장 버퍼
+        char filtered_line[len + 1];
+        filtered_line[0] = '\0';
+        size_t current_len = 0;
+
+        // 1. 레이블 및 description 토큰 처리
         while ((token = strtok_r(rest_of_line, " \n", &rest_of_line))) {
-            if (strstr(token, "__label__") == token) {
+            bool is_label = (strstr(token, "__label__") == token);
+
+            if (is_label) {
                 if (search_label(token, gs) != -1) {
-                    has_valid_label = 1;
+                    has_valid_label = true;
+                    // 유효한 레이블만 추가
+                    if (current_len > 0) {
+                        current_len += sprintf(filtered_line + current_len, " %s", token);
+                    } else {
+                        current_len += sprintf(filtered_line + current_len, "%s", token);
+                    }
                 }
             } else {
-                // 레이블 파싱이 끝났으므로 description으로 넘어갑니다.
-                break;
-            }
-        }
-        
-        // 2. description 파싱 및 유효성 검사
-        char *description_section = rest_of_line;
-        if (description_section) {
-            char *desc_copy = strdup(description_section);
-            if (!desc_copy) {
-                perror("Memory allocation failed");
-                free(line_copy);
-                continue;
-            }
-
-            char *desc_token;
-            char *desc_rest = desc_copy;
-            while ((desc_token = strtok_r(desc_rest, " \n", &desc_rest))) {
-                if (search_vocab(desc_token, gs) != -1) {
-                    has_valid_description_word = 1;
-                    break; 
+                if (search_vocab(token, gs) != -1) {
+                    has_valid_description_word = true;
+                    // 유효한 단어만 추가
+                    if (current_len > 0) {
+                        current_len += sprintf(filtered_line + current_len, " %s", token);
+                    } else {
+                        current_len += sprintf(filtered_line + current_len, "%s", token);
+                    }
                 }
             }
-            free(desc_copy);
         }
 
-        // 3. 조건 만족 시, 원본 라인을 새 파일에 추가
+        // 2. 조건 만족 시, 필터링된 라인을 파일에 추가
         if (has_valid_label && has_valid_description_word) {
-            fprintf(output_file, "%s", line);
+            fprintf(output_file, "%s\n", filtered_line);
         }
-        
-        free(line_copy);
     }
 
     free(line);
     fclose(input_file);
     fclose(output_file);
 }
+
+// void process_file(const char *input_path, const char *output_path, global_setting *gs) {
+//     FILE *input_file = fopen(input_path, "r");
+//     if (!input_file) {
+//         perror("Error opening input file");
+//         return;
+//     }
+
+//     FILE *output_file = fopen(output_path, "w");
+//     if (!output_file) {
+//         perror("Error opening output file");
+//         fclose(input_file);
+//         return;
+//     }
+
+//     char *line = NULL;
+//     size_t len = 0;
+//     ssize_t read;
+//     long long line_cnt = 0;
+
+//     while ((read = getline(&line, &len, input_file)) != -1) {
+//         line_cnt++;
+//         printf("%c progress: %.2f%", 13,  line_cnt / (double)gs->total_lines * 100);
+//         fflush(stdout);
+
+//         char *line_copy = strdup(line); // 원본 라인 보존
+//         if (!line_copy) {
+//             perror("Memory allocation failed");
+//             continue;
+//         }
+
+//         char *token;
+//         char *rest_of_line = line_copy;
+//         int has_valid_label = 0;
+//         int has_valid_description_word = 0;
+
+//         // 1. 레이블 파싱 및 유효성 검사
+//         while ((token = strtok_r(rest_of_line, " \n", &rest_of_line))) {
+//             if (strstr(token, "__label__") == token) {
+//                 if (search_label(token, gs) != -1) {
+//                     has_valid_label = 1;
+//                 }
+//             } else {
+//                 // 레이블 파싱이 끝났으므로 description으로 넘어갑니다.
+//                 break;
+//             }
+//         }
+        
+//         // 2. description 파싱 및 유효성 검사
+//         char *description_section = rest_of_line;
+//         if (description_section) {
+//             char *desc_copy = strdup(description_section);
+//             if (!desc_copy) {
+//                 perror("Memory allocation failed");
+//                 free(line_copy);
+//                 continue;
+//             }
+
+//             char *desc_token;
+//             char *desc_rest = desc_copy;
+//             while ((desc_token = strtok_r(desc_rest, " \n", &desc_rest))) {
+//                 if (search_vocab(desc_token, gs) != -1) {
+//                     has_valid_description_word = 1;
+//                     break; 
+//                 }
+//             }
+//             free(desc_copy);
+//         }
+
+//         // 3. 조건 만족 시, 원본 라인을 새 파일에 추가
+//         if (has_valid_label && has_valid_description_word) {
+//             fprintf(output_file, "%s", line);
+//         }
+        
+//         free(line_copy);
+//     }
+
+//     free(line);
+//     fclose(input_file);
+//     fclose(output_file);
+// }
 
 
 
@@ -148,7 +219,7 @@ void train_model(global_setting *gs) {
   printf("[INFO] save vocabulary...\n");
 
 
-  process_file(gs->train_file, gs->parse_output, gs);
+  process_file_filtered(gs->train_file, gs->parse_output, gs);
   
 }
 
