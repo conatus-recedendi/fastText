@@ -128,7 +128,7 @@ void train_model(global_setting *gs) {
   gs->label_size = 0;
   printf("[INFO] Computing thread offsets...\n");
 
-  compute_thread_offsets(fp, gs);
+  // compute_thread_offsets(fp, gs);
 
 
   printf("[INFO] read vocabulary...\n");
