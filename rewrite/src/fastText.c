@@ -340,12 +340,7 @@ void *train_thread(thread_args *args) {
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
     clock_gettime(CLOCK_MONOTONIC, &token_st);
     while (br_read_word(token, &br) != -1) {
-      long long len_word = 0;
 
-      for (long i = 0;;i++) {
-        if (words[i] == -1)  {break;} 
-        len_word++;
-      }
 
       if (line >= max_line) {
         break; // Stop reading if we reach the maximum line for this thread
@@ -517,8 +512,14 @@ void *train_thread(thread_args *args) {
         clock_gettime(CLOCK_MONOTONIC, &token_st);
         debug_avg_len += len_word;
 
-        if (gs->debug_mode > 1 && temp % (gs->num_threads * 1) == thread_id * 1) {
+        if (gs->debug_mode > 1 && temp % (gs->num_threads * 10000) == thread_id * 10000) {
           temp = 0;
+          long long len_word = 0;
+
+          for (long i = 0;;i++) {
+            if (words[i] == -1)  {break;} 
+            len_word++;
+          }
           clock_t now = clock();
           struct timespec end_time;
           clock_gettime(CLOCK_MONOTONIC, &end_time);
