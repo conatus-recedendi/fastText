@@ -273,10 +273,8 @@ void *train_thread(thread_args *args) {
   long long iter = gs->iter;
   
   long long sentence_length = 0;
-  long long sentence_position = 0;
-  long long sentence_start = 0;
-  long long sentence_end = 0;
-  long long sen[MAX_SENTENCE_LENGTH];
+
+  long long debug_avg_len = 0;
   
   
   
@@ -286,12 +284,10 @@ void *train_thread(thread_args *args) {
   // printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
   for (int iter = 0; iter < gs->iter; iter++) {
     sentence_length = 0;
-    sentence_position = 0;
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
 
     char word[MAX_STRING];
     char prev_word[MAX_STRING]; // only support for ngram=2
-    char sen[MAX_SENTENCE_LENGTH];
     char concat_word[MAX_STRING];
     long long offset = 0;
     // long long labels[MAX_LABELS]; // [0, 3, -1, -1, -1 ...]
@@ -333,7 +329,6 @@ void *train_thread(thread_args *args) {
     struct timespec token_st;
 
     //initialize
-    sen[strcspn(sen, "\n")] = 0;
     sentence_length = 0;
     temp = 0;
     ngram_sentences_length = 0;
@@ -503,18 +498,45 @@ void *train_thread(thread_args *args) {
         line++;
         gs->total_learned_lines++;
         temp++;
-        sen[strcspn(sen, "\n")] = 0;
+
         sentence_length = 0;
         ngram_sentences_length = 0;
         label_length = 0;
         memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+
         memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
         memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
         clock_gettime(CLOCK_MONOTONIC, &token_st);
+
+        if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
+          temp = 0;
+          clock_t now = clock();
+          struct timespec end_time;
+          clock_gettime(CLOCK_MONOTONIC, &end_time);
+          // ETA ->  (gs->total_lines - gs->total_learned_lines) * (1 / lines/second)
+          float lines_sec = gs->total_learned_lines / ((float)(end_time.tv_sec - gs->start.tv_sec + 1));
+          long long remain_lines = gs->total_lines * gs->iter - gs->total_learned_lines;
+          long long eta_seconds = remain_lines / lines_sec;
+          long long eta_hours = eta_seconds / 3600;
+          long long eta_minutes = (eta_seconds % 3600) / 60;
+
+          
+          printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds, Len_word: %.2f",
+                13, gs->learning_rate_decay,
+                gs->total_learned_lines / (double)(gs->iter * gs->total_lines + 1) * 100,
+                (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
+                (lines_sec / (double)1000),
+                gs->loss / (gs->total_learned_lines + 1), gs->total_learned_lines, 
+                eta_hours, eta_minutes, eta_seconds % 60,
+                debug_avg_len / (double)(gs->total_learned_lines + 1));
+
+          fflush(stdout);
+
+        }
       } else {
         long long word_index = search_vocab(token, gs);
 
-        if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE) {
+        if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE - 1) {
           if (gs->sample > 0) {
             float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
             double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
@@ -550,29 +572,7 @@ void *train_thread(thread_args *args) {
         strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
         prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
       }
-      if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
-        temp = 0;
-        clock_t now = clock();
-        struct timespec end_time;
-        clock_gettime(CLOCK_MONOTONIC, &end_time);
-        // ETA ->  (gs->total_lines - gs->total_learned_lines) * (1 / lines/second)
-        float lines_sec = gs->total_learned_lines / ((float)(end_time.tv_sec - gs->start.tv_sec + 1));
-        long long remain_lines = gs->total_lines * gs->iter - gs->total_learned_lines;
-        long long eta_seconds = remain_lines / lines_sec;
-        long long eta_hours = eta_seconds / 3600;
-        long long eta_minutes = (eta_seconds % 3600) / 60;
 
-        
-        printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds",
-              13, gs->learning_rate_decay,
-              gs->total_learned_lines / (double)(gs->iter * gs->total_lines + 1) * 100,
-              (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
-              (lines_sec / (double)1000),
-               gs->loss / (gs->total_learned_lines + 1), gs->total_learned_lines, 
-               eta_hours, eta_minutes, eta_seconds % 60);
-
-        fflush(stdout);
-      }
 
     }
   
@@ -583,7 +583,6 @@ void *train_thread(thread_args *args) {
 
 
 
-    //   sen[strcspn(sen, "\n")] = 0;
 
 
     //   char *token = strtok(sen, " ");
