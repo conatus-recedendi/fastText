@@ -336,6 +336,7 @@ void create_vocab_from_train_file(global_setting *gs) {
   long long prev_word_hash = -1; // for ngram
   while(1) {
     read_word(word, f_in);
+    printf("[INFO] Read word: %s\n", word);
     if (feof(f_in)) break;
     if (strncmp(word, "__label__", 9) == 0) {
       prev_word_hash = -1;
