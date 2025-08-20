@@ -314,9 +314,6 @@ void create_vocab_from_train_file(global_setting *gs) {
 
 
 
-  printf("[INFO] Creating vocabulary from training file...\n\n\n\n\n");
-  printf("[INFO] Creating vocabulary from training file...\n\n\n\n\n");
-  printf("[INFO] Creating vocabulary from training file...\n\n\n\n\n");
 
   
   FILE *f_in = fopen(train_file, "rb");
@@ -325,7 +322,6 @@ void create_vocab_from_train_file(global_setting *gs) {
     exit(1);
   }
 
-  printf("[INFO] Reading words from training file...\n");
 
   clock_t search_label_time;
   clock_t accum_search_label_time = 0;
@@ -340,7 +336,6 @@ void create_vocab_from_train_file(global_setting *gs) {
   long long prev_word_hash = -1; // for ngram
   while(1) {
     read_word(word, f_in);
-    printf("[INFO] Read word: %s\n", word);
     if (feof(f_in)) break;
     if (strncmp(word, "__label__", 9) == 0) {
       prev_word_hash = -1;
