@@ -581,8 +581,8 @@ void *train_thread(thread_args *args) {
         strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
         prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
       }
-      
-      strncpy(token, "", 1); // Reset token for next word
+
+      strncpy(token, "", MAX_STRING - 1); // Reset token for next word
 
     }
   
