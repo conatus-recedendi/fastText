@@ -220,6 +220,7 @@ int main(int argc, char **argv) {
   if ((i = get_arg_pos((char *)"-bucket", argc, argv)) > 0) {
     gs.vocab_hash_size = atoi(argv[i + 1]);
     gs.vocab_max_size = gs.vocab_hash_size; // Set max size to double the hash size
+    gs.label_hash_size = gs.vocab_hash_size; // Set label hash size to vocabulary hash size
   }
   if ((i = get_arg_pos((char *)"-hs", argc, argv)) > 0) gs.hs = atoi(argv[i + 1]);
   if ((i = get_arg_pos((char *)"-ngram", argc, argv)) > 0) gs.ngram = atoi(argv[i + 1]);
