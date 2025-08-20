@@ -137,6 +137,8 @@ void train_model(global_setting *gs) {
     create_vocab_from_train_file(gs);
   }
 
+  printf("[INFO] save vocabulary...\n");
+
 
   process_file(gs->train_file, gs->parse_output, gs);
   
