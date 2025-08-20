@@ -81,21 +81,26 @@ long long read_word_buf(char *word, char *buf) {
 
 int search_label(char *word, global_setting *gs) {
   // printf("[INFO] Searching for label: %s\n", word);
+  printf("[DEBUG] 1. Searching for label: %s\n", word);
   unsigned int hash = get_label_hash(word, gs);
   // printf("[INFO] Hash for label '%s': %u\n", word, hash);
+  printf("[DEBUG] 2. Searching for label: %s\n", word);
   vocab_word *labels = gs->labels;
   int *label_hash = gs->label_hash;
   long long label_hash_size = gs->label_hash_size;
   // printf("[INFO] Searching in label hash table... label_hash_size: %lld\n", label_hash_size);
+  printf("[DEBUG] 3. Searching for label: %s\n", word);
   
   while (1) {
     // printf("[INFO] Checking label hash index %u: %d\n", hash, label_hash[hash]);
     // getchar();
+    printf("[DEBUG] 4. Searching for label: %s\n", word);
     if (label_hash[hash] == -1) return -1; // Not found
     // printf("%s vs %s, %d\n", word, labels[label_hash[hash]].word, strcmp(word, labels[label_hash[hash]].word));
     if (!strcmp(word, labels[label_hash[hash]].word)) {
       return label_hash[hash]; // Found
     }
+    printf("[DEBUG] 5. Searching for label: %s\n", word);
     hash = (hash + 1) % label_hash_size; // Linear probing
   }
   return -1; // Should not reach here
