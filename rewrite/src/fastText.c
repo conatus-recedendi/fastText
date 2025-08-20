@@ -282,10 +282,11 @@ void *train_thread(thread_args *args) {
   FILE *fi = fopen(gs->train_file, "rb");
   BufReader br;
   // printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
-  br_init(&br, fi, 1 << 20);
+
   for (int iter = 0; iter < gs->iter; iter++) {
     sentence_length = 0;
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
+    br_init(&br, fi, 1 << 20); // 1MB buffer size
 
     char word[MAX_STRING];
     char prev_word[MAX_STRING]; // only support for ngram=2
@@ -856,9 +857,8 @@ void *train_thread(thread_args *args) {
     free(neu2);
     free(neu1err);
     free(neu2err);
+    br_free(&br);
   }
-  br_free(&br);
-  fclose(fi);
   // Implement the saving output here
   pthread_exit(NULL);
 
