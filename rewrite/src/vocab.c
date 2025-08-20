@@ -314,7 +314,7 @@ void create_vocab_from_train_file(global_setting *gs) {
 
 
 
-  // printf("[INFO] Creating vocabulary from training file...\n");
+  printf("[INFO] Creating vocabulary from training file...\n");
 
   
   FILE *f_in = fopen(train_file, "rb");
@@ -323,7 +323,7 @@ void create_vocab_from_train_file(global_setting *gs) {
     exit(1);
   }
 
-  // printf("[INFO] Reading words from training file...\n");
+  printf("[INFO] Reading words from training file...\n");
 
   clock_t search_label_time;
   clock_t accum_search_label_time = 0;
