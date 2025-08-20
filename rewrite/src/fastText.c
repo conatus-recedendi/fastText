@@ -275,6 +275,7 @@ void *train_thread(thread_args *args) {
   long long sentence_length = 0;
 
   long long debug_avg_len = 0;
+  long long debug_avg_labels_len = 0;
   
   
   
@@ -502,24 +503,22 @@ void *train_thread(thread_args *args) {
         gs->total_learned_lines++;
         temp++;
 
-        sentence_length = 0;
-        ngram_sentences_length = 0;
-        label_length = 0;
-        memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
-
-        memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
-        memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-        clock_gettime(CLOCK_MONOTONIC, &token_st);
-        debug_avg_len += len_word;
-
         if (gs->debug_mode > 1 && temp % (gs->num_threads * 10000) == thread_id * 10000) {
           temp = 0;
           long long len_word = 0;
-
+          long long len_labels = 0;
+          
+          
           for (long i = 0;;i++) {
             if (words[i] == -1)  {break;} 
             len_word++;
           }
+          for (int i = 0;;i++) {
+            if (labels[i] == -1)  {break;} 
+            len_labels++;
+          }
+          debug_avg_len += len_word;
+          debug_avg_labels_len += len_labels;
           clock_t now = clock();
           struct timespec end_time;
           clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -531,18 +530,29 @@ void *train_thread(thread_args *args) {
           long long eta_minutes = (eta_seconds % 3600) / 60;
 
           
-          printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds, Len_word: %.2f",
+          printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds, Len_word: %.2f, Len_labels: %.2f\n",
                 13, gs->learning_rate_decay,
                 gs->total_learned_lines / (double)(gs->iter * gs->total_lines + 1) * 100,
                 (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
                 (lines_sec / (double)1000),
                 gs->loss / (gs->total_learned_lines + 1), gs->total_learned_lines, 
                 eta_hours, eta_minutes, eta_seconds % 60,
-                debug_avg_len / (double)(gs->total_learned_lines + 1));
+                debug_avg_len / (double)(gs->total_learned_lines + 1),
+              debug_avg_labels_len / (double)(gs->total_learned_lines + 1));
 
           fflush(stdout);
 
         }
+
+        sentence_length = 0;
+        ngram_sentences_length = 0;
+        label_length = 0;
+        memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+
+        memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
+        memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+        clock_gettime(CLOCK_MONOTONIC, &token_st);
+        
       } else {
         long long word_index = search_vocab(token, gs);
 
