@@ -340,6 +340,13 @@ void *train_thread(thread_args *args) {
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
     clock_gettime(CLOCK_MONOTONIC, &token_st);
     while (br_read_word(token, &br) != -1) {
+      long long len_word = 0;
+
+      for (long i = 0;;i++) {
+        if (words[i] == -1)  {break;} 
+        len_word++;
+      }
+
       if (line >= max_line) {
         break; // Stop reading if we reach the maximum line for this thread
       }
@@ -358,143 +365,143 @@ void *train_thread(thread_args *args) {
 
         long long golden_label = 0;
           
-        // if (sentence_length > 0 && label_length > 0) {
+        if (sentence_length > 0 && label_length > 0) {
   
   
-        //   // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
-        //   memset(neu1, 0, gs->layer1_size * sizeof(float));
-        //   memset(neu2, 0, gs->label_size * sizeof(float));
-        //   memset(neu1err, 0, gs->layer1_size * sizeof(float));
-        //   for (long long j = 0; j <  sentence_length; j++) {
-        //     if (words[j] != -1) {
-        //       for (long long k = 0; k < gs->layer1_size; k++) {
-        //         neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
-        //       }
-        //     }
-        //   }
+          // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
+          memset(neu1, 0, gs->layer1_size * sizeof(float));
+          memset(neu2, 0, gs->label_size * sizeof(float));
+          memset(neu1err, 0, gs->layer1_size * sizeof(float));
+          for (long long j = 0; j <  sentence_length; j++) {
+            if (words[j] != -1) {
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
+              }
+            }
+          }
   
-        //   for (long long j = 0; j < gs->layer1_size; j++) {
-        //     //neu1: 1 x h
-        //     neu1[j] /= sentence_length; // 평균을 구함
-        //   }
+          for (long long j = 0; j < gs->layer1_size; j++) {
+            //neu1: 1 x h
+            neu1[j] /= sentence_length; // 평균을 구함
+          }
   
   
-        //   // implement Hiereical softmax
-        //   if (gs->hs) {
-        //     float loss = 0.0f;
-        //     for (int i = 0; i < label_length; i++) {
-        //       if (labels[i] >= 0) {
-        //         golden_label = labels[i];
-        //       } else {
-        //         continue ;
-        //       }
-        //       for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
+          // implement Hiereical softmax
+          if (gs->hs) {
+            float loss = 0.0f;
+            for (int i = 0; i < label_length; i++) {
+              if (labels[i] >= 0) {
+                golden_label = labels[i];
+              } else {
+                continue ;
+              }
+              for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
                 
-        //         float f = 0.0f;
-        //         // layer1: vocab * hidden
-        //         // layer2: hidden * label_size
-        //         // neu1: 1 * hidden
-        //         // neu1err: 1 * hidden
-        //         // like neu2
-        //         long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
-        //         long long M = gs->layer1_size; // hidden size
-        //         for (long long j = 0; j < gs->layer1_size; j++) {
-        //           f += neu1[j] * gs->layer2[point * M + j];
-        //         }
-        //         f = 1.0f / (1.0f + expf(-f)); // sigmoid function
-        //         float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
-        //         if (g > 6) g = 6;
-        //         if (g < -6) g = -6;
-        //         // block thread
-        //         for (long long j = 0; j < M; j++) {
-        //           neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
-        //           gs->layer2[point * M + j] += g * neu1[j]; // update layer2
-        //         }
-        //         if (gs->labels[golden_label].code[d] == 0) {
-        //           loss += -logf(f + 1e-10f); // log loss
-        //         } else {
-        //           // if code is 0, then we are at the internal node
-        //           loss += -logf(1 - f + 1e-10f); // log loss
+                float f = 0.0f;
+                // layer1: vocab * hidden
+                // layer2: hidden * label_size
+                // neu1: 1 * hidden
+                // neu1err: 1 * hidden
+                // like neu2
+                long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
+                long long M = gs->layer1_size; // hidden size
+                for (long long j = 0; j < gs->layer1_size; j++) {
+                  f += neu1[j] * gs->layer2[point * M + j];
+                }
+                f = 1.0f / (1.0f + expf(-f)); // sigmoid function
+                float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
+                if (g > 6) g = 6;
+                if (g < -6) g = -6;
+                // block thread
+                for (long long j = 0; j < M; j++) {
+                  neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
+                  gs->layer2[point * M + j] += g * neu1[j]; // update layer2
+                }
+                if (gs->labels[golden_label].code[d] == 0) {
+                  loss += -logf(f + 1e-10f); // log loss
+                } else {
+                  // if code is 0, then we are at the internal node
+                  loss += -logf(1 - f + 1e-10f); // log loss
   
-        //         }
-        //       }
-        //     }
-        //     for (long long j = 0; j < sentence_length; j++) {
-        //       if (words[j] != -1) {
-        //         for (long long k = 0; k < gs->layer1_size; k++) {
-        //           gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
-        //         }
-        //       }
-        //     }
-        //     if (label_length > 0) {
-        //       loss /= label_length;
-        //       gs->loss += loss;
-        //     }
-        //   } else { // if hierarchical softmax is not used
+                }
+              }
+            }
+            for (long long j = 0; j < sentence_length; j++) {
+              if (words[j] != -1) {
+                for (long long k = 0; k < gs->layer1_size; k++) {
+                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
+                }
+              }
+            }
+            if (label_length > 0) {
+              loss /= label_length;
+              gs->loss += loss;
+            }
+          } else { // if hierarchical softmax is not used
   
-        //     // neu1 dot layer2
-        //     for (long long j = 0; j < gs->label_size; j++) {
-        //       for (long long k = 0; k < gs->layer1_size; k++) {
-        //         neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
-        //       }
-        //     }
+            // neu1 dot layer2
+            for (long long j = 0; j < gs->label_size; j++) {
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
+              }
+            }
   
-        //     float max = neu2[0];
-        //     for (long long j = 1; j < gs->label_size; j++) {
-        //       if (neu2[j] > max) max = neu2[j];
-        //     }
+            float max = neu2[0];
+            for (long long j = 1; j < gs->label_size; j++) {
+              if (neu2[j] > max) max = neu2[j];
+            }
   
-        //     float sum = 0.0f;
-        //     for (long long j = 0; j < gs->label_size; j++) {
-        //         neu2[j] = expf(neu2[j] - max);
-        //         sum += neu2[j];
-        //     }
-        //     for (long long j = 0; j < gs->label_size; j++)
-        //         neu2[j] /= sum;
+            float sum = 0.0f;
+            for (long long j = 0; j < gs->label_size; j++) {
+                neu2[j] = expf(neu2[j] - max);
+                sum += neu2[j];
+            }
+            for (long long j = 0; j < gs->label_size; j++)
+                neu2[j] /= sum;
   
-        //     float loss = 0.0f;
+            float loss = 0.0f;
   
-        //     memset(neu1err, 0, gs->layer1_size * sizeof(float));
-        //     memset(neu2err, 0, gs->label_size * sizeof(float));
-        //     for (int i = 0; i < label_length; i++) {
-        //       if (labels[i] >= 0) {
-        //         golden_label = labels[i];
-        //       } else {
-        //         break ;
-        //       }
+            memset(neu1err, 0, gs->layer1_size * sizeof(float));
+            memset(neu2err, 0, gs->label_size * sizeof(float));
+            for (int i = 0; i < label_length; i++) {
+              if (labels[i] >= 0) {
+                golden_label = labels[i];
+              } else {
+                break ;
+              }
   
-        //       float g = 0.0f;
-        //       // multi answer 
-        //       for (long long j = 0; j < gs->label_size; j++) {
-        //         g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
-        //         if (g > 6) g = 6;
-        //         if (g < -6) g = -6;
-        //         for (long long k = 0; k < gs->layer1_size; k++) {
-        //           neu1err[k] += g * gs->layer2[k * gs->label_size + j]; // to neu1
-        //           gs->layer2[k * gs->label_size + j] += g * neu1[k]; // update layer2
-        //         } 
-        //       }
+              float g = 0.0f;
+              // multi answer 
+              for (long long j = 0; j < gs->label_size; j++) {
+                g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
+                if (g > 6) g = 6;
+                if (g < -6) g = -6;
+                for (long long k = 0; k < gs->layer1_size; k++) {
+                  neu1err[k] += g * gs->layer2[k * gs->label_size + j]; // to neu1
+                  gs->layer2[k * gs->label_size + j] += g * neu1[k]; // update layer2
+                } 
+              }
               
-        //       loss += -logf(neu2[golden_label] + 1e-10f);
-        //       // if (isnan(loss) || isinf(loss)) {
-        //       //   getchar();
-        //       // }
-        //     }
-        //     // Update neu1err
-        //     for (long long j = 0; j < sentence_length; j++) {
-        //       if (words[j] != -1) {
-        //         for (long long k = 0; k < gs->layer1_size; k++) {
-        //           gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
-        //         }
-        //       }
-        //     }
+              loss += -logf(neu2[golden_label] + 1e-10f);
+              // if (isnan(loss) || isinf(loss)) {
+              //   getchar();
+              // }
+            }
+            // Update neu1err
+            for (long long j = 0; j < sentence_length; j++) {
+              if (words[j] != -1) {
+                for (long long k = 0; k < gs->layer1_size; k++) {
+                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
+                }
+              }
+            }
   
-        //     if (label_length > 0) {
-        //       loss /= label_length;
-        //       gs->loss += loss;
-        //     }
-        //   }
-        // }
+            if (label_length > 0) {
+              loss /= label_length;
+              gs->loss += loss;
+            }
+          }
+        }
 
         line++;
         gs->total_learned_lines++;
@@ -504,18 +511,13 @@ void *train_thread(thread_args *args) {
         ngram_sentences_length = 0;
         label_length = 0;
         memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
-        long long len_word = 0;
 
-        for (long i = 0;;i++) {
-          if (words[i] == -1)  {break;} 
-          len_word++;
-        }
-        debug_avg_len += len_word;
         memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
         memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
         clock_gettime(CLOCK_MONOTONIC, &token_st);
+        debug_avg_len += len_word;
 
-        if (gs->debug_mode > 1 && temp % (gs->num_threads * 1000) == thread_id * 1000) {
+        if (gs->debug_mode > 1 && temp % (gs->num_threads * 1) == thread_id * 1) {
           temp = 0;
           clock_t now = clock();
           struct timespec end_time;
