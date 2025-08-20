@@ -10,7 +10,7 @@ CFLAGS  := -O3 -march=native -Wall -funroll-loops -Wno-unused-result -lm -pthrea
 INC     := -I$(INCLUDE_DIR)
 
 # 공통 소스 및 오브젝트 (⚠️ 이걸 먼저 정의)
-COMMON_SRCS := $(SRC_DIR)/utils.c $(SRC_DIR)/vocab.c 
+COMMON_SRCS := $(SRC_DIR)/parse_data_utils.c $(SRC_DIR)/parse_data_vocab.c 
 COMMON_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(COMMON_SRCS))
 
 # 실행 파일 목록 (여기만 고치면 됨)
