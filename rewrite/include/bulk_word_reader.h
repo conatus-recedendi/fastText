@@ -117,6 +117,7 @@ static inline long long br_read_word(char *word, BufReader *br) {
                     // newline alone => return </s> immediately (already consumed)
                     strcpy(word, "</s>");
                     return br->file_pos;
+                    
                 } else {
                     // skip leading spaces/tabs
                     continue;
