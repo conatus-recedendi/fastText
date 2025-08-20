@@ -282,6 +282,7 @@ void *train_thread(thread_args *args) {
   FILE *fi = fopen(gs->train_file, "rb");
   BufReader br;
   // printf("[INFO] Thread %lld opened file %s\n", thread_id, gs->train_file);
+  br_init(&br, fi, 1 << 20);
   for (int iter = 0; iter < gs->iter; iter++) {
     sentence_length = 0;
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
@@ -337,7 +338,6 @@ void *train_thread(thread_args *args) {
     memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
     clock_gettime(CLOCK_MONOTONIC, &token_st);
-    br_init(&br, fi, 1 << 20);
     while (br_read_word(token, &br) != -1) {
       if (line >= max_line) {
         break; // Stop reading if we reach the maximum line for this thread
