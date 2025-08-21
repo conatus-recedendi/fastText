@@ -287,7 +287,7 @@ void *train_thread(thread_args *args) {
   for (int iter = 0; iter < gs->iter; iter++) {
     sentence_length = 0;
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
-    br_init(&br, fi, 1 << 21); // 2MB buffer size
+    br_init(&br, fi, 1 << 19); // 512KB buffer size
 
     char word[MAX_STRING];
     char prev_word[MAX_STRING]; // only support for ngram=2
