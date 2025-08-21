@@ -294,6 +294,9 @@ void reduce_label(global_setting *gs, long long min_reduce) {
   for (a = 0; a < *vocab_size; a++) {
     // Hash will be re-computed, as it is not actual
     hash = get_word_hash(vocab[a].word, gs);
+    if (hash == -1) {
+      continue ;
+    }
     while (vocab_hash[hash] != -1) hash = (hash + 1) % vocab_hash_size;
     vocab_hash[hash] = a;
   }
