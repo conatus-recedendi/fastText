@@ -480,7 +480,7 @@ void test_thread(global_setting *gs) {
   // }
   long long line = 0;
   long long max_line = count_lines(fi);
-  // printf("[INFO] Total lines in test file: %lld\n", max_line);
+  printf("[INFO] Total lines in test file: %lld\n", max_line);
 
   long long correct_cnt = 0;
   long long total_cnt = 0;
@@ -504,15 +504,15 @@ void test_thread(global_setting *gs) {
   long long avg_failure_ngram = 0;
   long long avg_word =0;
   
-  // printf("[INFO] Starting test loop...\n");
+  printf("[INFO] Starting test loop...\n");
   fseek(fi, 0, SEEK_SET);
 
   while (fgets(sen, MAX_SENTENCE_LENGTH, fi)) {
-    // printf("[DEBUG] Processing line %lld: %s", line, sen);
+    printf("[DEBUG] Processing line %lld: %s", line, sen);
     line++;
     if (line % 1000 == 0) {
-      // printf("%c[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld, total: %lld/%lld\n", 13,avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000, line, (gs->train_words / gs->iter));
-      // fflush(stdout);
+      printf("%c[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld, total: %lld/%lld\n", 13,avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000, line, (gs->train_words / gs->iter));
+      fflush(stdout);
       avg_ngram = 0;
       avg_failure_ngram = 0;
       avg_word = 0;
