@@ -372,145 +372,145 @@ void *train_thread(thread_args *args) {
           }
       } else if (strncmp(token, "</s>", 4) == 0) {
         memcpy(prev_word, "", 1); // Reset previous word for next sentence
-        // gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
-        // gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
+        gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
+        gs->learning_rate_decay = gs->learning_rate * (1 - (double)gs->total_learned_lines / (double)(gs->total_lines * gs->iter));
         
         // // running training
 
         // long long golden_label = 0;
           
-        // // if (sentence_length > 0 && label_length > 0) {
+        // if (sentence_length > 0 && label_length > 0) {
   
   
-        // //   // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
-        // //   memset(neu1, 0, gs->layer1_size * sizeof(float));
-        // //   // memset(neu2, 0, gs->label_size * sizeof(float));
-        // //   memset(neu1err, 0, gs->layer1_size * sizeof(float));
-        // //   for (long long j = 0; j <  sentence_length; j++) {
-        // //     if (words[j] != -1) {
-        // //       for (long long k = 0; k < gs->layer1_size; k++) {
-        // //         neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
-        // //       }
-        // //     }
-        // //   }
+        //   // words 안에 있는 단어들에 대한 임베딩을 가져와서 평균을 구함
+        //   memset(neu1, 0, gs->layer1_size * sizeof(float));
+        //   // memset(neu2, 0, gs->label_size * sizeof(float));
+        //   memset(neu1err, 0, gs->layer1_size * sizeof(float));
+        //   for (long long j = 0; j <  sentence_length; j++) {
+        //     if (words[j] != -1) {
+        //       for (long long k = 0; k < gs->layer1_size; k++) {
+        //         neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
+        //       }
+        //     }
+        //   }
   
-        // //   for (long long j = 0; j < gs->layer1_size; j++) {
-        // //     //neu1: 1 x h
-        // //     neu1[j] /= sentence_length; // 평균을 구함
-        // //   }
+        //   for (long long j = 0; j < gs->layer1_size; j++) {
+        //     //neu1: 1 x h
+        //     neu1[j] /= sentence_length; // 평균을 구함
+        //   }
   
   
-        // //   // implement Hiereical softmax
-        // //   if (gs->hs == 1) {
-        // //     float loss = 0.0f;
-        // //     for (int i = 0; i < label_length; i++) {
-        // //       if (labels[i] >= 0) {
-        // //         golden_label = labels[i];
-        // //       } else {
-        // //         continue ;
-        // //       }
-        // //       for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
+        //   // implement Hiereical softmax
+        //   if (gs->hs == 1) {
+        //     float loss = 0.0f;
+        //     for (int i = 0; i < label_length; i++) {
+        //       if (labels[i] >= 0) {
+        //         golden_label = labels[i];
+        //       } else {
+        //         continue ;
+        //       }
+        //       for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
                 
-        // //         float f = 0.0f;
-        // //         // layer1: vocab * hidden
-        // //         // layer2: hidden * label_size
-        // //         // neu1: 1 * hidden
-        // //         // neu1err: 1 * hidden
-        // //         // like neu2
-        // //         long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
-        // //         long long M = gs->layer1_size; // hidden size
-        // //         for (long long j = 0; j < M; j++) {
-        // //           f += neu1[j] * gs->layer2[point * M + j];
-        // //         }
-        // //         // f = 1.0f / (1.0f + expf(-f)); // sigmoid function
-        // //         f = fast_sigmoid(f); // fast sigmoid function
-        // //         float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
-        // //         if (g > 6) g = 6;
-        // //         if (g < -6) g = -6;
-        // //         // block thread
-        // //         for (long long j = 0; j < M; j++) {
-        // //           neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
-        // //           gs->layer2[point * M + j] += g * neu1[j]; // update layer2
-        // //         }
-        // //         if (gs->labels[golden_label].code[d] == 0) {
-        // //           loss += -logf(1 - f + 1e-10f); // log loss
-        // //         } else {
-        // //           loss += -logf(f + 1e-10f); // log loss
-        // //         }
-        // //       }
-        // //     }
-        // //     for (long long j = 0; j < sentence_length; j++) {
-        // //       if (words[j] != -1) {
-        // //         for (long long k = 0; k < gs->layer1_size; k++) {
-        // //           gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
-        // //         }
-        // //       }
-        // //     }
-        // //     if (label_length > 0) {
-        // //       loss /= label_length;
-        // //       gs->loss += loss;
-        // //     }
-        // //   }
+        //         float f = 0.0f;
+        //         // layer1: vocab * hidden
+        //         // layer2: hidden * label_size
+        //         // neu1: 1 * hidden
+        //         // neu1err: 1 * hidden
+        //         // like neu2
+        //         long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
+        //         long long M = gs->layer1_size; // hidden size
+        //         for (long long j = 0; j < M; j++) {
+        //           f += neu1[j] * gs->layer2[point * M + j];
+        //         }
+        //         // f = 1.0f / (1.0f + expf(-f)); // sigmoid function
+        //         f = fast_sigmoid(f); // fast sigmoid function
+        //         float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
+        //         if (g > 6) g = 6;
+        //         if (g < -6) g = -6;
+        //         // block thread
+        //         for (long long j = 0; j < M; j++) {
+        //           neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
+        //           gs->layer2[point * M + j] += g * neu1[j]; // update layer2
+        //         }
+        //         if (gs->labels[golden_label].code[d] == 0) {
+        //           loss += -logf(1 - f + 1e-10f); // log loss
+        //         } else {
+        //           loss += -logf(f + 1e-10f); // log loss
+        //         }
+        //       }
+        //     }
+        //     for (long long j = 0; j < sentence_length; j++) {
+        //       if (words[j] != -1) {
+        //         for (long long k = 0; k < gs->layer1_size; k++) {
+        //           gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
+        //         }
+        //       }
+        //     }
+        //     if (label_length > 0) {
+        //       loss /= label_length;
+        //       gs->loss += loss;
+        //     }
+        //   }
 
-        // //   // implement negative sampling
-        // //   // if (gs->hs == 2) {
-        // //   //   float loss = 0.0f;
-        // //   //   long long target_label;
-        // //   //   long long label_count = 0;
+        //   // implement negative sampling
+        //   // if (gs->hs == 2) {
+        //   //   float loss = 0.0f;
+        //   //   long long target_label;
+        //   //   long long label_count = 0;
             
-        // //   //   // Iterate through all true (positive) labels in the sentence
-        // //   //   for (int i = 0; i < label_length; i++) {
-        // //   //       if (labels[i] >= 0) {
-        // //   //           target_label = labels[i];
-        // //   //           label_count++;
+        //   //   // Iterate through all true (positive) labels in the sentence
+        //   //   for (int i = 0; i < label_length; i++) {
+        //   //       if (labels[i] >= 0) {
+        //   //           target_label = labels[i];
+        //   //           label_count++;
 
-        // //   //           // Positive sample: update weights for the true label
-        // //   //           // f represents the score of the positive sample
-        // //   //           float f = 0.0f;
-        // //   //           long long M = gs->layer1_size;
-        // //   //           for (long long j = 0; j < M; j++) {
-        // //   //               f += neu1[j] * gs->layer2[target_label * M + j];
-        // //   //           }
-        // //   //           float g = (1 - 1.0f / (1.0f + expf(-f))) * gs->learning_rate_decay;
+        //   //           // Positive sample: update weights for the true label
+        //   //           // f represents the score of the positive sample
+        //   //           float f = 0.0f;
+        //   //           long long M = gs->layer1_size;
+        //   //           for (long long j = 0; j < M; j++) {
+        //   //               f += neu1[j] * gs->layer2[target_label * M + j];
+        //   //           }
+        //   //           float g = (1 - 1.0f / (1.0f + expf(-f))) * gs->learning_rate_decay;
 
                     
-        // //   //           for (long long j = 0; j < M; j++) {
-        // //   //               neu1err[j] += g * gs->layer2[target_label * M + j];
-        // //   //               gs->layer2[target_label * M + j] += g * neu1[j];
-        // //   //           }
-        // //   //           loss += -logf(1.0f / (1.0f + expf(-f)) + 1e-10f);
+        //   //           for (long long j = 0; j < M; j++) {
+        //   //               neu1err[j] += g * gs->layer2[target_label * M + j];
+        //   //               gs->layer2[target_label * M + j] += g * neu1[j];
+        //   //           }
+        //   //           loss += -logf(1.0f / (1.0f + expf(-f)) + 1e-10f);
 
-        // //   //           // Negative samples: iterate for each negative sample
-        // //   //           for (int k = 0; k < gs->negative_count; k++) {
-        // //   //               long long negative_label = 0;
-        // //   //               // Sample a random label from the negative labels table
-        // //   //               negative_label = gs->neg_table[rand() % gs->neg_table_size];
+        //   //           // Negative samples: iterate for each negative sample
+        //   //           for (int k = 0; k < gs->negative_count; k++) {
+        //   //               long long negative_label = 0;
+        //   //               // Sample a random label from the negative labels table
+        //   //               negative_label = gs->neg_table[rand() % gs->neg_table_size];
                         
-        // //   //               // If the sampled label is the same as the target, re-sample
-        // //   //               if (negative_label == target_label) {
-        // //   //                   k--;
-        // //   //                   continue;
-        // //   //               }
+        //   //               // If the sampled label is the same as the target, re-sample
+        //   //               if (negative_label == target_label) {
+        //   //                   k--;
+        //   //                   continue;
+        //   //               }
 
-        // //   //               // f represents the score of the negative sample
-        // //   //               f = 0.0f;
-        // //   //               for (long long j = 0; j < M; j++) {
-        // //   //                   f += neu1[j] * gs->layer2[negative_label * M + j];
-        // //   //               }
+        //   //               // f represents the score of the negative sample
+        //   //               f = 0.0f;
+        //   //               for (long long j = 0; j < M; j++) {
+        //   //                   f += neu1[j] * gs->layer2[negative_label * M + j];
+        //   //               }
                         
-        // //   //               // update weights for the negative label
-        // //   //               g = (0 - 1.0f / (1.0f + expf(-f))) * gs->learning_rate_decay;
+        //   //               // update weights for the negative label
+        //   //               g = (0 - 1.0f / (1.0f + expf(-f))) * gs->learning_rate_decay;
                         
-        // //   //               for (long long j = 0; j < M; j++) {
-        // //   //                   neu1err[j] += g * gs->layer2[negative_label * M + j];
-        // //   //                   gs->layer2[negative_label * M + j] += g * neu1[j];
-        // //   //               }
-        // //   //               loss += -logf(1.0f - 1.0f / (1.0f + expf(-f)) + 1e-10f);
-        // //   //           }
-        // //   //       }
-        // //   //   }
-        // //   // }
-        // // }
+        //   //               for (long long j = 0; j < M; j++) {
+        //   //                   neu1err[j] += g * gs->layer2[negative_label * M + j];
+        //   //                   gs->layer2[negative_label * M + j] += g * neu1[j];
+        //   //               }
+        //   //               loss += -logf(1.0f - 1.0f / (1.0f + expf(-f)) + 1e-10f);
+        //   //           }
+        //   //       }
+        //   //   }
+        //   // }
+        // }
 
         // line++;
         gs->total_learned_lines++;
@@ -565,47 +565,49 @@ void *train_thread(thread_args *args) {
         memset(labels, -1, sizeof(long long) * len_labels); // Initialize labels to -1
         memset(words, -1, sizeof(long long) * len_word); // Initialize words to -1 (unknown word
         // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-        // clock_gettime(CLOCK_MONOTONIC, &token_st);
+        clock_gettime(CLOCK_MONOTONIC, &token_st);
         
       } else {
-        // long long word_index = search_vocab(token, gs);
+        long long word_index = search_vocab(token, gs);
 
-        // if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE - 1) {
-        //   if (gs->sample > 0) {
-        //     float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
-        //     double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
+        if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE - 1) {
+          if (gs->sample > 0) {
+            float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
+            double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
 
-        //     if (ran < random_value) {
-        //       // token = strtok(NULL, " ");
-        //       continue; // Skip this word
-        //     }
-        //   }
-        //   words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
-        //   avg_word++;
-        //   if (gs->ngram > 1) {
-        //     if (prev_word[0] == 0) {
-        //       strncpy(prev_word, token, sizeof(prev_word) - 1);
-              
-        //     } else {
-        //       memset(concat_word, 0, sizeof(concat_word));
-        //       // strncat(concat_word, prev_word, strlen(prev_word));
-        //       // strncat(concat_word, "-", 1);
-        //       // strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
-        //       snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+            if (ran < random_value) {
+              // token = strtok(NULL, " ");
+              continue; // Skip this word
+            }
+          }
+          words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
+          avg_word++;
+          if (gs->ngram > 1) {
+            if (prev_word[0] == 0) {
+              // strncpy(prev_word, token, sizeof(prev_word) - 1);
+              // prev_word[sizeof(prev_word) - 1] = '\0'; // Ensure null termination
+            } else {
+              // memset(concat_word, 0, sizeof(concat_word));
+              snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
 
-        //       long long index = search_vocab(concat_word, gs);
-        //       if (index == -1) {
-        //         avg_failure_ngram++;
-        //       } else {
-        //         avg_ngram++;
-        //         words[sentence_length++] = index; // ngram word
-        //       }
-        //     }
-        //   }
-        // }
-        // memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-        // strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
-        // prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+              long long index = search_vocab(concat_word, gs);
+              if (index == -1) {
+                avg_failure_ngram++;
+              } else {
+                avg_ngram++;
+                words[sentence_length++] = index; // ngram word
+              }
+            }
+          }
+        }
+
+        if (gs->ngram > 1) {
+          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+          strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+          prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+
+        }
+
       }
 
       strncpy(token, "", MAX_STRING - 1); // Reset token for next word
