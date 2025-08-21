@@ -349,7 +349,7 @@ void *train_thread(thread_args *args) {
       if (strncmp(token, "__label__", 9) == 0) {
           memset(prev_word, 0, sizeof(prev_word));
           long long label_index = search_label(token, gs);
-          if (label_index != -1) {
+          if (label_index != -1 && label_length < gs->label_size) {
               labels[label_length++] = label_index; 
           }
       } else if (strncmp(token, "</s>", 4) == 0) {
@@ -907,10 +907,10 @@ void train_model(global_setting *gs) {
   // 스레드에서는 start offset으로 fseek하고, 각 thread에서 실행할 데이터만큼 학습
   
   // long long total_line;
-  gs->start_offsets= malloc(sizeof(long long) * gs->num_threads);
-  gs->end_offsets = malloc(sizeof(long long) * gs->num_threads);
-  gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
-  gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads);
+  gs->start_offsets= malloc(sizeof(long long) * gs->num_threads + 1);
+  gs->end_offsets = malloc(sizeof(long long) * gs->num_threads + 1);
+  gs->start_line_by_thread = malloc(sizeof(long long) * gs->num_threads + 1);
+  gs->total_line_by_thread = malloc(sizeof(long long) * gs->num_threads + 1);
   gs->label_size = 0;
 
   compute_thread_offsets(fp, gs);
