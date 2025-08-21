@@ -562,7 +562,7 @@ void *train_thread(thread_args *args) {
         ngram_sentences_length = 0;
         label_length = 0;
         // memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
-        lables[0] = -1;
+        labels[0] = -1;
         // memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
         words[0] = -1; // Reset words array for the next sentence
         // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
@@ -613,10 +613,9 @@ void *train_thread(thread_args *args) {
       strncpy(token, "", MAX_STRING - 1); // Reset token for next word
 
     }
-  }
-  
     br_free(&br);
   }
+  
   free(labels);
   free(neu1);
   free(neu1err);
