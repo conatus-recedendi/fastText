@@ -369,7 +369,7 @@ void *train_thread(thread_args *args) {
           long long label_index = search_label(token, gs);
           if (label_index != -1 && label_length < gs->label_size) {
               labels[label_length++] = label_index; 
-        
+          }
       } else if (strncmp(token, "</s>", 4) == 0) {
         memcpy(prev_word, "", 1); // Reset previous word for next sentence
         // gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
@@ -561,7 +561,7 @@ void *train_thread(thread_args *args) {
         // sentence_length = 0;
         // ngram_sentences_length = 0;
         // label_length = 0;
-        memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+        // memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
 
         // memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
         // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
