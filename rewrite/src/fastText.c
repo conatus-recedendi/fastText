@@ -610,7 +610,12 @@ void *train_thread(thread_args *args) {
 
       }
 
-      strncpy(token, "", MAX_STRING - 1); // Reset token for next word
+      long long z = 0;
+      while (1) {
+        if (!token[z]) break;
+        token[z++] = 0;
+      }
+      // strncpy(token, "", MAX_STRING - 1); // Reset token for next word
 
     }
     br_free(&br);
