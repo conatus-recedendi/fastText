@@ -513,7 +513,7 @@ void *train_thread(thread_args *args) {
         // // }
 
         // line++;
-        // gs->total_learned_lines++;
+        gs->total_learned_lines++;
         // temp++;
 
         // long long len_word = 0;
@@ -558,9 +558,9 @@ void *train_thread(thread_args *args) {
 
         }
 
-        // sentence_length = 0;
-        // ngram_sentences_length = 0;
-        // label_length = 0;
+        sentence_length = 0;
+        ngram_sentences_length = 0;
+        label_length = 0;
         // memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
 
         // memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
