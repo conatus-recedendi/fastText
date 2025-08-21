@@ -377,7 +377,7 @@ void *train_thread(thread_args *args) {
         
         // // running training
 
-        // long long golden_label = 0;
+        long long golden_label = 0;
           
         if (sentence_length > 0 && label_length > 0) {
   
