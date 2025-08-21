@@ -492,7 +492,7 @@ void *train_thread(thread_args *args) {
         clock_t now = clock();
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC, &end_time);
-        if (gs->debug_mode > 1 && thread_id == 0 && end_time.tv_sec - last_log.tv_sec >= 0) {
+        if (gs->debug_mode > 1 && thread_id == 0 && end_time.tv_sec - last_log.tv_sec >= 1) {
           last_log = end_time;
           temp = 1;
           
