@@ -280,6 +280,7 @@ void reduce_label(global_setting *gs, long long min_reduce) {
   int *vocab_hash = gs->label_hash;
   long long vocab_hash_size = gs->label_hash_size;
 
+
   for (a = 0; a < *vocab_size; a++) if (vocab[a].cn >= min_reduce) {
     vocab[b].cn = vocab[a].cn;
     for (int c = 0; c < MAX_STRING; c++) {

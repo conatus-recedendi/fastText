@@ -287,7 +287,7 @@ void *train_thread(thread_args *args) {
   for (int iter = 0; iter < gs->iter; iter++) {
     sentence_length = 0;
     fseek(fi, gs->start_offsets[thread_id], SEEK_SET);
-    br_init(&br, fi, 1 << 20); // 1MB buffer size
+    br_init(&br, fi, 1 << 21); // 2MB buffer size
 
     char word[MAX_STRING];
     char prev_word[MAX_STRING]; // only support for ngram=2
@@ -414,11 +414,9 @@ void *train_thread(thread_args *args) {
                   gs->layer2[point * M + j] += g * neu1[j]; // update layer2
                 }
                 if (gs->labels[golden_label].code[d] == 0) {
-                  loss += -logf(f + 1e-10f); // log loss
-                } else {
-                  // if code is 0, then we are at the internal node
                   loss += -logf(1 - f + 1e-10f); // log loss
-  
+                } else {
+                  loss += -logf(f + 1e-10f); // log loss
                 }
               }
             }
@@ -429,69 +427,6 @@ void *train_thread(thread_args *args) {
                 }
               }
             }
-            if (label_length > 0) {
-              loss /= label_length;
-              gs->loss += loss;
-            }
-          } else { // if hierarchical softmax is not used
-  
-            // neu1 dot layer2
-            for (long long j = 0; j < gs->label_size; j++) {
-              for (long long k = 0; k < gs->layer1_size; k++) {
-                neu2[j] += neu1[k] * gs->layer2[k * gs->label_size + j];
-              }
-            }
-  
-            float max = neu2[0];
-            for (long long j = 1; j < gs->label_size; j++) {
-              if (neu2[j] > max) max = neu2[j];
-            }
-  
-            float sum = 0.0f;
-            for (long long j = 0; j < gs->label_size; j++) {
-                neu2[j] = expf(neu2[j] - max);
-                sum += neu2[j];
-            }
-            for (long long j = 0; j < gs->label_size; j++)
-                neu2[j] /= sum;
-  
-            float loss = 0.0f;
-  
-            memset(neu1err, 0, gs->layer1_size * sizeof(float));
-            memset(neu2err, 0, gs->label_size * sizeof(float));
-            for (int i = 0; i < label_length; i++) {
-              if (labels[i] >= 0) {
-                golden_label = labels[i];
-              } else {
-                break ;
-              }
-  
-              float g = 0.0f;
-              // multi answer 
-              for (long long j = 0; j < gs->label_size; j++) {
-                g = gs->learning_rate_decay* ((j == golden_label ? 1.0f : 0.0f) - neu2[j]);
-                if (g > 6) g = 6;
-                if (g < -6) g = -6;
-                for (long long k = 0; k < gs->layer1_size; k++) {
-                  neu1err[k] += g * gs->layer2[k * gs->label_size + j]; // to neu1
-                  gs->layer2[k * gs->label_size + j] += g * neu1[k]; // update layer2
-                } 
-              }
-              
-              loss += -logf(neu2[golden_label] + 1e-10f);
-              // if (isnan(loss) || isinf(loss)) {
-              //   getchar();
-              // }
-            }
-            // Update neu1err
-            for (long long j = 0; j < sentence_length; j++) {
-              if (words[j] != -1) {
-                for (long long k = 0; k < gs->layer1_size; k++) {
-                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k]; // Update layer1
-                }
-              }
-            }
-  
             if (label_length > 0) {
               loss /= label_length;
               gs->loss += loss;
