@@ -524,7 +524,7 @@ void *train_thread(thread_args *args) {
         
         memset(labels, -1, sizeof(long long) * len_labels); // Initialize labels to -1
         memset(words, -1, sizeof(long long) * len_word); // Initialize words to -1 (unknown word
-        // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+        memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
         clock_gettime(CLOCK_MONOTONIC, &token_st);
         
       } else {
