@@ -365,7 +365,8 @@ void *train_thread(thread_args *args) {
         break; // Stop reading if we reach the maximum line for this thread
       }
       if (strncmp(token, "__label__", 9) == 0) {
-          memset(prev_word, 0, sizeof(prev_word));
+          long long z = 0;
+          while(prev_word[z]) prev_word[z] = 0;
           long long label_index = search_label(token, gs);
           if (label_index != -1 && label_length < gs->label_size) {
               labels[label_length++] = label_index; 
@@ -437,7 +438,7 @@ void *train_thread(thread_args *args) {
                   neu1err[j] += g * wrow[j]; // to neu1
                   gs->layer2[point[d] * M + j] += g * neu1[j]; // update layer2
                 }
-                if (gs->labels[golden_label].code[d] == 0) {
+                if (gs->labels[golden_label].code[d] == 0 && temp % 100000 == 10) {
                   loss += -logf(1 - f + 1e-10f); // log loss
                 } else {
                   loss += -logf(f + 1e-10f); // log loss
