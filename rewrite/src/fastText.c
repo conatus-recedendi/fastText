@@ -378,15 +378,20 @@ void *train_thread(thread_args *args) {
         // // running training
 
         long long golden_label = 0;
+        long long M = gs->layer1_size; // hidden size
+        float * __restrict layer2 = gs->layer2;
+        const float lr = gs->learning_rate_decay;
           
         if (sentence_length > 0 && label_length > 0) {
+          for (long long i = 0; i < gs->layer1_size; i++) {
+            neu1[i] = 0.0f; // Reset neu1 for each sentence
+            neu1err[i] = 0.0f; // Reset neu1err for each sentence
+          }
   
   
           for (long long j = 0; j <  sentence_length; j++) {
             if (words[j] != -1) {
               for (long long k = 0; k < gs->layer1_size; k++) {
-                if (j == 0) neu1[k] = 0.0f;
-                
                 neu1[k] += gs->layer1[words[j] * gs->layer1_size + k];
               }
             }
@@ -407,29 +412,30 @@ void *train_thread(thread_args *args) {
               } else {
                 continue ;
               }
-              for (long long d=0;d<gs->labels[golden_label].codelen;d++) {
-                
+              const int codelen = gs->labels[golden_label].codelen;
+              const unsigned char *code = gs->labels[golden_label].code;
+              const long long *point = gs->labels[golden_label].point;
+              for (long long d=0;d<codelen;d++) {
+                const long long p = point[d];
+                float * __restrict wrow = &gs->layer2[p * M];
+
                 float f = 0.0f;
-                // layer1: vocab * hidden
-                // layer2: hidden * label_size
-                // neu1: 1 * hidden
-                // neu1err: 1 * hidden
-                // like neu2
-                long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
+
+                // long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
                 long long M = gs->layer1_size; // hidden size
                 for (long long j = 0; j < M; j++) {
-                  f += neu1[j] * gs->layer2[point * M + j];
+                  f += neu1[j] * wrow[j];
                 }
                 // f = 1.0f / (1.0f + expf(-f)); // sigmoid function
                 f = fast_sigmoid(f); // fast sigmoid function
-                float g = gs->learning_rate_decay * (1 - gs->labels[golden_label].code[d] - f);
+                const float target = (code[d] ? 1.0f : 0.0f); // target is 1 if code[d] is 1, else 0
+                float g = lr * (target - f);
                 if (g > 6) g = 6;
                 if (g < -6) g = -6;
                 // block thread
                 for (long long j = 0; j < M; j++) {
-                  if (d == 0) neu1err[j] = 0.0f; // reset neu1err for the first label
-                  neu1err[j] += g * gs->layer2[point * M + j]; // to neu1
-                  gs->layer2[point * M + j] += g * neu1[j]; // update layer2
+                  neu1err[j] += g * wrow[j]; // to neu1
+                  gs->layer2[point[d] * M + j] += g * neu1[j]; // update layer2
                 }
                 if (gs->labels[golden_label].code[d] == 0) {
                   loss += -logf(1 - f + 1e-10f); // log loss
@@ -438,11 +444,15 @@ void *train_thread(thread_args *args) {
                 }
               }
             }
+            const float inv_len = 1.0f / (float)label_length;
             for (long long j = 0; j < sentence_length; j++) {
-              if (words[j] != -1) {
-                for (long long k = 0; k < gs->layer1_size; k++) {
-                  gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] / sentence_length; // Update layer1
-                }
+              const long long w = words[j];
+              if (w < 0) continue ;
+              float * __restrict row = &gs->layer1[w * gs->layer1_size];
+
+              for (long long k = 0; k < gs->layer1_size; k++) {
+                // gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] * inv_len; // Update layer1
+                row[k] += neu1err[k] * inv_len; // Update layer1
               }
             }
             if (label_length > 0) {
@@ -451,64 +461,6 @@ void *train_thread(thread_args *args) {
             }
           }
 
-          // implement negative sampling
-          // if (gs->hs == 2) {
-          //   float loss = 0.0f;
-          //   long long target_label;
-          //   long long label_count = 0;
-            
-          //   // Iterate through all true (positive) labels in the sentence
-          //   for (int i = 0; i < label_length; i++) {
-          //       if (labels[i] >= 0) {
-          //           target_label = labels[i];
-          //           label_count++;
-
-          //           // Positive sample: update weights for the true label
-          //           // f represents the score of the positive sample
-          //           float f = 0.0f;
-          //           long long M = gs->layer1_size;
-          //           for (long long j = 0; j < M; j++) {
-          //               f += neu1[j] * gs->layer2[target_label * M + j];
-          //           }
-          //           float g = (1 - 1.0f / (1.0f + expf(-f))) * gs->learning_rate_decay;
-
-                    
-          //           for (long long j = 0; j < M; j++) {
-          //               neu1err[j] += g * gs->layer2[target_label * M + j];
-          //               gs->layer2[target_label * M + j] += g * neu1[j];
-          //           }
-          //           loss += -logf(1.0f / (1.0f + expf(-f)) + 1e-10f);
-
-          //           // Negative samples: iterate for each negative sample
-          //           for (int k = 0; k < gs->negative_count; k++) {
-          //               long long negative_label = 0;
-          //               // Sample a random label from the negative labels table
-          //               negative_label = gs->neg_table[rand() % gs->neg_table_size];
-                        
-          //               // If the sampled label is the same as the target, re-sample
-          //               if (negative_label == target_label) {
-          //                   k--;
-          //                   continue;
-          //               }
-
-          //               // f represents the score of the negative sample
-          //               f = 0.0f;
-          //               for (long long j = 0; j < M; j++) {
-          //                   f += neu1[j] * gs->layer2[negative_label * M + j];
-          //               }
-                        
-          //               // update weights for the negative label
-          //               g = (0 - 1.0f / (1.0f + expf(-f))) * gs->learning_rate_decay;
-                        
-          //               for (long long j = 0; j < M; j++) {
-          //                   neu1err[j] += g * gs->layer2[negative_label * M + j];
-          //                   gs->layer2[negative_label * M + j] += g * neu1[j];
-          //               }
-          //               loss += -logf(1.0f - 1.0f / (1.0f + expf(-f)) + 1e-10f);
-          //           }
-          //       }
-          //   }
-          // }
         }
 
         line++;
@@ -544,7 +496,7 @@ void *train_thread(thread_args *args) {
 
           
           printf("%clr: %f  Progress: %.2f%%  Words/sec: %.2fk, Lines/sec: %.fk, loss: %f, Lines: %lld, ETA: %lldH:%lldm:%llds, Len_word: %.2f, Len_labels: %.2f",
-                13, gs->learning_rate_decay,
+                13, lr,
                 gs->total_learned_lines / (double)(gs->iter * gs->total_lines + 1) * 100,
                 (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
                 (lines_sec / (double)1000),

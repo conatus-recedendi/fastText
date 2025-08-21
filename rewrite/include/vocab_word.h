@@ -9,6 +9,6 @@ typedef struct {
   char codelen; // Word string, Huffman code, and its length
   char word[VOCAB_MAX_STRING]; // Word string
   char code[VOCAB_MAX_CODE_LENGTH]; // Huffman code
-  char point[VOCAB_MAX_CODE_LENGTH + 1]; // Points to the nodes in the Huffman tree
+  long long point[VOCAB_MAX_CODE_LENGTH + 1]; // Points to the nodes in the Huffman tree
 } vocab_word;
 #endif
