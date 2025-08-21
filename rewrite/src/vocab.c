@@ -352,6 +352,7 @@ void create_vocab_from_train_file(global_setting *gs) {
       if (temp_label_hash == -1) {
         temp_label = add_label_to_vocab(word, gs);
         gs->labels[temp_label].cn = 1; // Initialize count to 1
+        // gs->neg_table[gs->neg_table_size++] = 1; // Initialize negative sampling table entry
       } else {
         gs->labels[temp_label_hash].cn++; 
       }
@@ -544,6 +545,14 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     }
     
   }
+
+  long long total_codelen =0 ;
+  for (a = 0; a < vocab_size; a++) {
+    total_codelen += vocab[a].codelen;
+    // printf("[DEBUG] Word: %s, Code Length: %lld, Count: %lld\n", vocab[a].word, vocab[a].codelen, vocab[a].cn);
+  }
+
+  printf("[DEBUG]: Avg codelen: %f\n", (float)total_codelen / vocab_size);
 
 
   printf("[INFO] Binary tree created with %lld nodes.\n", vocab_size * 2 - 1);
