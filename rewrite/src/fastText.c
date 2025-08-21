@@ -512,9 +512,9 @@ void *train_thread(thread_args *args) {
         // //   // }
         // // }
 
-        // line++;
-        // gs->total_learned_lines++;
-        // temp++;
+        line++;
+        gs->total_learned_lines++;
+        temp++;
 
         // long long len_word = 0;
         // long long len_labels = 0;
