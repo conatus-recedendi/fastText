@@ -562,52 +562,49 @@ void *train_thread(thread_args *args) {
         ngram_sentences_length = 0;
         label_length = 0;
         // memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
-        labels[0] = -1;
         // memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
-        words[0] = -1; // Reset words array for the next sentence
         // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-        ngram_words[0] = -1;
         // clock_gettime(CLOCK_MONOTONIC, &token_st);
         
       } else {
-        long long word_index = search_vocab(token, gs);
+        // long long word_index = search_vocab(token, gs);
 
-        if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE - 1) {
-          if (gs->sample > 0) {
-            float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
-            double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
+        // if (word_index != -1 && sentence_length < MAX_WORDS_PER_SENTENCE - 1) {
+        //   if (gs->sample > 0) {
+        //     float ran = (sqrt(gs->vocab[word_index].cn / (gs->sample * gs->train_words)) + 1) * (gs->sample * gs->train_words) / gs->vocab[word_index].cn;
+        //     double random_value = (double)rand() / ((double)RAND_MAX + 1.0); // Generate a random value between 0 and 1
 
-            if (ran < random_value) {
-              // token = strtok(NULL, " ");
-              continue; // Skip this word
-            }
-          }
-          words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
-          avg_word++;
-          if (gs->ngram > 1) {
-            if (prev_word[0] == 0) {
-              strncpy(prev_word, token, sizeof(prev_word) - 1);
+        //     if (ran < random_value) {
+        //       // token = strtok(NULL, " ");
+        //       continue; // Skip this word
+        //     }
+        //   }
+        //   words[sentence_length++] = word_index; // vocab[word_index] or layer1[word_index]
+        //   avg_word++;
+        //   if (gs->ngram > 1) {
+        //     if (prev_word[0] == 0) {
+        //       strncpy(prev_word, token, sizeof(prev_word) - 1);
               
-            } else {
-              memset(concat_word, 0, sizeof(concat_word));
-              // strncat(concat_word, prev_word, strlen(prev_word));
-              // strncat(concat_word, "-", 1);
-              // strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
-              snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
+        //     } else {
+        //       memset(concat_word, 0, sizeof(concat_word));
+        //       // strncat(concat_word, prev_word, strlen(prev_word));
+        //       // strncat(concat_word, "-", 1);
+        //       // strncat(concat_word, token, MAX_STRING - strlen(prev_word) - 1);
+        //       snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
 
-              long long index = search_vocab(concat_word, gs);
-              if (index == -1) {
-                avg_failure_ngram++;
-              } else {
-                avg_ngram++;
-                words[sentence_length++] = index; // ngram word
-              }
-            }
-          }
-        }
-        memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-        strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
-        prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+        //       long long index = search_vocab(concat_word, gs);
+        //       if (index == -1) {
+        //         avg_failure_ngram++;
+        //       } else {
+        //         avg_ngram++;
+        //         words[sentence_length++] = index; // ngram word
+        //       }
+        //     }
+        //   }
+        // }
+        // memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+        // strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+        // prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
       }
 
       strncpy(token, "", MAX_STRING - 1); // Reset token for next word
