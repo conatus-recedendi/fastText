@@ -520,7 +520,7 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     right_node[vocab_size + a] = min2i;
   }
 
-  // for (int i = vocab_size; i< vocab_size * 2 - 1; i++) {
+  // for (int i = 0; i< vocab_size * 2 - 1; i++) {
   //   printf("%lld ", point[i]);
   // }
   // printf("\n");
@@ -542,7 +542,9 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     for (b = 0; b < i; b++) {
       vocab[a].code[i - b - 1] = code[b];
       vocab[a].point[i - b] = point[b] - vocab_size;
+      // printf("%lld %lld %lld %lld", point[b], vocab[a].code[i - b - 1], b, i);
     }
+    // printf("\n");
     
   }
 
@@ -551,6 +553,8 @@ void create_binary_tree(vocab_word *_vocab, long long *left_node, long long *rig
     total_codelen += vocab[a].codelen;
     // printf("[DEBUG] Word: %s, Code Length: %lld, Count: %lld\n", vocab[a].word, vocab[a].codelen, vocab[a].cn);
   }
+
+
 
   printf("[DEBUG]: Avg codelen: %f\n", (float)total_codelen / vocab_size);
 

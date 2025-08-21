@@ -380,7 +380,7 @@ void *train_thread(thread_args *args) {
 
         long long golden_label = 0;
         long long M = gs->layer1_size; // hidden size
-        float * __restrict layer2 = gs->layer2;
+        // float * __restrict layer2 = gs->layer2;
         const float lr = gs->learning_rate_decay;
           
         if (sentence_length > 0 && label_length > 0) {
@@ -418,34 +418,41 @@ void *train_thread(thread_args *args) {
               const long long *point = gs->labels[golden_label].point;
               for (long long d=0;d<codelen;d++) {
                 const long long p = point[d];
-                float * __restrict wrow = &gs->layer2[p * M];
+                if (p < 0 || p >= gs->label_size) {
+                  printf("[ERROR] Invalid point index: %lld for label %lld\n", p, golden_label);
+                  getchar();
+                }
+                // float * __restrict wrow = &gs->layer2[p * M];
 
                 float f = 0.0f;
 
                 // long long point = gs->labels[golden_label].point[d]; // label_size!c (1이면 1번째 lable을 가리키는 것
                 long long M = gs->layer1_size; // hidden size
                 for (long long j = 0; j < M; j++) {
-                  f += neu1[j] * wrow[j];
+                  f += neu1[j] * gs->layer2[p * M + j]; // dot product
                 }
                 // f = 1.0f / (1.0f + expf(-f)); // sigmoid function
                 f = fast_sigmoid(f); // fast sigmoid function
-                const float target = (code[d] ? 1.0f : 0.0f); // target is 1 if code[d] is 1, else 0
+                const float target = ( code[d] ? 1.0f : 0.0f); // target is 1 if code[d] is 1, else 0
+
                 float g = lr * (target - f);
-                if (g > 6) g = 6;
-                if (g < -6) g = -6;
+                // if (g > 6) g = 6;
+                // if (g < -6) g = -6;
                 // block thread
                 for (long long j = 0; j < M; j++) {
-                  neu1err[j] += g * wrow[j]; // to neu1
+                  neu1err[j] += g * gs->layer2[point[d] * M + j]; // to neu1
                   gs->layer2[point[d] * M + j] += g * neu1[j]; // update layer2
                 }
-                if (gs->labels[golden_label].code[d] == 0 && temp % 100000 == 10) {
+                if (gs->labels[golden_label].code[d] == 0) {
                   loss += -logf(1 - f + 1e-10f); // log loss
+                  // loss = f;
                 } else {
                   loss += -logf(f + 1e-10f); // log loss
+                  // loss = f;
                 }
               }
             }
-            const float inv_len = 1.0f / (float)label_length;
+            const float inv_len = 1.0f / (float)sentence_length;
             for (long long j = 0; j < sentence_length; j++) {
               const long long w = words[j];
               if (w < 0) continue ;
@@ -455,6 +462,7 @@ void *train_thread(thread_args *args) {
                 // gs->layer1[words[j] * gs->layer1_size + k] += neu1err[k] * inv_len; // Update layer1
                 row[k] += neu1err[k] * inv_len; // Update layer1
               }
+
             }
             if (label_length > 0) {
               loss /= label_length;
@@ -484,7 +492,7 @@ void *train_thread(thread_args *args) {
         clock_t now = clock();
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC, &end_time);
-        if (gs->debug_mode > 1 && thread_id == 0 && end_time.tv_sec - last_log.tv_sec >= 1) {
+        if (gs->debug_mode > 1 && thread_id == 0 && end_time.tv_sec - last_log.tv_sec >= 0) {
           last_log = end_time;
           temp = 1;
           
@@ -501,7 +509,7 @@ void *train_thread(thread_args *args) {
                 gs->total_learned_lines / (double)(gs->iter * gs->total_lines + 1) * 100,
                 (gs->train_words / ((double)(end_time.tv_sec - gs->start.tv_sec + 1) * (double)1000)), 
                 (lines_sec / (double)1000),
-                gs->loss / (gs->total_learned_lines + 1), gs->total_learned_lines, 
+                gs->loss / (double)(gs->total_learned_lines + 1), gs->total_learned_lines, 
                 eta_hours, eta_minutes, eta_seconds % 60,
                 debug_avg_len / (double)(gs->total_learned_lines + 1),
               debug_avg_labels_len / (double)(gs->total_learned_lines + 1));
