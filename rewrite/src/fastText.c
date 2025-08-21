@@ -356,7 +356,7 @@ void *train_thread(thread_args *args) {
     label_length = 0;
     memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
     memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
-    memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+    // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
     clock_gettime(CLOCK_MONOTONIC, &token_st);
     while (br_read_word(token, &br) != -1) {
 
@@ -561,10 +561,14 @@ void *train_thread(thread_args *args) {
         sentence_length = 0;
         ngram_sentences_length = 0;
         label_length = 0;
-        memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
-        memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
-        memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-        clock_gettime(CLOCK_MONOTONIC, &token_st);
+        
+        while(1) {
+          labels[]
+        }
+        memset(labels, -1, sizeof(long long) * len_labels); // Initialize labels to -1
+        memset(words, -1, sizeof(long long) * len_word); // Initialize words to -1 (unknown word
+        // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+        // clock_gettime(CLOCK_MONOTONIC, &token_st);
         
       } else {
         // long long word_index = search_vocab(token, gs);
