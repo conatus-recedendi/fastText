@@ -520,7 +520,7 @@ void test_thread(global_setting *gs) {
 
 
     // printf("")
-    // printf("[DEBUG] Processing line %lld: %s", line, sen);
+    printf("[DEBUG] Processing line %lld: %s", line, sen);
     // gs->total_learned_lines++;
     // word를 label, words로 분리.
     // 줄 끝 개행 문자 제거
@@ -531,13 +531,13 @@ void test_thread(global_setting *gs) {
     long long sentence_length = 0;
     long long ngram_sentences_length = 0;
     long long label_length = 0;
-    // printf("[DEBUG] Tokenizing sentence: %s\n", sen);
+    printf("[DEBUG] Tokenizing sentence: %s\n", sen);
     memset(labels, -1, gs->label_size * sizeof(long long)); // Initialize labels to 0
-    // printf("[DEBUG] Initializing labels and words...\n");
+    printf("[DEBUG] Initializing labels and words...\n");
     memset(words, -1, MAX_WORDS_PER_SENTENCE * sizeof(long long)); // Initialize words to -1 (unknown word)
-    // printf("[DEBUG] Initializing ngram_words...\n");
+    printf("[DEBUG] Initializing ngram_words...\n");
     memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-    // printf("[DEBUG] Initializing prev_word and concat_word...\n");
+    printf("[DEBUG] Initializing prev_word and concat_word...\n");
     
 
     while (token != NULL) {
@@ -601,8 +601,7 @@ void test_thread(global_setting *gs) {
       token = strtok(NULL, " ");
     }
 
-    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
-    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     memcpy(prev_word, "", 1); // Reset previous word for next sentence
     // exit(1);
     gs->train_words += sentence_length; // Increment train words by the number of words in the sentence
@@ -640,7 +639,7 @@ void test_thread(global_setting *gs) {
     // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     if (label_length==0 || sentence_length == 0) wrong_cnt++;
 
-    // printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
+    printf("[DEBUG] Sentence Length: %lld, Label Length: %lld, Words: ", sentence_length, label_length);
     if (sentence_length > 0 && label_length > 0) {
       // for (long long j = 0; j < ngram_sentences_length; j++) {
       //   // printf("ngram_words[%lld]: %lld ", j, ngram_words[j]);
@@ -671,7 +670,7 @@ void test_thread(global_setting *gs) {
       float *neu2_sorted = (float *)malloc(gs->label_size * sizeof(float));
       long long *index_sorted = (long long *)malloc(gs->label_size * sizeof(long long));
 
-      // printf("[DEBUG] Calculating neu2...\n");
+      printf("[DEBUG] Calculating neu2...\n");
       if (gs->hs == 2)  {
          // MEMO: hierarchical softmax는 prec 값만 구함.
          // precision 외의 값을 구하기 위해서는 전체 label의 등장확률을 구해야하고 - softmax 보다 느림.
@@ -756,10 +755,10 @@ void test_thread(global_setting *gs) {
           heap[j].score = -1e10; // Initialize heap with a very low score
           heap[j].word = -1;
         }
-        // printf("[DEBUG] Starting DFS for hierarchical softmax...\n");
+        printf("[DEBUG] Starting DFS for hierarchical softmax...\n");
         // fflush(stdout);
         dfs(gs->top_k, 2 * gs->label_size - 2, 0.0f, heap, &heap_size, gs, neu1);
-        // printf("[DEBUG] DFS completed. Heap size: %lld\n", heap_size);
+        printf("[DEBUG] DFS completed. Heap size: %lld\n", heap_size);
         // fflush(stdout);
         // if (gold_length != 1) printf("[INFO] Gold length: %lld, Predicted length: %lld\n", gold_length, gs->top_k);
         int out_flag = 0;
