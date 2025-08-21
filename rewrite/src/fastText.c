@@ -516,19 +516,19 @@ void *train_thread(thread_args *args) {
         gs->total_learned_lines++;
         // temp++;
 
-        // long long len_word = 0;
-        // long long len_labels = 0;
-        // for (long i = 0;;i++) {
-        //   if (words[i] == -1)  {break;} 
-        //   len_word++;
-        // }
-        // for (int i = 0;;i++) {
-        //   if (labels[i] == -1)  {break;} 
-        //   len_labels++;
-        // }
+        long long len_word = 0;
+        long long len_labels = 0;
+        for (long i = 0;;i++) {
+          if (words[i] == -1)  {break;} 
+          len_word++;
+        }
+        for (int i = 0;;i++) {
+          if (labels[i] == -1)  {break;} 
+          len_labels++;
+        }
         
-        // debug_avg_len += len_word;
-        // debug_avg_labels_len += len_labels;
+        debug_avg_len += len_word;
+        debug_avg_labels_len += len_labels;
         clock_t now = clock();
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -561,10 +561,10 @@ void *train_thread(thread_args *args) {
         sentence_length = 0;
         ngram_sentences_length = 0;
         label_length = 0;
-        // memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
-        // memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
-        // memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
-        // clock_gettime(CLOCK_MONOTONIC, &token_st);
+        memset(labels, -1, sizeof(long long) * gs->label_size); // Initialize labels to -1
+        memset(words, -1, sizeof(words)); // Initialize words to -1 (unknown word
+        memset(ngram_words, -1, sizeof(ngram_words)); // Initialize ngram_words to -1 (unknown word)
+        clock_gettime(CLOCK_MONOTONIC, &token_st);
         
       } else {
         // long long word_index = search_vocab(token, gs);
