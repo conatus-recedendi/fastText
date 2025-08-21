@@ -451,7 +451,7 @@ void *train_thread(thread_args *args) {
         
         debug_avg_len += len_word;
         debug_avg_labels_len += len_labels;
-        if (gs->debug_mode > 1 && temp % (gs->num_threads * 10000) == thread_id * 10000) {
+        if (gs->debug_mode > 1 && temp % (gs->num_threads * 10) == thread_id * 10) {
           temp = 0;
           
           clock_t now = clock();
