@@ -402,9 +402,15 @@ void create_vocab_from_train_file(global_setting *gs) {
       printf("[INFO] Label size after reduction: %lld\n", gs->label_size);
     }
   }
+  printf("[INFO] Vocabulary reduced. Current size: %lld\n", gs->vocab_size);
   reduce_vocab(gs, gs->min_count_vocab);
+  printf("[INFO] Vocabulary size after reduction: %lld\n", gs->vocab_size);
+  printf("[INFO] Label size: %lld\n", gs->label_size);
   reduce_label(gs, gs->min_count_label);
+  printf("[INFO] Label size after reduction: %lld\n", gs->label_size);
+  printf("[DEBUG] create_ngram: %lld\n", create_ngram);
   sort_vocab(gs);
+  printf("[DEBUG] Vocabulary sorted. Size: %lld\n", gs->vocab_size);
   gs->file_size = ftell(f_in);
   fclose(f_in);
 }
