@@ -511,7 +511,7 @@ void test_thread(global_setting *gs) {
     // printf("[DEBUG] Processing line %lld: %s", line, sen);
     line++;
     if (line % 1000 == 0) {
-      printf("%c[INFO] avg_ngram: %lld, avg_failrue_gram: %lld, avg_word: %lld, total: %lld/%lld\n", 13,avg_ngram / 1000, avg_failure_ngram / 1000, avg_word / 1000, line, (gs->train_words / gs->iter));
+      printf("%c[INFO] true: %lld, false: %lld, line: %lld", 13, tp_cnt, fp_cnt, line);
       fflush(stdout);
       avg_ngram = 0;
       avg_failure_ngram = 0;
