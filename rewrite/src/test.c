@@ -575,10 +575,10 @@ void test_thread(global_setting *gs) {
             if (gs->ngram > 1) {
 
               if (prev_word[0] == 0) {
-                strncpy(prev_word, token, sizeof(prev_word) - 1);
+                // strncpy(prev_word, token, sizeof(prev_word) - 1);
                 // prev_word[sizeof(prev_word) - 1] = '\0'; // Ensure null termination
               } else {
-                memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
+                // memset(concat_word, 0, sizeof(concat_word)); // Reset concat_word
                 snprintf(concat_word, MAX_STRING, "%s-%s", prev_word, token);
 
                 long long index = search_vocab(concat_word, gs);
@@ -591,12 +591,12 @@ void test_thread(global_setting *gs) {
                   avg_ngram++;
                   words[sentence_length++] = index; // ngram word
                 }
+              } 
+              memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+              strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+              prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
               }
             }
-          } 
-          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-          strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
-          prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
       }
       token = strtok(NULL, " ");
     }

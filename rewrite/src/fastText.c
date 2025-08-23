@@ -558,15 +558,15 @@ void *train_thread(thread_args *args) {
                 words[sentence_length++] = index; // ngram word
               }
             }
+            if (gs->ngram > 1) {
+              memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
+              strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
+              prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
+    
+            }
           }
         }
 
-        if (gs->ngram > 1) {
-          memset(prev_word, 0, sizeof(prev_word)); // Reset previous word for ngram
-          strncpy(prev_word, token, MAX_STRING - 1); // Update previous word
-          prev_word[MAX_STRING - 1] = '\0'; // Ensure null termination
-
-        }
 
       }
 
