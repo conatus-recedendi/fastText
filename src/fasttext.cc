@@ -9,6 +9,7 @@
 #include "fasttext.h"
 #include "loss.h"
 #include "quantmatrix.h"
+#include "args.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -34,6 +35,8 @@ bool comparePairs(
 
 std::shared_ptr<Loss> FastText::createLoss(std::shared_ptr<Matrix>& output) {
   loss_name lossName = args_->loss;
+  const Args args;
+  std::cerr << "[INFO] Creating loss function: " << args.lossToString(lossName) << std::endl;
   switch (lossName) {
     case loss_name::hs:
       return std::make_shared<HierarchicalSoftmaxLoss>(
@@ -175,13 +178,13 @@ void FastText::saveOutput(const std::string& filename) {
 bool FastText::checkModel(std::istream& in) {
   int32_t magic;
   in.read((char*)&(magic), sizeof(int32_t));
-  if (magic != FASTTEXT_FILEFORMAT_MAGIC_INT32) {
-    return false;
-  }
+  // if (magic != FASTTEXT_FILEFORMAT_MAGIC_INT32) {
+  //   return false;
+  // }
   in.read((char*)&(version), sizeof(int32_t));
-  if (version > FASTTEXT_VERSION) {
-    return false;
-  }
+  // if (version > FASTTEXT_VERSION) {
+  //   return false;
+  // }
   return true;
 }
 
