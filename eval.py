@@ -24,13 +24,15 @@ def get_subword_average(word, vectors, minn, maxn):
     Get the average vector of subwords for a given word.
     """
     subword_vectors = []
-    # if word in vectors:
-    #     subword_vectors.append(vectors[word])  # Include the word itself
-    # for i in range(minn, maxn + 1):
-    #     for j in range(len(word) - i + 1):
-    #         subword = word[j : j + i]
-    #         if subword in vectors:
-    #             subword_vectors.append(vectors[subword])
+    if word in vectors:
+        subword_vectors.append(vectors[word])  # Include the word itself
+    for i in range(minn, maxn + 1):
+        for j in range(len(word) - i + 1):
+            subword = word[j : j + i]
+            print("word:", word, "i:", i, "j:", j)
+            print("subword:", subword)
+            if subword in vectors:
+                subword_vectors.append(vectors[subword])
     if not subword_vectors:
         return np.zeros_like(next(iter(vectors.values())))
     return np.mean(subword_vectors, axis=0)
