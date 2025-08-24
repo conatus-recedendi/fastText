@@ -24,12 +24,13 @@ def get_subword_average(word, vectors, minn, maxn):
     Get the average vector of subwords for a given word.
     """
     subword_vectors = []
-    subword_vectors.append(vectors[word])  # Include the word itself
-    # for i in range(minn, maxn + 1):
-    #     for j in range(len(word) - i + 1):
-    #         subword = word[j : j + i]
-    #         if subword in vectors:
-    #             subword_vectors.append(vectors[subword])
+    if word in vectors:
+        subword_vectors.append(vectors[word])  # Include the word itself
+    for i in range(minn, maxn + 1):
+        for j in range(len(word) - i + 1):
+            subword = word[j : j + i]
+            if subword in vectors:
+                subword_vectors.append(vectors[subword])
     if not subword_vectors:
         return np.zeros_like(next(iter(vectors.values())))
     return np.mean(subword_vectors, axis=0)
@@ -84,6 +85,14 @@ parser.add_argument(
 parser.add_argument(
     "--data", "-d", dest="dataPath", action="store", required=True, help="path to data"
 )
+parser.add_argument(
+    "--sisg",
+    "-sisg",
+    dest="sisg",
+    type=int,
+    action="store_true",
+    help="use SISG (Subword Information and Similarity Graph) for evaluation",
+)
 args = parser.parse_args()
 
 vectors = {}
@@ -108,18 +117,22 @@ for _, line in enumerate(fin):
 fin.close()
 
 mysim = []
+mysim_sisg = []
 gold = []
+gold_sisg = []
+
 drop = 0.0
 nwords = 0.0
+
 
 fin = open(args.dataPath, "rb")
 for line in fin:
     tline = compat_splitting_by_comma(line)
     # show tline infor
     # print("Processing:", tline)
-    word1 = tline[0].lower()
+    word1 = tline[1].lower()
     word1 = "<" + word1 + ">"  # Add < and > to the word
-    word2 = tline[1].lower()
+    word2 = tline[2].lower()
     word2 = "<" + word2 + ">"  # Add < and > to
     nwords = nwords + 1.0
 
@@ -132,6 +145,12 @@ for line in fin:
         gold.append(float(tline[2]))
     else:
         drop = drop + 1.0
+        if args.sisg:
+            v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
+            v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+            d = similarity(v1, v2)
+            mysim_sisg.append(d)
+            gold_sisg.append(float(tline[0]))
     # print(
     #     "Processed {0:20s} and {1:20s} with similarity {2:.4f}".format(
     #         word1, word2, d if (word1 in vectors and word2 in vectors) else 0.0
