@@ -146,31 +146,63 @@ for line in fin:
 
     if (word1 in vectors) and (word2 in vectors):
         # v1 = vectors[word1]
-        v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
-        v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+        # v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
+        # v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+        v1 = vectors[word1]
+        v2 = vectors[word2]
         d = similarity(v1, v2)
         mysim.append(d)
         gold.append(float(tline[2]))
-    else:
+        mysim_sisg.append(d)
+        gold_sisg.append(float(tline[2]))
+    elif word1 in vectors:
         drop = drop + 1.0
         if args.sisg:
             # SISG 이면 word1, word2 둘 중 하나가 없음! 이렇게 구하면 dim  안맞음
+            # v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
+            v1 = vectors[word1]
+            v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+            d = similarity(v1, v2)
+            mysim_sisg.append(d)
+            gold_sisg.append(float(tline[2]))
+
+    elif word2 in vectors:
+        drop = drop + 1.0
+        if args.sisg:
+            # SISG 이면 word1, word2 둘 중 하나가 없음! 이렇게 구하면 dim  안맞음
+            v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
+            # v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+            v2 = vectors[word2]
+            d = similarity(v1, v2)
+            mysim_sisg.append(d)
+            gold_sisg.append(float(tline[2]))
+    else:
+        drop = drop + 1.0
+        if args.sisg:
             v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
             v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
             d = similarity(v1, v2)
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
-    # print(
-    #     "Processed {0:20s} and {1:20s} with similarity {2:.4f}".format(
-    #         word1, word2, d if (word1 in vectors and word2 in vectors) else 0.0
-    #     )
-    # )
+
 fin.close()
 
 corr = stats.spearmanr(mysim, gold)
 dataset = os.path.basename(args.dataPath)
+
+# this is for sisg-
 print(
     "{0:20s}: {1:2.0f}  (OOV: {2:2.0f}%)".format(
         dataset, corr[0] * 100, math.ceil(drop / nwords * 100.0)
     )
 )
+
+
+# this sis for sisg+
+if args.sisg:
+    corr_sisg = stats.spearmanr(mysim_sisg, gold_sisg)
+    print(
+        "{0:20s} (SISG): {1:2.0f}  (OOV: {2:2.0f}%)".format(
+            dataset, corr_sisg[0] * 100, math.ceil(drop / nwords * 100.0)
+        )
+    )
