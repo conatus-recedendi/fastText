@@ -25,8 +25,18 @@ def compat_splitting(line):
 
 
 def compat_splitting_by_comma(line):
-    # split by comma
-    return line.decode("utf8").strip().split(",")
+    # 디코딩 + BOM 제거 + 앞뒤 공백 제거
+    line = line.decode("utf8").strip()
+
+    # 1차: 콤마 기준 분리
+    parts = line.split(",")
+
+    # 2차: 각 조각을 다시 공백 기준으로 분리 (여러 공백은 하나로 취급)
+    tokens = []
+    for part in parts:
+        tokens.extend(part.strip().split())
+
+    return tokens
 
 
 def similarity(v1, v2):
