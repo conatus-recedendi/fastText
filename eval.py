@@ -89,7 +89,6 @@ parser.add_argument(
     "--sisg",
     "-sisg",
     dest="sisg",
-    type=int,
     action="store_true",
     help="use SISG (Subword Information and Similarity Graph) for evaluation",
 )
