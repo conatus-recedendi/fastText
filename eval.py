@@ -115,6 +115,8 @@ for _, line in enumerate(fin):
         continue
 fin.close()
 
+print("Loaded {0:} words.".format(len(vectors)))
+
 mysim = []
 mysim_sisg = []
 gold = []
