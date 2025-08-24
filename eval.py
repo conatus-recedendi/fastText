@@ -129,16 +129,18 @@ nwords = 0.0
 fin = open(args.dataPath, "rb")
 print("Evaluating on data in {0:}".format(args.dataPath))
 # len of fin
-print("Total lines:", sum(1 for line in fin))
+# print("Total lines:", sum(1 for line in fin))
 for line in fin:
     tline = compat_splitting_by_comma(line)
     # show tline infor
     # print("Processing:", tline)
     word1 = tline[0].lower()
-    word1 = "<" + word1 + ">"  # Add < and > to the word
+    # word1 = "<" + word1 + ">"  # Add < and > to the word
     word2 = tline[1].lower()
-    word2 = "<" + word2 + ">"  # Add < and > to
+    # word2 = "<" + word2 + ">"  # Add < and > to
     nwords = nwords + 1.0
+
+    print("Comparing words: '{0}' and '{1}'".format(word1, word2))
 
     if (word1 in vectors) and (word2 in vectors):
         # v1 = vectors[word1]
