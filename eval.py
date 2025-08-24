@@ -129,9 +129,9 @@ for line in fin:
     tline = compat_splitting_by_comma(line)
     # show tline infor
     # print("Processing:", tline)
-    word1 = tline[1].lower()
+    word1 = tline[0].lower()
     word1 = "<" + word1 + ">"  # Add < and > to the word
-    word2 = tline[2].lower()
+    word2 = tline[1].lower()
     word2 = "<" + word2 + ">"  # Add < and > to
     nwords = nwords + 1.0
 
@@ -145,11 +145,12 @@ for line in fin:
     else:
         drop = drop + 1.0
         if args.sisg:
+            # SISG 이면 word1, word2 둘 중 하나가 없음! 이렇게 구하면 dim  안맞음
             v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
             v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
             d = similarity(v1, v2)
             mysim_sisg.append(d)
-            gold_sisg.append(float(tline[0]))
+            gold_sisg.append(float(tline[2]))
     # print(
     #     "Processed {0:20s} and {1:20s} with similarity {2:.4f}".format(
     #         word1, word2, d if (word1 in vectors and word2 in vectors) else 0.0
