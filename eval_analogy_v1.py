@@ -187,7 +187,7 @@ fin = open(args.modelPath, "rb")
 
 f = load_model(args.modelPath)
 words, counts = f.get_words(include_freq=True)
-subwords = f.get_subwords()
+# subwords = f.get_subwords(words)
 
 
 # for _, line in enumerate(fin):
@@ -225,8 +225,9 @@ for w in words[: args.topk]:
 
 
 subword_vectors = {}
-for sw in subwords[0]:  # subwords is a tuple (list of sub
+for w in words[: args.topk]:  # subwords is a tuple (list of sub
     # words, list of indices)
+    sw = f.get_subwords(w)[0]
     sw = sw.lower()
     vec = f.get_word_vector(sw)
     if np.linalg.norm(vec) == 0:
