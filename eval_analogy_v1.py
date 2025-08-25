@@ -186,7 +186,7 @@ vectors = {}
 fin = open(args.modelPath, "rb")
 
 f = load_model(args.modelPath)
-words = f.get_words(include_freq=True)
+words, counts = f.get_words(include_freq=True)
 
 
 # for _, line in enumerate(fin):
@@ -212,7 +212,9 @@ words = f.get_words(include_freq=True)
 #     except UnicodeDecodeError:
 #         continue
 
-for w, c in words[: args.topk]:
+for w in words[: args.topk]:
+    print(w)
+
     w = w.lower()
     w = normalize_token(w)
     vec = f.get_word_vector(w)
