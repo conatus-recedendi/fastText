@@ -164,7 +164,7 @@ for line in fin:
     # print("Processing:", tline)
     if tline[0].startswith(":"):
         # 이 다음 줄부터는 syntactic
-        if tline[1:].startswith("gram"):
+        if tline[1].startswith("gram"):
             flag = "syntactic"
         continue
 
