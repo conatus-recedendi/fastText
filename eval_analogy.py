@@ -8,6 +8,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -17,6 +18,50 @@ from scipy import stats
 import os
 import math
 import argparse
+
+
+import re
+
+_WS_RE = re.compile(r"\s+")
+
+
+def normalize_token(token: str) -> str:
+    """쉘의 normalize_text와 최대한 유사하게 단일 '단어 키'를 만들기 위한 정규화.
+    - 소문자화
+    - 특수 따옴표/큰따옴표 등 치환
+    - 여러 기호(#, @, «, ♯, 전각 콜론 등) → 공백
+    - 숫자 → 공백
+    - 공백 압축/트림
+    - 공백이 생겨 다단어가 되면 '첫 토큰'만 사용
+    """
+    if not token:
+        return ""
+
+    s = token.lower()
+
+    # 따옴표류 통일
+    s = s.replace("’", "'").replace("′", "'").replace("“", '"').replace("”", '"')
+
+    # 쉘 sed에서 공백으로 치환하던 기호들
+    for ch in ["«", "♯", "#", "@", "：", ",", "،", "=", "*", "|"]:
+        s = s.replace(ch, " ")
+
+    # 문장부호 주변에 공백을 넣는 대신, 단어 키를 만들 목적이므로
+    # 여기서는 그냥 제거/공백화만 수행(토큰 키가 쪼개지지 않도록)
+    for ch in [".", "(", ")", "!", "?", "-", '"', "'"]:
+        s = s.replace(ch, " ")
+
+    # 숫자 → 공백 (sed 의 `tr 0-9 " "` 대응)
+    s = re.sub(r"[0-9]", " ", s)
+
+    # 공백 압축 및 트림
+    s = _WS_RE.sub(" ", s).strip()
+
+    # 다단어로 쪼개졌다면 첫 단어만 사용(키 충돌 방지 목적)
+    if " " in s:
+        s = s.split(" ", 1)[0]
+
+    return s
 
 
 def get_nearest_vector(vector, vectors, topk, golden_word, args):
@@ -143,6 +188,7 @@ for _, line in enumerate(fin):
 
         word = tab[0]
         word = word.lower()
+        word = normalize_token(word)
         # word = word.lstrip("<").rstrip(">")
         if np.linalg.norm(vec) == 0:
             continue
