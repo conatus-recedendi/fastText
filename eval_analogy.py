@@ -153,7 +153,7 @@ drop = 0.0
 nwords = 0.0
 
 
-fin = open(args.dataPath, "rb")
+fin = open(args.dataPath, "r")
 print("Evaluating on data in {0:}".format(args.dataPath))
 # len of fin
 
