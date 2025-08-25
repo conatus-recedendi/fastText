@@ -134,7 +134,7 @@ for _, line in enumerate(fin):
         if tab is None or len(tab) < 2:
             continue
 
-        if len(tab) is not 301:
+        if len(tab) != 301:
             continue
         vec = np.array(tab[1:], dtype=float)
 
