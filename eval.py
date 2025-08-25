@@ -35,7 +35,8 @@ def get_subword_average(word, vectors, minn, maxn):
                 subword_vectors.append(vectors[subword])
     if not subword_vectors:
         return np.zeros_like(next(iter(vectors.values())))
-    return np.mean(subword_vectors, axis=0)
+    # return np.mean(subword_vectors, axis=0)
+    return np.sum(subword_vectors, axis=0)
 
 
 def compat_splitting(line):
