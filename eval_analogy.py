@@ -42,7 +42,9 @@ def get_nearest_vector(vector, vectors, topk, golden_word, args):
             golden_subword_vec = get_subword_average(
                 golden_word, vectors, args.minn, args.maxn
             )
-            if min_dist > np.linalg.norm(vector - golden_subword_vec):
+            if min_dist > np.dot(
+                vector - golden_subword_vec, vector - golden_subword_vec
+            ):
                 nearest = golden_word
 
     return nearest
