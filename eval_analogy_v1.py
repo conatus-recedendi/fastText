@@ -213,7 +213,6 @@ words, counts = f.get_words(include_freq=True)
 #         continue
 
 for w in words[: args.topk]:
-    print(w)
 
     w = w.lower()
     w = normalize_token(w)
