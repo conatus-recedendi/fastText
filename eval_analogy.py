@@ -211,7 +211,7 @@ for line in fin:
         for i in range(0, W.shape[0], B):
             sim = W[i : i + B] @ q  # (B,)
             j = np.argmax(sim)
-            if sim[j] > best_sim:
+            if sim[j] > best_sim and words[i + j] not in (word1, word2, word3):
                 best_sim = float(sim[j])
                 best_idx = i + j
         nearest = words[best_idx]
