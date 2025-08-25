@@ -43,7 +43,7 @@ def normalize_token(token: str) -> str:
     s = s.replace("’", "'").replace("′", "'").replace("“", '"').replace("”", '"')
 
     # 쉘 sed에서 공백으로 치환하던 기호들
-    for ch in ["«", "♯", "#", "@", "：", ",", "،", "=", "*", "|", "»"]:
+    for ch in ["«", "♯", "#", "@", "：", ",", "،", "=", "*", "|", "»", "ː"]:
         s = s.replace(ch, " ")
 
     # 문장부호 주변에 공백을 넣는 대신, 단어 키를 만들 목적이므로
@@ -263,7 +263,7 @@ for line in fin:
         v2 = vectors[word2]
         v3 = vectors[word3]
         q = v3 - v2 + v1
-        q /= np.linalg.norm(q) + 1e-12
+        # q /= np.linalg.norm(q) + 1e-12
         best_idx = -1
         best_sim = -1.0
         B = 100_000
