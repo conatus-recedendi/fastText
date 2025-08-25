@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ===== locale =====
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
-# ===== output root =====
 NOW=$(date +"%Y%m%d")
 ROOT="data/wikimedia/${NOW}"
 mkdir -p "${ROOT}"
 echo "[INFO] Saving data in ${ROOT}"
 
-# ===== normalizer =====
 normalize_text() {
   sed -e "s/’/'/g" -e "s/′/'/g" -e "s/''/ /g" -e "s/'/ ' /g" -e "s/“/\"/g" -e "s/”/\"/g" \
       -e 's/"/ " /g' -e 's/\./ \. /g' -e 's/<br \/>/ /g' -e 's/, / , /g' -e 's/(/ ( /g' -e 's/)/ ) /g' -e 's/\!/ \! /g' \
@@ -20,130 +17,96 @@ normalize_text() {
       -e 's/«/ /g' | tr 0-9 " "
 }
 
-# ===== download =====
-echo "[INFO] Downloading archives (resume enabled)..."
-# wget -c https://www.statmt.org/wmt13/training-monolingual-europarl-v7.tgz    -P "${ROOT}"
-# wget -c https://www.statmt.org/wmt13/training-monolingual-nc-v8.tgz          -P "${ROOT}"
-# wget -c https://www.statmt.org/wmt13/training-monolingual-news-2012.tgz      -P "${ROOT}"
-
-# ===== extract =====
-echo "[INFO] Extracting..."
-# tar -xzf "${ROOT}/training-monolingual-europarl-v7.tgz"   -C "${ROOT}"
-# tar -xzf "${ROOT}/training-monolingual-nc-v8.tgz"         -C "${ROOT}"
-# tar -xzf "${ROOT}/training-monolingual-news-2012.tgz"     -C "${ROOT}"
-
-# 보통 ${ROOT}/training/ 아래로 풀립니다.
-TRAIN_DIR="${ROOT}/training"
-TRAIN_DIR_MONO="${ROOT}/training-monolingual"
-# if [[ ! -d "${TRAIN_DIR}" ]]; then
-#   echo "[WARN] Expected ${ROOT}/training directory not found. Checking fallback..."
-#   TRAIN_DIR="${ROOT}/training-monolingual"
-#   # 일부 배포는 다른 폴더명을 쓸 수 있어 필요시 수정하세요.
-# fi
-
-# ===== helper: zcat 여러 파일을 안전하게 합치기 =====
-zcat_many() {
-  # 인자: 파일 리스트
-  # 파일이 하나도 없으면 빈 스트림을 리턴
-  if [[ $# -eq 0 ]]; then
+# .gz/평문 모두 지원하는 안전 스트리머
+stream_files() {
+  local any=0
+  for f in "$@"; do
+    [[ -e "$f" ]] || continue
+    any=1
+    case "$f" in
+      *.gz) gzip -cd -- "$f" ;;
+      *)    cat -- "$f" ;;
+    esac
+  done
+  # 아무 파일도 없으면 빈 스트림
+  if [[ $any -eq 0 ]]; then
     return 0
   fi
-  zcat -- "$@" 2>/dev/null || true
 }
 
+# 보통 구조: ${ROOT}/training/ (혹은 training-monolingual/)
+TRAIN_DIR="${ROOT}/training"
+TRAIN_DIR_MONO="${ROOT}/training-monolingual"
 shopt -s nullglob
+
 langs=(de en es fr)
 
 for L in "${langs[@]}"; do
   echo "[INFO] Processing language=${L}"
 
-  # ---- 경로/패턴 (WMT13 일반적 파일명 규칙) ----
-  europarl_files=( "${TRAIN_DIR}/europarl-v7.${L}" )
-  # news-commentary-v8.ar
-  nc_files=( "${TRAIN_DIR}"/news-commentary-v8.${L} )
-  # News 2012:
-  news2012_files=( "${TRAIN_DIR_MONO}"/news.2012.${L}.shuffled )
+  # 가능한 패턴들을 모두 나열 (압축/비압축 모두)
+  europarl_files=( \
+    "${TRAIN_DIR}/europarl-v7.${L}.gz" \
+    "${TRAIN_DIR}/europarl-v7.${L}" \
+    "${TRAIN_DIR_MONO}/europarl-v7.${L}.gz" \
+    "${TRAIN_DIR_MONO}/europarl-v7.${L}" \
+  )
+  nc_files=( \
+    "${TRAIN_DIR}/news-commentary-v8.${L}.gz" \
+    "${TRAIN_DIR}/news-commentary-v8.${L}" \
+    "${TRAIN_DIR_MONO}/news-commentary-v8.${L}.gz" \
+    "${TRAIN_DIR_MONO}/news-commentary-v8.${L}" \
+  )
+  news2012_files=( \
+    "${TRAIN_DIR}/news.2012.${L}.shuffled.gz" \
+    "${TRAIN_DIR}/news.2012.${L}.shuffled" \
+    "${TRAIN_DIR_MONO}/news.2012.${L}.shuffled.gz" \
+    "${TRAIN_DIR_MONO}/news.2012.${L}.shuffled" \
+  )
 
-  # ---- 1) Europarl v7 + NC v8 합본 ----
+  # 존재 검사 로그
+  echo "  [DBG] Europarl candidates:"
+  printf '    - %s\n' "${europarl_files[@]}" | sed '/- $/d' || true
+  echo "  [DBG] NC v8 candidates:"
+  printf '    - %s\n' "${nc_files[@]}" | sed '/- $/d' || true
+  echo "  [DBG] News2012 candidates:"
+  printf '    - %s\n' "${news2012_files[@]}" | sed '/- $/d' || true
+
+  # ---- 1) Europarl v7 + News-Commentary v8 합본 ----
   out_combo="${ROOT}/wiki.${L}.europal_ncv8.txt"
   echo "[INFO]   Europarl+NC → ${out_combo}"
-
-  # 유효한 입력이 있는지 체크
-  if [[ ${#europarl_files[@]} -eq 0 && ${#nc_files[@]} -eq 0 ]]; then
-    echo "[WARN]   No Europarl v7 or NC v8 files for ${L}. Skipping combo."
-  else
-    {
-      zcat_many "${europarl_files[@]}"
-      zcat_many "${nc_files[@]}"
-    } \
-    | awk '{print tolower($0)}' \
-    | normalize_text \
-    | awk '{if (NF>1) print;}' \
-    | perl -e '
-# Program to filter Wikipedia XML dumps to "clean" text consisting only of lowercase
-# letters (a-z, converted from A-Z), and spaces (never consecutive)...
-# All other characters are converted to spaces.  Only text which normally appears.
-# in the web browser is displayed.  Tables are removed.  Image captions are.
-# preserved.  Links are converted to normal text.  Digits are spelled out.
-# *** Modified to not spell digits or throw away non-ASCII characters ***
-# Written by Matt Mahoney, June 10, 2006.  This program is released to the public domain.
-$/=">";                     # input record separator
-while (<>) {
-  if (/<text /) {$text=1;}  # remove all but between <text> ... </text>
-  if (/#redirect/i) {$text=0;}  # remove #REDIRECT
-  if ($text) {
-    # Remove any text not normally visible
-    if (/<\/text>/) {$text=0;}
-    s/<.*>//;               # remove xml tags
-    s/&amp;/&/g;            # decode URL encoded chars
-    s/&lt;/</g;
-    s/&gt;/>/g;
-    s/<ref[^<]*<\/ref>//g;  # remove references <ref...> ... </ref>
-    s/<[^>]*>//g;           # remove xhtml tags
-    s/\[http:[^] ]*/[/g;    # remove normal url, preserve visible text
-    s/\|thumb//ig;          # remove images links, preserve caption
-    s/\|left//ig;
-    s/\|right//ig;
-    s/\|\d+px//ig;
-    s/\[\[image:[^\[\]]*\|//ig;
-    s/\[\[category:([^|\]]*)[^]]*\]\]/[[$1]]/ig;  # show categories without markup
-    s/\[\[[a-z\-]*:[^\]]*\]\]//g;  # remove links to other languages
-    s/\[\[[^\|\]]*\|/[[/g;  # remove wiki url, preserve visible text
-    s/\{\{[^}]*\}\}//g;         # remove {{icons}} and {tables}
-    s/{[^}]*\}//g;
-    s/\[//g;                # remove [ and ]
-    s/\]//g;
-    s/&[^;]*;/ /g;          # remove URL encoded chars
-    $_=" $_ ";
-    chop;
-    print $_;
-  }
-}
-' | tr -s " " \
-    | shuf \
-    > "${out_combo}"
-  fi
+  {
+    stream_files "${europarl_files[@]}"
+    stream_files "${nc_files[@]}"
+  } \
+  | awk '{print tolower($0)}' \
+  | normalize_text \
+  | awk 'NF>1' \
+  | tr -s " " \
+  | tee >(wc -l >&2 >/dev/null) \
+  | shuf \
+  > "${out_combo}"
 
   # ---- 2) News 2012 단독 ----
   out_news2012="${ROOT}/wiki.${L}.news2012.txt"
   echo "[INFO]   News2012 → ${out_news2012}"
+  stream_files "${news2012_files[@]}" \
+  | awk '{print tolower($0)}' \
+  | normalize_text \
+  | awk 'NF>1' \
+  | tr -s " " \
+  | tee >(wc -l >&2 >/dev/null) \
+  | shuf \
+  > "${out_news2012}"
 
-  if [[ ${#news2012_files[@]} -eq 0 ]]; then
-    echo "[WARN]   No News 2012 files for ${L}. Skipping news2012."
-  else
-    zcat_many "${news2012_files[@]}" \
-    | awk '{print tolower($0)}' \
-    | normalize_text \
-    | awk '{if (NF>1) print;}' \
-    | tr -s " " \
-    | shuf \
-    > "${out_news2012}"
-  fi
+  # 크기 확인
+  for f in "${out_combo}" "${out_news2012}"; do
+    if [[ -s "$f" ]]; then
+      echo "  [OK] $(basename "$f"): $(wc -l < "$f") lines"
+    else
+      echo "  [WARN] $(basename "$f") is empty. 입력 파일 패턴/경로를 확인하세요."
+    fi
+  done
 done
 
 echo "[INFO] Done."
-echo "[INFO] Outputs:"
-for L in "${langs[@]}"; do
-  [[ -f "${ROOT}/wiki.${L}.europal_ncv8.txt" ]] && echo " - ${ROOT}/wiki.${L}.europal_ncv8.txt"
-  [[ -f "${ROOT}/wiki.${L}.news2012.txt"     ]] && echo " - ${ROOT}/wiki.${L}.news2012.txt"
-done
