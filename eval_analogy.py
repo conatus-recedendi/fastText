@@ -19,7 +19,7 @@ import math
 import argparse
 
 
-def get_nearest_vector(vector, vectors, topk,, golden_word, args):
+def get_nearest_vector(vector, vectors, topk, golden_word, args):
     # find nearest vector in vectors
     nearest = None
     min_dist = float("inf")
@@ -34,7 +34,9 @@ def get_nearest_vector(vector, vectors, topk,, golden_word, args):
     if args.sisg:
         golden_word = golden_word.lower()
         if golden_word not in vectors:
-            golden_subword_vec = get_subword_average(golden_word, vectors, args.minn, args.maxn)
+            golden_subword_vec = get_subword_average(
+                golden_word, vectors, args.minn, args.maxn
+            )
             if min_dist > np.linalg.norm(vector - golden_subword_vec):
                 nearest = golden_word
 
@@ -182,7 +184,7 @@ for line in fin:
         v1 = vectors[word1]
         v2 = vectors[word2]
         v3 = vectors[word3]
-        nearest_word = get_nearest_vector(v3 - v2 + v1, vectors, 1, args, word4)
+        nearest_word = get_nearest_vector(v3 - v2 + v1, vectors, 1, word4, args)
         if nearest_word == word4:
             d = 1.0
         else:
