@@ -160,14 +160,12 @@ print("Evaluating on data in {0:}".format(args.dataPath))
 flag = "semantic"
 for line in fin:
 
-    tline = compat_splitting_by_comma(line)
+    tline = compat_splitting(line)
     print("Processing:", tline)
-    if tline[0].startswith(": gram"):
-        # 이 다음 줄부터는 syntactic
-        flag = "syntactic"
-        continue
     if tline[0].startswith(":"):
-        # skip this line
+        # 이 다음 줄부터는 syntactic
+        if tline[1:].startswith("gram"):
+            flag = "syntactic"
         continue
 
     word1 = tline[0].lower()
