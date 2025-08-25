@@ -227,13 +227,14 @@ for w in words[: args.topk]:
 subword_vectors = {}
 for w in words[: args.topk]:  # subwords is a tuple (list of sub
     # words, list of indices)
-    sw = f.get_subwords(w)[0]
-    sw = sw.lower()
-    vec = f.get_word_vector(sw)
-    if np.linalg.norm(vec) == 0:
-        continue
-    if sw not in subword_vectors:
-        subword_vectors[sw] = vec
+    subwords = f.get_subwords(w)[0]
+    for sw in subwords:
+        sw = sw.lower()
+        vec = f.get_word_vector(sw)
+        if np.linalg.norm(vec) == 0:
+            continue
+        if sw not in subword_vectors:
+            subword_vectors[sw] = vec
 
 
 print("Loaded {0:} words.".format(len(vectors)))
