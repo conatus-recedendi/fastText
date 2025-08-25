@@ -24,13 +24,14 @@ def get_nearest_vector(vector, vectors, topk, golden_word, args):
     nearest = None
     min_dist = float("inf")
     for word, vec in vectors.items():
-        if np.array_equal(vector, vec):
-            return word
+        # if np.array_equal(vector, vec):
+        #     return word
 
         # print vector, vec size
         # print(word, vec)
         # print("vector size:", vector.shape, "vec size:", vec.shape)
-        dist = np.linalg.norm(vector - vec)
+        d = vector - vec
+        dist = np.dot(d, d)
         if dist < min_dist:
             min_dist = dist
             nearest = word
@@ -149,6 +150,14 @@ for _, line in enumerate(fin):
         continue
     except UnicodeDecodeError:
         continue
+# 벡터 로딩 후 1회:
+for w in list(vectors.keys()):
+    v = vectors[w].astype(np.float32)
+    n = np.linalg.norm(v)
+    if n == 0:
+        del vectors[w]
+        continue
+    vectors[w] = v / n
 fin.close()
 
 print("Loaded {0:} words.".format(len(vectors)))
@@ -191,7 +200,9 @@ for line in fin:
         v1 = vectors[word1]
         v2 = vectors[word2]
         v3 = vectors[word3]
-        nearest_word = get_nearest_vector(v3 - v2 + v1, vectors, 1, word4, args)
+        q = v3 - v2 + v1
+        q /= np.linalg.norm(q) + 1e-12
+        nearest_word = get_nearest_vector(q, vectors, 1, word4, args)
         if nearest_word == word4:
             d = 1.0
         else:
