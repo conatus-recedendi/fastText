@@ -212,7 +212,7 @@ words = f.get_words(include_freq=True)
 #     except UnicodeDecodeError:
 #         continue
 
-for w in words[: args.topk]:
+for w, c in words[: args.topk]:
     w = w.lower()
     w = normalize_token(w)
     vec = f.get_word_vector(w)
