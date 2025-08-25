@@ -139,9 +139,9 @@ for line in fin:
     # show tline infor
     # print("Processing:", tline)
     word1 = tline[0].lower()
-    # word1 = "<" + word1 + ">"  # Add < and > to the word
+    word1 = "<" + word1 + ">"  # Add < and > to the word
     word2 = tline[1].lower()
-    # word2 = "<" + word2 + ">"  # Add < and > to
+    word2 = "<" + word2 + ">"  # Add < and > to
     nwords = nwords + 1.0
 
     # print("Comparing words: '{0}' and '{1}'".format(word1, word2))
@@ -176,8 +176,6 @@ for line in fin:
                     word1, word2, d
                 )
             )
-            mysim.append(0)
-            gold.append(float(tline[2]))
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
 
@@ -197,27 +195,25 @@ for line in fin:
                     word1, word2, d
                 )
             )
-            mysim.append(0)
-            gold.append(float(tline[2]))
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
     else:
         drop = drop + 1.0
-        # if args.sisg:
-        #     v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
-        #     v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
-        #     if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
-        #         # as null vector
-        #         continue
-        #     d = similarity(v1, v2)
+        if args.sisg:
+            v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
+            v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+            if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
+                # as null vector
+                continue
+            d = similarity(v1, v2)
 
-        #     print(
-        #         "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
-        #             word1, word2, d, float(tline[2])
-        #         )
-        #     )
-        #     mysim_sisg.append(d)
-        #     gold_sisg.append(float(tline[2]))
+            print(
+                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
+                    word1, word2, d, float(tline[2])
+                )
+            )
+            mysim_sisg.append(d)
+            gold_sisg.append(float(tline[2]))
 
 fin.close()
 
