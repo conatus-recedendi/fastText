@@ -195,8 +195,8 @@ for line in fin:
             v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
             d = similarity(v1, v2)
             print(
-                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}".format(
-                    word1, word2, d
+                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
+                    word1, word2, d, float(tline[2])
                 )
             )
             mysim_sisg.append(d)
