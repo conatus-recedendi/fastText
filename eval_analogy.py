@@ -168,6 +168,7 @@ for line in fin:
     if tline[0].startswith(":"):
         # skip this line
         continue
+    print("Processing:", tline)
 
     word1 = tline[0].lower()
     word2 = tline[1].lower()
