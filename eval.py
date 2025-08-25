@@ -23,7 +23,7 @@ def get_subword_average(word, vectors, minn, maxn):
     """
     Get the average vector of subwords for a given word.
     """
-    word = "<" + word + ">"  # Add < and > to the word
+    word = word  # Add < and > to the word
     subword_vectors = []
     if word in vectors:
         subword_vectors.append(vectors[word])  # Include the word itself
@@ -176,6 +176,8 @@ for line in fin:
                     word1, word2, d
                 )
             )
+            mysim.append(0)
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
 
@@ -195,6 +197,8 @@ for line in fin:
                     word1, word2, d
                 )
             )
+            mysim.append(0)
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
     else:
