@@ -23,7 +23,7 @@ def get_subword_average(word, vectors, minn, maxn):
     """
     Get the average vector of subwords for a given word.
     """
-    word = word  # Add < and > to the word
+    word = "<" + word + ">"  # Add < and > to the word
     subword_vectors = []
     if word in vectors:
         subword_vectors.append(vectors[word])  # Include the word itself
