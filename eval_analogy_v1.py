@@ -8,11 +8,11 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from fasttext import load_model
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
+from fasttext import load_model
 import numpy as np
 from scipy import stats
 import os
