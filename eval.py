@@ -139,9 +139,9 @@ for line in fin:
     tline = compat_splitting_by_comma(line)
     # show tline infor
     # print("Processing:", tline)
-    word1 = tline[1].lower()
+    word1 = tline[0].lower()
     # word1 = "<" + word1 + ">"  # Add < and > to the word
-    word2 = tline[2].lower()
+    word2 = tline[1].lower()
     # word2 = "<" + word2 + ">"  # Add < and > to
     nwords = nwords + 1.0
 
@@ -155,9 +155,9 @@ for line in fin:
         v2 = vectors[word2]
         d = similarity(v1, v2)
         mysim.append(d)
-        gold.append(float(tline[0]))
+        gold.append(float(tline[2]))
         mysim_sisg.append(d)
-        gold_sisg.append(float(tline[0]))
+        gold_sisg.append(float(tline[2]))
     elif word1 in vectors and not word2 in vectors:
         drop = drop + 1.0
         if args.sisg:
@@ -174,13 +174,13 @@ for line in fin:
             # print similairty
             print(
                 "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
-                    word1, word2, d, float(tline[0])
+                    word1, word2, d, float(tline[2])
                 )
             )
             mysim.append(0)
-            gold.append(float(tline[0]))
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
-            gold_sisg.append(float(tline[0]))
+            gold_sisg.append(float(tline[2]))
 
     elif word2 in vectors and not word1 in vectors:
         drop = drop + 1.0
@@ -195,13 +195,13 @@ for line in fin:
             d = similarity(v1, v2)
             print(
                 "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
-                    word1, word2, d, float(tline[0])
+                    word1, word2, d, float(tline[2])
                 )
             )
             mysim.append(0)
-            gold.append(float(tline[0]))
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
-            gold_sisg.append(float(tline[0]))
+            gold_sisg.append(float(tline[2]))
     else:
         drop = drop + 1.0
         if args.sisg:
@@ -214,13 +214,13 @@ for line in fin:
 
             print(
                 "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
-                    word1, word2, d, float(tline[0])
+                    word1, word2, d, float(tline[2])
                 )
             )
             mysim.append(0)
-            gold.append(float(tline[0]))
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
-            gold_sisg.append(float(tline[0]))
+            gold_sisg.append(float(tline[2]))
 
 fin.close()
 
