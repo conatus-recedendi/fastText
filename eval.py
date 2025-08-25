@@ -155,8 +155,8 @@ for line in fin:
         d = similarity(v1, v2)
         mysim.append(d)
         gold.append(float(tline[2]))
-        mysim_sisg.append(d)
-        gold_sisg.append(float(tline[2]))
+        # mysim_sisg.append(d)
+        # gold_sisg.append(float(tline[2]))
     elif word1 in vectors and not word2 in vectors:
         drop = drop + 1.0
         if args.sisg:
@@ -172,8 +172,8 @@ for line in fin:
             d = similarity(v1, v2)
             # print similairty
             print(
-                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}".format(
-                    word1, word2, d
+                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
+                    word1, word2, d, float(tline[2])
                 )
             )
             mysim_sisg.append(d)
@@ -191,8 +191,8 @@ for line in fin:
                 continue
             d = similarity(v1, v2)
             print(
-                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}".format(
-                    word1, word2, d
+                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
+                    word1, word2, d, float(tline[2])
                 )
             )
             mysim_sisg.append(d)
