@@ -229,7 +229,7 @@ dataset = os.path.basename(args.dataPath)
 
 # this is for sisg-
 print(
-    "{0:20s}: {1:2.0f}  (OOV: {2:2.0f}%)".format(
+    "{0:20s}: {1:2.3f}  (OOV: {2:2.0f}%)".format(
         dataset, corr[0] * 100, math.ceil(drop / nwords * 100.0)
     )
 )
