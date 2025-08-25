@@ -153,20 +153,21 @@ drop = 0.0
 nwords = 0.0
 
 
-fin = open(args.dataPath, "r")
+fin = open(args.dataPath, "rb")
 print("Evaluating on data in {0:}".format(args.dataPath))
 # len of fin
 
 flag = "semantic"
 for line in fin:
-    if line.startswith(": gram"):
+
+    tline = compat_splitting_by_comma(line)
+    if tline[1].startswith("gram"):
         # 이 다음 줄부터는 syntactic
         flag = "syntactic"
         continue
-    if (line.startswith(": ")) or (len(line.strip()) == 0):
+    if tline[0].startswith(":"):
+        # skip this line
         continue
-
-    tline = compat_splitting_by_comma(line)
 
     word1 = tline[0].lower()
     word2 = tline[1].lower()
