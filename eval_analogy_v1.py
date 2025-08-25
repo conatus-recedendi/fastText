@@ -264,7 +264,7 @@ for line in fin:
         v3 = vectors[word3]
         # v1 - v2 = v3 - q
         q = v3 + v2 - v1
-        # q /= np.linalg.norm(q) + 1e-12
+        q /= np.linalg.norm(q) + 1e-12
         best_idx = -1
         best_sim = -1.0
         B = 100_000
