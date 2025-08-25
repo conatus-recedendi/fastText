@@ -162,7 +162,7 @@ for line in fin:
 
     tline = compat_splitting_by_comma(line)
     print("Processing:", tline)
-    if tline[1].startswith("gram"):
+    if tline[0].startswith(": gram"):
         # 이 다음 줄부터는 syntactic
         flag = "syntactic"
         continue
