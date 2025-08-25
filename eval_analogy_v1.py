@@ -187,6 +187,7 @@ fin = open(args.modelPath, "rb")
 
 f = load_model(args.modelPath)
 words, counts = f.get_words(include_freq=True)
+subwords = f.get_subwords()
 
 
 # for _, line in enumerate(fin):
@@ -221,6 +222,17 @@ for w in words[: args.topk]:
         continue
     if w not in vectors:
         vectors[w] = vec
+
+
+subword_vectors = {}
+for sw in subwords[0]:  # subwords is a tuple (list of sub
+    # words, list of indices)
+    sw = sw.lower()
+    vec = f.get_word_vector(sw)
+    if np.linalg.norm(vec) == 0:
+        continue
+    if sw not in subword_vectors:
+        subword_vectors[sw] = vec
 
 
 print("Loaded {0:} words.".format(len(vectors)))
@@ -289,6 +301,14 @@ for line in fin:
         sim[mask] = -np.inf  # 제외 적용
         best_idx = int(np.argmax(sim))
         nearest = words[best_idx]
+
+        if args.sisg and (word4 not in vectors):
+            golden_subword_vec = get_subword_average(
+                word4, subwords, args.minn, args.maxn
+            )
+            if best_sim > np.dot(q, golden_subword_vec):
+                nearest = word4
+
         # for i in range(0, W.shape[0], B):
         #     sim = W[i : i + B] @ q  # (B,)
         #     j = np.argmax(sim)
