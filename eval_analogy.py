@@ -161,6 +161,7 @@ flag = "semantic"
 for line in fin:
 
     tline = compat_splitting_by_comma(line)
+    print("Processing:", tline)
     if tline[1].startswith("gram"):
         # 이 다음 줄부터는 syntactic
         flag = "syntactic"
@@ -168,7 +169,6 @@ for line in fin:
     if tline[0].startswith(":"):
         # skip this line
         continue
-    print("Processing:", tline)
 
     word1 = tline[0].lower()
     word2 = tline[1].lower()
