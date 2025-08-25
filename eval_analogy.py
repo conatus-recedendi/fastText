@@ -163,6 +163,7 @@ for w, v in vectors.items():
 W = np.vstack(W_list)  # (N, D)
 # 이미 위에서 정규화해두면 생략 가능
 W /= np.linalg.norm(W, axis=1, keepdims=True) + 1e-12
+idx_of = {w: i for i, w in enumerate(words)}  # ← 추가
 fin.close()
 
 
@@ -208,12 +209,22 @@ for line in fin:
         best_idx = -1
         best_sim = -1.0
         B = 100_000
-        for i in range(0, W.shape[0], B):
-            sim = W[i : i + B] @ q  # (B,)
-            j = np.argmax(sim)
-            if sim[j] > best_sim and words[i + j] not in (word1, word2, word3):
-                best_sim = float(sim[j])
-                best_idx = i + j
+        mask = np.zeros(W.shape[0], dtype=bool)
+        for ww in (word1, word2, word3):
+            i = idx_of.get(ww, None)
+            if i is not None:
+                mask[i] = True
+
+        sim = W @ q  # (N,)
+        sim[mask] = -np.inf  # 제외 적용
+        best_idx = int(np.argmax(sim))
+        nearest = words[best_idx]
+        # for i in range(0, W.shape[0], B):
+        #     sim = W[i : i + B] @ q  # (B,)
+        #     j = np.argmax(sim)
+        #     if sim[j] > best_sim and words[i + j] not in (word1, word2, word3):
+        #         best_sim = float(sim[j])
+        #         best_idx = i + j
         nearest = words[best_idx]
         if nearest == word4:
             d = 1.0
