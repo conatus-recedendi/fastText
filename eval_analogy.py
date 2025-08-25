@@ -26,6 +26,10 @@ def get_nearest_vector(vector, vectors, topk, golden_word, args):
     for word, vec in vectors.items():
         if np.array_equal(vector, vec):
             return word
+
+        # print vector, vec size
+        print(word, vec)
+        print("vector size:", vector.shape, "vec size:", vec.shape)
         dist = np.linalg.norm(vector - vec)
         if dist < min_dist:
             min_dist = dist
