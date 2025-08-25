@@ -22,15 +22,15 @@ normalize_text() {
 
 # ===== download =====
 echo "[INFO] Downloading archives (resume enabled)..."
-wget -c https://www.statmt.org/wmt13/training-monolingual-europarl-v7.tgz    -P "${ROOT}"
-wget -c https://www.statmt.org/wmt13/training-monolingual-nc-v8.tgz          -P "${ROOT}"
-wget -c https://www.statmt.org/wmt13/training-monolingual-news-2012.tgz      -P "${ROOT}"
+# wget -c https://www.statmt.org/wmt13/training-monolingual-europarl-v7.tgz    -P "${ROOT}"
+# wget -c https://www.statmt.org/wmt13/training-monolingual-nc-v8.tgz          -P "${ROOT}"
+# wget -c https://www.statmt.org/wmt13/training-monolingual-news-2012.tgz      -P "${ROOT}"
 
 # ===== extract =====
 echo "[INFO] Extracting..."
-tar -xzf "${ROOT}/training-monolingual-europarl-v7.tgz"   -C "${ROOT}"
-tar -xzf "${ROOT}/training-monolingual-nc-v8.tgz"         -C "${ROOT}"
-tar -xzf "${ROOT}/training-monolingual-news-2012.tgz"     -C "${ROOT}"
+# tar -xzf "${ROOT}/training-monolingual-europarl-v7.tgz"   -C "${ROOT}"
+# tar -xzf "${ROOT}/training-monolingual-nc-v8.tgz"         -C "${ROOT}"
+# tar -xzf "${ROOT}/training-monolingual-news-2012.tgz"     -C "${ROOT}"
 
 # 보통 ${ROOT}/training/ 아래로 풀립니다.
 TRAIN_DIR="${ROOT}/training"
