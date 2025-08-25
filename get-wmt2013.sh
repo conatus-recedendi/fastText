@@ -34,11 +34,12 @@ tar -xzf "${ROOT}/training-monolingual-news-2012.tgz"     -C "${ROOT}"
 
 # 보통 ${ROOT}/training/ 아래로 풀립니다.
 TRAIN_DIR="${ROOT}/training"
-if [[ ! -d "${TRAIN_DIR}" ]]; then
-  echo "[WARN] Expected ${ROOT}/training directory not found. Checking fallback..."
-  TRAIN_DIR="${ROOT}/training-monolingual"
-  # 일부 배포는 다른 폴더명을 쓸 수 있어 필요시 수정하세요.
-fi
+TRAIN_DIR_MONO="${ROOT}/training-monolingual"
+# if [[ ! -d "${TRAIN_DIR}" ]]; then
+#   echo "[WARN] Expected ${ROOT}/training directory not found. Checking fallback..."
+#   TRAIN_DIR="${ROOT}/training-monolingual"
+#   # 일부 배포는 다른 폴더명을 쓸 수 있어 필요시 수정하세요.
+# fi
 
 # ===== helper: zcat 여러 파일을 안전하게 합치기 =====
 zcat_many() {
@@ -57,12 +58,11 @@ for L in "${langs[@]}"; do
   echo "[INFO] Processing language=${L}"
 
   # ---- 경로/패턴 (WMT13 일반적 파일명 규칙) ----
-  europarl_files=( "${TRAIN_DIR}/europarl-v7.${L}.gz" )
-  # NC v8: 여러 해가 섞여 있음: news.2007.L.shuffled.gz ~ news.2011.L.shuffled.gz 등
+  europarl_files=( "${TRAIN_DIR}/europarl-v7.${L}" )
   # news-commentary-v8.ar
-  nc_files=( "${TRAIN_DIR}"/news-commentary-v8.${L}.gz )
+  nc_files=( "${TRAIN_DIR}"/news-commentary-v8.${L} )
   # News 2012:
-  news2012_files=( "${TRAIN_DIR}"/news.2012.${L}.shuffled.gz )
+  news2012_files=( "${TRAIN_DIR_MONO}"/news.2012.${L}.shuffled )
 
   # ---- 1) Europarl v7 + NC v8 합본 ----
   out_combo="${ROOT}/wiki.${L}.europal_ncv8.txt"
@@ -79,7 +79,47 @@ for L in "${langs[@]}"; do
     | awk '{print tolower($0)}' \
     | normalize_text \
     | awk '{if (NF>1) print;}' \
-    | tr -s " " \
+    | perl -e '
+# Program to filter Wikipedia XML dumps to "clean" text consisting only of lowercase
+# letters (a-z, converted from A-Z), and spaces (never consecutive)...
+# All other characters are converted to spaces.  Only text which normally appears.
+# in the web browser is displayed.  Tables are removed.  Image captions are.
+# preserved.  Links are converted to normal text.  Digits are spelled out.
+# *** Modified to not spell digits or throw away non-ASCII characters ***
+# Written by Matt Mahoney, June 10, 2006.  This program is released to the public domain.
+$/=">";                     # input record separator
+while (<>) {
+  if (/<text /) {$text=1;}  # remove all but between <text> ... </text>
+  if (/#redirect/i) {$text=0;}  # remove #REDIRECT
+  if ($text) {
+    # Remove any text not normally visible
+    if (/<\/text>/) {$text=0;}
+    s/<.*>//;               # remove xml tags
+    s/&amp;/&/g;            # decode URL encoded chars
+    s/&lt;/</g;
+    s/&gt;/>/g;
+    s/<ref[^<]*<\/ref>//g;  # remove references <ref...> ... </ref>
+    s/<[^>]*>//g;           # remove xhtml tags
+    s/\[http:[^] ]*/[/g;    # remove normal url, preserve visible text
+    s/\|thumb//ig;          # remove images links, preserve caption
+    s/\|left//ig;
+    s/\|right//ig;
+    s/\|\d+px//ig;
+    s/\[\[image:[^\[\]]*\|//ig;
+    s/\[\[category:([^|\]]*)[^]]*\]\]/[[$1]]/ig;  # show categories without markup
+    s/\[\[[a-z\-]*:[^\]]*\]\]//g;  # remove links to other languages
+    s/\[\[[^\|\]]*\|/[[/g;  # remove wiki url, preserve visible text
+    s/\{\{[^}]*\}\}//g;         # remove {{icons}} and {tables}
+    s/{[^}]*\}//g;
+    s/\[//g;                # remove [ and ]
+    s/\]//g;
+    s/&[^;]*;/ /g;          # remove URL encoded chars
+    $_=" $_ ";
+    chop;
+    print $_;
+  }
+}
+' | tr -s " " \
     | shuf \
     > "${out_combo}"
   fi
