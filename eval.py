@@ -108,6 +108,7 @@ for _, line in enumerate(fin):
         vec = np.array(tab[1:], dtype=float)
 
         word = tab[0]
+        word = word.lower()
         # word = word.lstrip("<").rstrip(">")
         if np.linalg.norm(vec) == 0:
             continue
@@ -155,8 +156,8 @@ for line in fin:
         d = similarity(v1, v2)
         mysim.append(d)
         gold.append(float(tline[2]))
-        # mysim_sisg.append(d)
-        # gold_sisg.append(float(tline[2]))
+        mysim_sisg.append(d)
+        gold_sisg.append(float(tline[2]))
     elif word1 in vectors and not word2 in vectors:
         drop = drop + 1.0
         if args.sisg:
