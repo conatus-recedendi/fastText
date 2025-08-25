@@ -140,6 +140,14 @@ parser.add_argument(
     action="store_true",
     help="use SISG (Subword Information and Similarity Graph) for evaluation",
 )
+parser.add_argument(
+    "--topk",
+    "-k",
+    dest="topk",
+    action="store",
+    type=int,
+    default=300000,
+)
 args = parser.parse_args()
 
 f = load_model(args.modelPath)
