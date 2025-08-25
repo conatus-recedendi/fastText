@@ -28,8 +28,8 @@ def get_nearest_vector(vector, vectors, topk, golden_word, args):
             return word
 
         # print vector, vec size
-        print(word, vec)
-        print("vector size:", vector.shape, "vec size:", vec.shape)
+        # print(word, vec)
+        # print("vector size:", vector.shape, "vec size:", vec.shape)
         dist = np.linalg.norm(vector - vec)
         if dist < min_dist:
             min_dist = dist
@@ -132,6 +132,9 @@ for _, line in enumerate(fin):
     try:
         tab = compat_splitting(line)
         if tab is None or len(tab) < 2:
+            continue
+
+        if len(tab) is not 301:
             continue
         vec = np.array(tab[1:], dtype=float)
 
