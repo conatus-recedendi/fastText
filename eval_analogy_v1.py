@@ -172,13 +172,23 @@ parser.add_argument(
     action="store_true",
     help="use SISG (Subword Information and Similarity Graph) for evaluation",
 )
+parser.add_argument(
+    "--topk",
+    "-k",
+    dest="topk",
+    action="store",
+    type=int,
+    default=300000,
+)
 args = parser.parse_args()
 
 vectors = {}
 fin = open(args.modelPath, "rb")
 
 f = load_model(args.modelPath)
-words = f.get_words()
+words = f.get_words(include_freq=True)
+
+
 # for _, line in enumerate(fin):
 #     try:
 #         tab = compat_splitting(line)
@@ -202,7 +212,7 @@ words = f.get_words()
 #     except UnicodeDecodeError:
 #         continue
 
-for w in words:
+for w in words[: args.topk]:
     w = w.lower()
     w = normalize_token(w)
     vec = f.get_word_vector(w)
