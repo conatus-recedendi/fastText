@@ -85,7 +85,7 @@ def get_nearest_vector(vector, vectors, topk, golden_word, args):
         golden_word = golden_word.lower()
         if golden_word not in vectors:
             golden_subword_vec = get_subword_average(
-                golden_word, vectors, args.minn, args.maxn
+                golden_word, subword_vectors, args.minn, args.maxn
             )
             if min_dist > np.dot(
                 vector - golden_subword_vec, vector - golden_subword_vec
@@ -306,7 +306,7 @@ for line in fin:
 
         if args.sisg and (word4 not in vectors):
             golden_subword_vec = get_subword_average(
-                word4, subwords, args.minn, args.maxn
+                word4, subword_vectors, args.minn, args.maxn
             )
             if best_sim > np.dot(q, golden_subword_vec):
                 nearest = word4
