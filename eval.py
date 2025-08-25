@@ -177,6 +177,8 @@ for line in fin:
                     word1, word2, d, float(tline[2])
                 )
             )
+            mysim.append(0)
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
 
@@ -196,6 +198,8 @@ for line in fin:
                     word1, word2, d, float(tline[2])
                 )
             )
+            mysim.append(0)
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
     else:
@@ -213,6 +217,8 @@ for line in fin:
                     word1, word2, d, float(tline[2])
                 )
             )
+            mysim.append(0)
+            gold.append(float(tline[2]))
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
 
