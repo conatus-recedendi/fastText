@@ -146,22 +146,22 @@ for line in fin:
 
     if (word1 in vectors) and (word2 in vectors):
         # v1 = vectors[word1]
-        v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
-        v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
-        # v1 = vectors[word1]
-        # v2 = vectors[word2]
+        # v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
+        # v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+        v1 = vectors[word1]
+        v2 = vectors[word2]
         d = similarity(v1, v2)
         mysim.append(d)
         gold.append(float(tline[2]))
         mysim_sisg.append(d)
         gold_sisg.append(float(tline[2]))
-    elif word1 in vectors:
+    elif word1 in vectors and not word2 in vectors:
         drop = drop + 1.0
         if args.sisg:
             # SISG 이면 word1, word2 둘 중 하나가 없음! 이렇게 구하면 dim  안맞음
-            v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
+            # v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
 
-            # v1 = vectors[word1]
+            v1 = vectors[word1]
             v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
             if np.linalg.norm(v2) == 0:
                 # as null vector
@@ -170,30 +170,29 @@ for line in fin:
             d = similarity(v1, v2)
             # print similairty
             print(
-                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
-                    word1, word2, d, float(tline[2])
+                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}".format(
+                    word1, word2, d
                 )
             )
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
 
-    elif word2 in vectors:
+    elif word2 in vectors and not word1 in vectors:
         drop = drop + 1.0
         if args.sisg:
             # SISG 이면 word1, word2 둘 중 하나가 없음! 이렇게 구하면 dim  안맞음
             v1 = get_subword_average(word1, vectors, args.minn, args.maxn)
-            v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
-            # v2 = vectors[word2]
+            # v2 = get_subword_average(word2, vectors, args.minn, args.maxn)
+            v2 = vectors[word2]
             if np.linalg.norm(v1) == 0:
                 # as null vector
                 continue
             d = similarity(v1, v2)
             print(
-                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}, {3:.4f}".format(
-                    word1, word2, d, float(tline[2])
+                "Similarity (SISG) between '{0}' and '{1}': {2:.4f}".format(
+                    word1, word2, d
                 )
             )
-
             mysim_sisg.append(d)
             gold_sisg.append(float(tline[2]))
     else:
