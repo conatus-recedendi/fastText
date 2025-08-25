@@ -152,17 +152,19 @@ for _, line in enumerate(fin):
         continue
     except UnicodeDecodeError:
         continue
-# 벡터 로딩 후 1회:
-for w in list(vectors.keys()):
-    v = vectors[w].astype(np.float32)
-    n = np.linalg.norm(v)
-    if n == 0:
-        del vectors[w]
-        continue
-    vectors[w] = v / n
-fin.close()
+
 
 print("Loaded {0:} words.".format(len(vectors)))
+words = []
+W_list = []
+for w, v in vectors.items():
+    words.append(w)
+    W_list.append(v.astype(np.float32))
+W = np.vstack(W_list)  # (N, D)
+# 이미 위에서 정규화해두면 생략 가능
+W /= np.linalg.norm(W, axis=1, keepdims=True) + 1e-12
+fin.close()
+
 
 semantic = []
 syntactic = []
@@ -204,8 +206,17 @@ for line in fin:
         v3 = vectors[word3]
         q = v3 - v2 + v1
         q /= np.linalg.norm(q) + 1e-12
-        nearest_word = get_nearest_vector(q, vectors, 1, word4, args)
-        if nearest_word == word4:
+        best_idx = -1
+        best_sim = -1.0
+        B = 100_000
+        for i in range(0, W.shape[0], B):
+            sim = W[i : i + B] @ q  # (B,)
+            j = np.argmax(sim)
+            if sim[j] > best_sim:
+                best_sim = float(sim[j])
+                best_idx = i + j
+        nearest = words[best_idx]
+        if nearest == word4:
             d = 1.0
         else:
             d = 0.0
@@ -213,6 +224,19 @@ for line in fin:
             semantic.append(d)
         else:
             syntactic.append(d)
+        print(
+            "\r Semantic Accuarcy: {0:.2f}%, Syntactic Accuracy: {1:.2f}%, Analogy: '{2}' is to '{3}' as '{4}' is to '{5}' (predicted: '{6}')".format(
+                np.mean(semantic) * 100,
+                np.mean(syntactic) * 100,
+                word1,
+                word2,
+                word3,
+                word4,
+                nearest,
+            ),
+            end="",
+            flush=True,
+        )
 
 
 print("Semantic accuracy: {0:.2f} %".format(np.mean(semantic) * 100))
