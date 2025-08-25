@@ -139,9 +139,9 @@ for line in fin:
     # show tline infor
     # print("Processing:", tline)
     word1 = tline[0].lower()
-    word1 = "<" + word1 + ">"  # Add < and > to the word
+    # word1 = "<" + word1 + ">"  # Add < and > to the word
     word2 = tline[1].lower()
-    word2 = "<" + word2 + ">"  # Add < and > to
+    # word2 = "<" + word2 + ">"  # Add < and > to
     nwords = nwords + 1.0
 
     # print("Comparing words: '{0}' and '{1}'".format(word1, word2))
