@@ -136,10 +136,11 @@ print("Evaluating on data in {0:}".format(args.dataPath))
 # len of fin
 # print("Total lines:", sum(1 for line in fin))
 for line in fin:
-    tline = compat_splitting_by_comma(line)
-
+    # tline = compat_splitting_by_comma(line)
+    tline = compat_splitting(line)
     if len(tline) < 3:
         continue
+
     # show tline infor
     # print("Processing:", tline)
     word1 = tline[0].lower()
