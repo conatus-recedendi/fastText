@@ -89,6 +89,7 @@ parser.add_argument(
 parser.add_argument(
     "--data", "-d", dest="dataPath", action="store", required=True, help="path to data"
 )
+
 parser.add_argument(
     "--sisg",
     "-sisg",
@@ -102,7 +103,7 @@ vectors = {}
 fin = open(args.modelPath, "rb")
 for _, line in enumerate(fin):
     try:
-        tab = compat_splitting(line)
+        tab = compat_splitting_by_comma(line)
         if tab is None or len(tab) < 2:
             continue
         vec = np.array(tab[1:], dtype=float)
