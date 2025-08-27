@@ -24,11 +24,11 @@ def get_subword_vectors(
     반환: (subword_list, vectors[np.ndarray, shape=(S, dim)])
     """
     # 기본값: 모델 설정 값 사용
-    args = model.get_args()
-    if nmin is None:
-        nmin = args.minn
-    if nmax is None:
-        nmax = args.maxn
+    # args = model.get_args()
+    # if nmin is None:
+    #     nmin = args.minn
+    # if nmax is None:
+    #     nmax = args.maxn
 
     subs, idxs = model.get_subwords(word)  # subword 문자열, 해당 input-matrix 인덱스
     pairs = []
