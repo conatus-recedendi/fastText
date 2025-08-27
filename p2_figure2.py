@@ -110,8 +110,8 @@ plot_subword_heatmap(
     model_path,
     "rarity",
     "scarceness",
-    nmin=3,
-    nmax=4,
+    nmin=4,
+    nmax=5,
     include_word=True,
     save_path="p2_figure2_rarity_scarceness.png",
 )
