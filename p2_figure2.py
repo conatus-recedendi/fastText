@@ -13,8 +13,8 @@ def _cosine_sim_matrix(A: np.ndarray, B: np.ndarray, eps: float = 1e-9) -> np.nd
 def get_subword_vectors(
     model,
     word: str,
-    nmin: int | None = None,
-    nmax: int | None = None,
+    nmin: int,
+    nmax: int,
     include_word: bool = True,
 ):
     """
