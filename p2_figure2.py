@@ -69,10 +69,10 @@ def plot_subword_heatmap(
     model_path: str,
     w1: str,
     w2: str,
-    nmin: int | None = None,
-    nmax: int | None = None,
+    nmin: int,
+    nmax: int,
     include_word: bool = True,
-    save_path: str | None = None,
+    save_path: str = None,
 ):
     """
     두 단어의 subword 간 코사인 유사도 히트맵을 그립니다.
