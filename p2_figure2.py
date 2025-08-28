@@ -113,7 +113,7 @@ plot_subword_heatmap(
     nmin=4,
     nmax=6,
     include_word=True,
-    save_path="p2_figure2_rarity_scarceness.png",
+    save_path="p2_figure/p2_figure2_rarity_scarceness.png",
 )
 
 plot_subword_heatmap(
@@ -123,7 +123,7 @@ plot_subword_heatmap(
     nmin=4,
     nmax=6,
     include_word=True,
-    save_path="p2_figure2_paving_asphaltic.png",
+    save_path="p2_figure/p2_figure2_paving_asphaltic.png",
 )
 
 plot_subword_heatmap(
@@ -133,7 +133,7 @@ plot_subword_heatmap(
     nmin=4,
     nmax=6,
     include_word=True,
-    save_path="p2_figure2_connect_interlink.png",
+    save_path="p2_figure/p2_figure2_connect_interlink.png",
 )
 
 
@@ -144,7 +144,7 @@ plot_subword_heatmap(
     nmin=4,
     nmax=6,
     include_word=True,
-    save_path="p2_figure2_young_preadolescent.png",
+    save_path="p2_figure/p2_figure2_young_preadolescent.png",
 )
 
 plot_subword_heatmap(
@@ -154,7 +154,7 @@ plot_subword_heatmap(
     nmin=4,
     nmax=6,
     include_word=True,
-    save_path="p2_figure2_chip_microcircuit.png",
+    save_path="p2_figure/p2_figure2_chip_microcircuit.png",
 )
 
 plot_subword_heatmap(
@@ -164,5 +164,5 @@ plot_subword_heatmap(
     nmin=4,
     nmax=6,
     include_word=True,
-    save_path="p2_figure2_spiciness_piquancy.png",
+    save_path="p2_figure2/p2_figure2_spiciness_piquancy.png",
 )
