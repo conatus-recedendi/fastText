@@ -111,7 +111,58 @@ plot_subword_heatmap(
     "rarity",
     "scarceness",
     nmin=4,
-    nmax=5,
+    nmax=6,
     include_word=True,
     save_path="p2_figure2_rarity_scarceness.png",
+)
+
+plot_subword_heatmap(
+    model_path,
+    "paving",
+    "asphaltic",
+    nmin=4,
+    nmax=6,
+    include_word=True,
+    save_path="p2_figure2_paving_asphaltic.png",
+)
+
+plot_subword_heatmap(
+    model_path,
+    "connect",
+    "interlink",
+    nmin=4,
+    nmax=6,
+    include_word=True,
+    save_path="p2_figure2_connect_interlink.png",
+)
+
+
+plot_subword_heatmap(
+    model_path,
+    "young",
+    "preadolescent",
+    nmin=4,
+    nmax=6,
+    include_word=True,
+    save_path="p2_figure2_young_preadolescent.png",
+)
+
+plot_subword_heatmap(
+    model_path,
+    "chip",
+    "microcircuit",
+    nmin=4,
+    nmax=6,
+    include_word=True,
+    save_path="p2_figure2_chip_microcircuit.png",
+)
+
+plot_subword_heatmap(
+    model_path,
+    "spiciness",
+    "piquancy",
+    nmin=4,
+    nmax=6,
+    include_word=True,
+    save_path="p2_figure2_spiciness_piquancy.png",
 )
