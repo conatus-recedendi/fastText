@@ -90,7 +90,7 @@ def plot_subword_heatmap(
     M = _cosine_sim_matrix(V1, V2)
 
     plt.figure(figsize=(8, 6))
-    plt.imshow(M, aspect="auto", interpolation="nearest")
+    plt.imshow(M, aspect="auto", interpolation="nearest", cmap="bwr")
     plt.xticks(ticks=np.arange(len(s2)), labels=s2, rotation=70, ha="right", fontsize=8)
     plt.yticks(ticks=np.arange(len(s1)), labels=s1, fontsize=8)
     plt.xlabel(w2)
