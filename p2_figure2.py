@@ -164,5 +164,5 @@ plot_subword_heatmap(
     nmin=4,
     nmax=6,
     include_word=True,
-    save_path="p2_figure2/p2_figure2_spiciness_piquancy.png",
+    save_path="p2_figure/p2_figure2_spiciness_piquancy.png",
 )
